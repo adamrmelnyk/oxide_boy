@@ -14,7 +14,7 @@ struct Registers {
 }
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
-const SUBTRACT_FLAG_BYTE_POSITION: u8 =6;
+const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
 const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
 const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
@@ -27,10 +27,10 @@ struct FlagsRegister {
 
 impl std::convert::From<FlagsRegister> for u8 {
     fn from(flag: FlagsRegister) -> u8 {
-        (if flag.zero       { 1 } else { 0 }) << ZERO_FLAG_BYTE_POSITION |
-        (if flag.subtract   { 1 } else { 0 }) << SUBTRACT_FLAG_BYTE_POSITION |
-        (if flag.half_carry { 1 } else { 0 }) << HALF_CARRY_FLAG_BYTE_POSITION |
-        (if flag.carry      { 1 } else { 0 }) << CARRY_FLAG_BYTE_POSITION
+        (if flag.zero { 1 } else { 0 }) << ZERO_FLAG_BYTE_POSITION
+            | (if flag.subtract { 1 } else { 0 }) << SUBTRACT_FLAG_BYTE_POSITION
+            | (if flag.half_carry { 1 } else { 0 }) << HALF_CARRY_FLAG_BYTE_POSITION
+            | (if flag.carry { 1 } else { 0 }) << CARRY_FLAG_BYTE_POSITION
     }
 }
 
@@ -45,7 +45,7 @@ impl std::convert::From<u8> for FlagsRegister {
             zero,
             subtract,
             half_carry,
-            carry
+            carry,
         }
     }
 }
@@ -67,33 +67,61 @@ impl Registers {
 
 enum Instruction {
     ADD(ArithmeticTarget),
+    SUB(ArithmeticTarget),
+    ADDHL(ArithmeticTarget),
+    ADC(ArithmeticTarget),
+    SBC(ArithmeticTarget),
+    AND(ArithmeticTarget),
+    OR(ArithmeticTarget),
+    XOR(ArithmeticTarget),
+    CP(ArithmeticTarget),
+    INC(ArithmeticTarget),
+    DEC(ArithmeticTarget),
+    CCF,
+    SCF,
 }
 
 enum ArithmeticTarget {
-    A, B, C, D, E, H, L
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
 }
 
 impl CPU {
     fn execute(&mut self, instruction: Instruction) {
         match instruction {
             Instruction::ADD(target) => {
-                match target {
-                    ArithmeticTarget::C => {
-                    let curr = self.registers.c;
-                    let new_value = self.add(curr);
-                    self.registers.a = new_value;
-                    },
-                    _ => {
-                    // TODO: Support more targets
-                    }
-                }
-            },
+                let curr = self.register_value(target);
+                self.registers.a = self.add(curr);
+            }
+            Instruction::SUB(target) => {
+                let curr = self.register_value(target);
+                self.registers.a = self.sub(curr);
+            }
             _ => {
                 // TODO: Support more instructions
             }
         }
     }
 
+    /// Helper method for returning the value of an 8bit register
+    fn register_value(&self, target: ArithmeticTarget) -> u8 {
+        match target {
+            ArithmeticTarget::A => self.registers.a,
+            ArithmeticTarget::B => self.registers.b,
+            ArithmeticTarget::C => self.registers.c,
+            ArithmeticTarget::D => self.registers.d,
+            ArithmeticTarget::E => self.registers.e,
+            ArithmeticTarget::H => self.registers.h,
+            ArithmeticTarget::L => self.registers.l,
+        }
+    }
+
+    // A = A + s
     fn add(&mut self, value: u8) -> u8 {
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
         self.registers.f.zero = new_value == 0;
@@ -103,119 +131,90 @@ impl CPU {
         new_value
     }
 
-    fn addhl() {
+    fn addhl(&mut self, value: u8) {}
 
+    // A = A + s + CY
+    fn adc(&mut self, value: u8) {}
+
+    // A = A - s
+    fn sub(&mut self, value: u8) -> u8 {
+        let new_value = self.registers.a - value;
+        self.registers.f.carry = false;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = true;
+        // self.registers.f.half_carry = false; // TODO
+        new_value
     }
 
-    fn adc() {
+    fn sbc() {}
 
-    }
+    fn and() {}
 
-    fn sub() {
+    fn or() {}
 
-    }
+    fn xor() {}
 
-    fn sbc() {
+    fn cp() {}
 
-    }
+    fn inc() {}
 
-    fn and() {
+    fn dec() {}
 
-    }
+    fn ccf() {}
 
-    fn or() {
+    fn scf() {}
 
-    }
+    fn rra() {}
 
-    fn xor() {
+    fn rla() {}
 
-    }
+    fn rrca() {}
 
-    fn cp() {
+    fn rrla() {}
 
-    }
+    fn cpl() {}
 
-    fn inc() {
+    fn bit() {}
 
-    }
+    fn reset() {}
 
-    fn dec() {
+    fn set() {}
 
-    }
+    fn srl() {}
 
-    fn ccf() {
+    fn rr() {}
 
-    }
+    fn rl() {}
 
-    fn scf() {
+    fn rrc() {}
 
-    }
+    fn rlc() {}
 
-    fn rra() {
+    fn sra() {}
 
-    }
+    fn sla() {}
 
-    fn rla() {
-
-    }
-
-    fn rrca() {
-
-    }
-
-    fn rrla() {
-
-    }
-
-    fn cpl() {
-
-    }
-
-    fn bit() {
-
-    }
-
-    fn reset() {
-
-    }
-
-    fn set() {
-
-    }
-
-    fn srl() {
-
-    }
-
-    fn rr() {
-
-    }
-
-    fn rl() {
-
-    }
-
-    fn rrc() {
-
-    }
-
-    fn rlc() {
-
-    }
-
-    fn sra() {
-
-    }
-
-    fn sla() {
-
-    }
-
-    fn swap() {
-
-    }
+    fn swap() {}
 }
 
 fn main() {
     println!("Hello, world!");
+    let mut cpu = CPU {
+        registers: Registers {
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
+            f: FlagsRegister {
+                zero: false,
+                subtract: false,
+                carry: false,
+                half_carry: false,
+            },
+            h: 0,
+            l: 0,
+        },
+    };
+    cpu.add(8);
 }

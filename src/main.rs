@@ -1,5 +1,29 @@
-struct CPU {
+#![feature(destructuring_assignment)]
+
+pub struct CPU {
     registers: Registers,
+}
+
+impl Default for CPU {
+    fn default() -> Self {
+        CPU {
+            registers: Registers {
+                a: 0,
+                b: 0,
+                c: 0,
+                d: 0,
+                e: 0,
+                f: FlagsRegister {
+                    zero: false,
+                    subtract: false,
+                    carry: false,
+                    half_carry: false,
+                },
+                h: 0,
+                l: 0,
+            },
+        }
+    }
 }
 
 struct Registers {
@@ -95,12 +119,32 @@ impl CPU {
     fn execute(&mut self, instruction: Instruction) {
         match instruction {
             Instruction::ADD(target) => {
-                let curr = self.register_value(target);
-                self.registers.a = self.add(curr);
+                let value = self.register_value(target);
+                self.registers.a = self.add(value);
             }
             Instruction::SUB(target) => {
-                let curr = self.register_value(target);
-                self.registers.a = self.sub(curr);
+                let value = self.register_value(target);
+                self.registers.a = self.sub(value);
+            }
+            Instruction::ADC(target) => {
+                let value = self.register_value(target);
+                self.registers.a = self.adc(value);
+            }
+            Instruction::SBC(target) => {
+                let value = self.register_value(target);
+                self.registers.a = self.sbc(value);
+            }
+            Instruction::AND(target) => {
+                let value = self.register_value(target);
+                self.registers.a = self.and(value);
+            }
+            Instruction::OR(target) => {
+                let value = self.register_value(target);
+                self.registers.a = self.or(value);
+            }
+            Instruction::XOR(target) => {
+                let value = self.register_value(target);
+                self.registers.a = self.xor(value);
             }
             _ => {
                 // TODO: Support more instructions
@@ -134,25 +178,77 @@ impl CPU {
     fn addhl(&mut self, value: u8) {}
 
     // A = A + s + CY
-    fn adc(&mut self, value: u8) {}
+    fn adc(&mut self, value: u8) -> u8 {
+        // using #![feature(destructuring_assignment)] from nightly so I don't neeed to do this
+        // let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
+        // if self.registers.f.carry {
+        //     let (t_new_value, t_did_overflow) = self.registers.a.overflowing_add(1u8); // using #![feature(destructuring_assignment)] for this
+        //     new_value = t_new_value;
+        //     did_overflow = t_did_overflow;
+        // }
+        let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
+        if self.registers.f.carry {
+            (new_value, did_overflow) = self.registers.a.overflowing_add(1u8);
+        }
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.carry = did_overflow;
+        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
+        new_value
+    }
 
     // A = A - s
     fn sub(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a - value;
         self.registers.f.carry = false;
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = true;
-        // self.registers.f.half_carry = false; // TODO
+        // TODO: Set the carry bits
+        // self.registers.f.subtract = true;
+        // self.registers.f.half_carry = false;
         new_value
     }
 
-    fn sbc() {}
+    // A = A - s -CY
+    fn sbc(&mut self, value: u8) -> u8 {
+        let carry: u8 = if self.registers.f.carry { 1 } else { 0 };
+        let new_value = self.registers.a - value - carry;
+        self.registers.f.carry = false;
+        self.registers.f.zero = new_value == 0;
+        // TODO: Set the carry bits
+        // self.registers.f.subtract = true;
+        // self.registers.f.half_carry = false;
+        new_value
+    }
 
-    fn and() {}
+    // A = A & s
+    fn and(&mut self, value: u8) -> u8 {
+        let new_value = self.registers.a & value;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.carry = false;
+        self.registers.f.half_carry = false;
+        new_value
+    }
 
-    fn or() {}
+    // A = A | s
+    fn or(&mut self, value: u8) -> u8 {
+        let new_value = self.registers.a | value;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.carry = false;
+        self.registers.f.half_carry = false;
+        new_value
+    }
 
-    fn xor() {}
+    // A = A ^ s
+    fn xor(&mut self, value: u8) -> u8 {
+        let new_value = self.registers.a ^ value;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.carry = false;
+        self.registers.f.half_carry = false;
+        new_value
+    }
 
     fn cp() {}
 
@@ -199,22 +295,11 @@ impl CPU {
 
 fn main() {
     println!("Hello, world!");
-    let mut cpu = CPU {
-        registers: Registers {
-            a: 0,
-            b: 0,
-            c: 0,
-            d: 0,
-            e: 0,
-            f: FlagsRegister {
-                zero: false,
-                subtract: false,
-                carry: false,
-                half_carry: false,
-            },
-            h: 0,
-            l: 0,
-        },
-    };
-    cpu.add(8);
+    let mut cpu = CPU::default();
+    cpu.execute(Instruction::ADD(ArithmeticTarget::C));
+    cpu.execute(Instruction::SUB(ArithmeticTarget::C));
+    cpu.execute(Instruction::ADC(ArithmeticTarget::C));
+    cpu.execute(Instruction::AND(ArithmeticTarget::C));
+    cpu.execute(Instruction::OR(ArithmeticTarget::C));
+    cpu.execute(Instruction::XOR(ArithmeticTarget::C));
 }

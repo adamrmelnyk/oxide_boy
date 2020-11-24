@@ -3,6 +3,7 @@
 pub struct CPU {
     registers: Registers,
 }
+
 impl Default for CPU {
     fn default() -> Self {
         CPU {
@@ -97,9 +98,30 @@ impl Registers {
         self.c = (value & 0xFF) as u8;
     }
 
-    // TODO: de register
+    // TODO: af register
 
-    // TODO: hl register
+    fn get_de(&self) -> u16 {
+        (self.d as u16) << 8 | self.e as u16
+    }
+
+    fn set_de(&mut self, value: u16) {
+        self.d = ((value & 0xFF00) >> 8) as u8;
+        self.e = (value & 0xFF) as u8;
+    }
+
+    fn get_hl(&self) -> u16 {
+        (self.h as u16) << 8 | self.l as u16
+    }
+
+    fn set_hl(&mut self, value: u16) {
+        self.h = ((value & 0xFF00) >> 8) as u8;
+        self.l = (value & 0xFF) as u8;
+    }
+}
+
+// TODO: We'll need this for setting the flag registers
+fn kth_bit_set(value: u16, k: u8) -> bool {
+    (value & (1 << (k - 1))) > 0
 }
 
 pub enum Instruction {
@@ -116,6 +138,21 @@ pub enum Instruction {
     DEC(ArithmeticTarget),
     CCF,
     SCF,
+    RRA,
+    RLA,
+    RRCA,
+    RRLA,
+    CPL,
+    // BIT,
+    // RESET,
+    // SET,
+    // SRL,
+    // RL,
+    // RRC,
+    // RLC,
+    SRA(ArithmeticTarget),
+    SLA(ArithmeticTarget),
+    SWAP(ArithmeticTarget),
 }
 
 pub enum ArithmeticTarget {
@@ -135,6 +172,7 @@ impl CPU {
                 let value = self.register_value(&target);
                 self.registers.a = self.add(value);
             }
+            Instruction::ADDHL(target) => {}
             Instruction::SUB(target) => {
                 let value = self.register_value(&target);
                 self.registers.a = self.sub(value);
@@ -159,6 +197,7 @@ impl CPU {
                 let value = self.register_value(&target);
                 self.registers.a = self.xor(value);
             }
+            Instruction::CP(target) => {}
             Instruction::INC(target) => {
                 let value = self.register_value(&target);
                 let new_value = self.inc(value);
@@ -169,9 +208,16 @@ impl CPU {
                 let new_value = self.dec(value);
                 self.set_register_by_target(&target, new_value);
             }
-            _ => {
-                // TODO: Support more instructions
-            }
+            Instruction::CCF => {}
+            Instruction::SCF => {}
+            Instruction::RRA => {}
+            Instruction::RLA => {}
+            Instruction::RRCA => {}
+            Instruction::RRLA => {}
+            Instruction::CPL => {}
+            Instruction::SRA(target) => {}
+            Instruction::SLA(target) => {}
+            Instruction::SWAP(target) => {}
         }
     }
 

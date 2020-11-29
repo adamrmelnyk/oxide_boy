@@ -1,7 +1,13 @@
 #![feature(destructuring_assignment)]
 
+mod memory;
+
+use memory::memory_bus::MemoryBus;
+
 pub struct CPU {
     registers: Registers,
+    pc: u16,
+    bus: MemoryBus,
 }
 
 impl Default for CPU {
@@ -22,6 +28,8 @@ impl Default for CPU {
                 h: 0,
                 l: 0,
             },
+            bus: MemoryBus::default(),
+            pc: 0,
         }
     }
 }
@@ -37,6 +45,18 @@ impl CPU {
             ArithmeticTarget::H => self.registers.h = value,
             ArithmeticTarget::L => self.registers.l = value,
         }
+    }
+
+    fn step(&mut self) {
+        let mut instruction_byte = self.bus.read_byte(self.pc);
+
+        let next_pc = if let Some(instruction) = Instruction::from_byte(instruction_byte) {
+            self.execute(instruction)
+        } else {
+            panic!("Unknown instruction found for: 0x{:x}", instruction_byte)
+        };
+
+        self.pc = next_pc;
     }
 }
 
@@ -131,6 +151,9 @@ pub enum Instruction {
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
     ADDHL(SixteenBitArithmeticTarget),
+    ADDSP(SixteenBitArithmeticTarget),
+    INC16(SixteenBitArithmeticTarget),
+    DEC16(SixteenBitArithmeticTarget),
     ADC(ArithmeticTarget),
     SBC(ArithmeticTarget),
     AND(ArithmeticTarget),
@@ -158,6 +181,16 @@ pub enum Instruction {
     SWAP(ArithmeticTarget),
 }
 
+impl Instruction {
+    fn from_byte(byte: u8) -> Option<Instruction> {
+        match byte {
+            0x02 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
+            0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
+            _ => None, // TODO: Add the rest of the mappings
+        }
+    }
+}
+
 pub enum ArithmeticTarget {
     A,
     B,
@@ -177,7 +210,7 @@ pub enum SixteenBitArithmeticTarget {
 }
 
 impl CPU {
-    pub fn execute(&mut self, instruction: Instruction) {
+    pub fn execute(&mut self, instruction: Instruction) -> u16 {
         match instruction {
             Instruction::ADD(target) => {
                 let value = self.register_value(&target);
@@ -188,6 +221,9 @@ impl CPU {
                 let new_value = self.addhl(value);
                 self.registers.set_hl(new_value);
             }
+            Instruction::ADDSP(target) => {}
+            Instruction::INC16(target) => {}
+            Instruction::DEC16(target) => {}
             Instruction::SUB(target) => {
                 let value = self.register_value(&target);
                 self.registers.a = self.sub(value);
@@ -245,6 +281,7 @@ impl CPU {
             }
             Instruction::SWAP(target) => {}
         }
+        self.pc.wrapping_add(1)
     }
 
     /// Helper method for returning the value of an 8bit register
@@ -288,6 +325,21 @@ impl CPU {
         self.registers.f.carry = did_overflow;
         self.registers.f.half_carry = (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF; // TODO: Double check
         new_value
+    }
+
+    // SP = SP + e
+    fn addsp(&mut self, value: u16) -> u16 {
+        unimplemented!();
+    }
+
+    // ss = ss + 1
+    fn inc_16(&mut self, value: u16) -> u16 {
+        unimplemented!();
+    }
+
+    // ss = ss - 1
+    fn dec_16(&mut self, value: u16) -> u16 {
+        unimplemented!();
     }
 
     // A = A + s + CY

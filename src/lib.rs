@@ -63,8 +63,8 @@ struct FlagsRegister {
     carry: bool,
 }
 
-impl std::convert::From<FlagsRegister> for u8 {
-    fn from(flag: FlagsRegister) -> u8 {
+impl std::convert::From<&FlagsRegister> for u8 {
+    fn from(flag: &FlagsRegister) -> u8 {
         (if flag.zero { 1 } else { 0 }) << ZERO_FLAG_BYTE_POSITION
             | (if flag.subtract { 1 } else { 0 }) << SUBTRACT_FLAG_BYTE_POSITION
             | (if flag.half_carry { 1 } else { 0 }) << HALF_CARRY_FLAG_BYTE_POSITION
@@ -98,7 +98,15 @@ impl Registers {
         self.c = (value & 0xFF) as u8;
     }
 
-    // TODO: af register
+    fn get_af(&self) -> u16 {
+        let flags_register = &self.f;
+        (self.b as u16) << 8 | u8::from(flags_register) as u16
+    }
+
+    fn set_af(&mut self, value: u16) {
+        self.a = ((value & 0xFF) >> 8) as u8;
+        self.f = FlagsRegister::from((value & 0xFF) as u8)
+    }
 
     fn get_de(&self) -> u16 {
         (self.d as u16) << 8 | self.e as u16
@@ -119,15 +127,10 @@ impl Registers {
     }
 }
 
-// TODO: We'll need this for setting the flag registers
-fn kth_bit_set(value: u16, k: u8) -> bool {
-    (value & (1 << (k - 1))) > 0
-}
-
 pub enum Instruction {
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
-    ADDHL(ArithmeticTarget),
+    ADDHL(SixteenBitArithmeticTarget),
     ADC(ArithmeticTarget),
     SBC(ArithmeticTarget),
     AND(ArithmeticTarget),
@@ -165,6 +168,14 @@ pub enum ArithmeticTarget {
     L,
 }
 
+pub enum SixteenBitArithmeticTarget {
+    AF,
+    BC,
+    DE,
+    HL,
+    // SP, // TODO: Add in the stack pointer
+}
+
 impl CPU {
     pub fn execute(&mut self, instruction: Instruction) {
         match instruction {
@@ -172,7 +183,11 @@ impl CPU {
                 let value = self.register_value(&target);
                 self.registers.a = self.add(value);
             }
-            Instruction::ADDHL(target) => {}
+            Instruction::ADDHL(target) => {
+                let value = self.sixteen_bit_register_value(&target);
+                let new_value = self.addhl(value);
+                self.registers.set_hl(new_value);
+            }
             Instruction::SUB(target) => {
                 let value = self.register_value(&target);
                 self.registers.a = self.sub(value);
@@ -197,7 +212,10 @@ impl CPU {
                 let value = self.register_value(&target);
                 self.registers.a = self.xor(value);
             }
-            Instruction::CP(target) => {}
+            Instruction::CP(target) => {
+                let value = self.register_value(&target);
+                self.cp(value);
+            }
             Instruction::INC(target) => {
                 let value = self.register_value(&target);
                 let new_value = self.inc(value);
@@ -208,15 +226,23 @@ impl CPU {
                 let new_value = self.dec(value);
                 self.set_register_by_target(&target, new_value);
             }
-            Instruction::CCF => {}
-            Instruction::SCF => {}
-            Instruction::RRA => {}
-            Instruction::RLA => {}
-            Instruction::RRCA => {}
-            Instruction::RRLA => {}
-            Instruction::CPL => {}
-            Instruction::SRA(target) => {}
-            Instruction::SLA(target) => {}
+            Instruction::CCF => self.ccf(),
+            Instruction::SCF => self.scf(),
+            Instruction::RRA => self.rra(),
+            Instruction::RLA => self.rla(),
+            Instruction::RRCA => self.rrca(),
+            Instruction::RRLA => self.rrla(),
+            Instruction::CPL => self.cpl(),
+            Instruction::SRA(target) => {
+                let value = self.register_value(&target);
+                let new_value = self.sra(value);
+                self.set_register_by_target(&target, new_value);
+            }
+            Instruction::SLA(target) => {
+                let value = self.register_value(&target);
+                let new_value = self.sla(value);
+                self.set_register_by_target(&target, new_value);
+            }
             Instruction::SWAP(target) => {}
         }
     }
@@ -234,6 +260,16 @@ impl CPU {
         }
     }
 
+    fn sixteen_bit_register_value(&self, target: &SixteenBitArithmeticTarget) -> u16 {
+        match target {
+            SixteenBitArithmeticTarget::AF => self.registers.get_af(),
+            SixteenBitArithmeticTarget::BC => self.registers.get_bc(),
+            SixteenBitArithmeticTarget::DE => self.registers.get_de(),
+            SixteenBitArithmeticTarget::HL => self.registers.get_hl(),
+            // SixteenBitArithmeticTarget::SP => self.registers.get_sp(),
+        }
+    }
+
     // A = A + s
     fn add(&mut self, value: u8) -> u8 {
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
@@ -244,7 +280,15 @@ impl CPU {
         new_value
     }
 
-    fn addhl(&mut self, value: u8) {}
+    // HL = HL + ss; BC,DE,HL,SP
+    fn addhl(&mut self, value: u16) -> u16 {
+        let (new_value, did_overflow) = self.registers.get_hl().overflowing_add(value);
+        // Zero register is unaffected
+        self.registers.f.subtract = false;
+        self.registers.f.carry = did_overflow;
+        self.registers.f.half_carry = (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF; // TODO: Double check
+        new_value
+    }
 
     // A = A + s + CY
     fn adc(&mut self, value: u8) -> u8 {
@@ -319,7 +363,13 @@ impl CPU {
     }
 
     // A - s
-    fn cp() {}
+    fn cp(&mut self, value: u8) {
+        let (_, did_overflow) = self.registers.a.overflowing_sub(value);
+        self.registers.f.zero = self.registers.a == value;
+        self.registers.f.subtract = true;
+        self.registers.f.carry = did_overflow;
+        self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
+    }
 
     // s = s + 1
     fn inc(&mut self, value: u8) -> u8 {
@@ -341,19 +391,33 @@ impl CPU {
         new_value
     }
 
-    fn ccf() {}
+    fn ccf(&mut self) {
+        self.registers.f.carry = !self.registers.f.carry;
+    }
 
-    fn scf() {}
+    fn scf(&mut self) {
+        self.registers.f.carry = true;
+    }
 
-    fn rra() {}
+    fn rra(&mut self) {
+        unimplemented!();
+    }
 
-    fn rla() {}
+    fn rla(&mut self) {
+        unimplemented!();
+    }
 
-    fn rrca() {}
+    fn rrca(&mut self) {
+        unimplemented!();
+    }
 
-    fn rrla() {}
+    fn rrla(&mut self) {
+        unimplemented!();
+    }
 
-    fn cpl() {}
+    fn cpl(&mut self) {
+        unimplemented!();
+    }
 
     fn bit() {}
 
@@ -371,9 +435,23 @@ impl CPU {
 
     fn rlc() {}
 
-    fn sra() {}
+    fn sra(&mut self, value: u8) -> u8 {
+        let new_value = value >> 1;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = (value & 0x01) == 1;
+        new_value
+    }
 
-    fn sla() {}
+    fn sla(&mut self, value: u8) -> u8 {
+        let new_value = value << 1;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = (value & 0x80) == 0x80;
+        new_value
+    }
 
     fn swap() {}
 }

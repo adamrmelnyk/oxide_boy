@@ -49,167 +49,26 @@ impl CPU {
 
     fn step(&mut self) {
         let mut instruction_byte = self.bus.read_byte(self.pc);
+        let prefixed = instruction_byte == 0xCB;
+        if instruction_byte == 0xCB {
+            instruction_byte = self.bus.read_byte(self.pc + 1);
+        }
 
-        let next_pc = if let Some(instruction) = Instruction::from_byte(instruction_byte) {
+        let next_pc = if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed)
+        {
             self.execute(instruction)
         } else {
-            panic!("Unknown instruction found for: 0x{:x}", instruction_byte)
+            let description = format!(
+                "0x{}{:x}",
+                if prefixed { "cb" } else { "" },
+                instruction_byte
+            );
+            panic!("Unkown instruction found for: {}", description)
         };
 
         self.pc = next_pc;
     }
-}
 
-struct Registers {
-    a: u8,
-    b: u8,
-    c: u8,
-    d: u8,
-    e: u8,
-    f: FlagsRegister,
-    h: u8,
-    l: u8,
-}
-
-const ZERO_FLAG_BYTE_POSITION: u8 = 7;
-const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
-const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
-const CARRY_FLAG_BYTE_POSITION: u8 = 4;
-
-struct FlagsRegister {
-    zero: bool,
-    subtract: bool,
-    half_carry: bool,
-    carry: bool,
-}
-
-impl std::convert::From<&FlagsRegister> for u8 {
-    fn from(flag: &FlagsRegister) -> u8 {
-        (if flag.zero { 1 } else { 0 }) << ZERO_FLAG_BYTE_POSITION
-            | (if flag.subtract { 1 } else { 0 }) << SUBTRACT_FLAG_BYTE_POSITION
-            | (if flag.half_carry { 1 } else { 0 }) << HALF_CARRY_FLAG_BYTE_POSITION
-            | (if flag.carry { 1 } else { 0 }) << CARRY_FLAG_BYTE_POSITION
-    }
-}
-
-impl std::convert::From<u8> for FlagsRegister {
-    fn from(byte: u8) -> FlagsRegister {
-        let zero = ((byte >> ZERO_FLAG_BYTE_POSITION) & 0b1) != 0;
-        let subtract = ((byte >> SUBTRACT_FLAG_BYTE_POSITION) & 0b1) != 0;
-        let half_carry = ((byte >> HALF_CARRY_FLAG_BYTE_POSITION) & 0b1) != 0;
-        let carry = ((byte >> CARRY_FLAG_BYTE_POSITION) & 0b1) != 0;
-
-        FlagsRegister {
-            zero,
-            subtract,
-            half_carry,
-            carry,
-        }
-    }
-}
-
-impl Registers {
-    fn get_bc(&self) -> u16 {
-        (self.b as u16) << 8 | self.c as u16
-    }
-
-    fn set_bc(&mut self, value: u16) {
-        self.b = ((value & 0xFF00) >> 8) as u8;
-        self.c = (value & 0xFF) as u8;
-    }
-
-    fn get_af(&self) -> u16 {
-        let flags_register = &self.f;
-        (self.b as u16) << 8 | u8::from(flags_register) as u16
-    }
-
-    fn set_af(&mut self, value: u16) {
-        self.a = ((value & 0xFF) >> 8) as u8;
-        self.f = FlagsRegister::from((value & 0xFF) as u8)
-    }
-
-    fn get_de(&self) -> u16 {
-        (self.d as u16) << 8 | self.e as u16
-    }
-
-    fn set_de(&mut self, value: u16) {
-        self.d = ((value & 0xFF00) >> 8) as u8;
-        self.e = (value & 0xFF) as u8;
-    }
-
-    fn get_hl(&self) -> u16 {
-        (self.h as u16) << 8 | self.l as u16
-    }
-
-    fn set_hl(&mut self, value: u16) {
-        self.h = ((value & 0xFF00) >> 8) as u8;
-        self.l = (value & 0xFF) as u8;
-    }
-}
-
-pub enum Instruction {
-    ADD(ArithmeticTarget),
-    SUB(ArithmeticTarget),
-    ADDHL(SixteenBitArithmeticTarget),
-    ADDSP(SixteenBitArithmeticTarget),
-    INC16(SixteenBitArithmeticTarget),
-    DEC16(SixteenBitArithmeticTarget),
-    ADC(ArithmeticTarget),
-    SBC(ArithmeticTarget),
-    AND(ArithmeticTarget),
-    OR(ArithmeticTarget),
-    XOR(ArithmeticTarget),
-    CP(ArithmeticTarget),
-    INC(ArithmeticTarget),
-    DEC(ArithmeticTarget),
-    CCF,
-    SCF,
-    RRA,
-    RLA,
-    RRCA,
-    RRLA,
-    CPL,
-    // BIT,
-    // RESET,
-    // SET,
-    // SRL,
-    // RL,
-    // RRC,
-    // RLC,
-    SRA(ArithmeticTarget),
-    SLA(ArithmeticTarget),
-    SWAP(ArithmeticTarget),
-}
-
-impl Instruction {
-    fn from_byte(byte: u8) -> Option<Instruction> {
-        match byte {
-            0x02 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
-            0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
-            _ => None, // TODO: Add the rest of the mappings
-        }
-    }
-}
-
-pub enum ArithmeticTarget {
-    A,
-    B,
-    C,
-    D,
-    E,
-    H,
-    L,
-}
-
-pub enum SixteenBitArithmeticTarget {
-    AF,
-    BC,
-    DE,
-    HL,
-    // SP, // TODO: Add in the stack pointer
-}
-
-impl CPU {
     pub fn execute(&mut self, instruction: Instruction) -> u16 {
         match instruction {
             Instruction::ADD(target) => {
@@ -269,6 +128,11 @@ impl CPU {
             Instruction::RRCA => self.rrca(),
             Instruction::RRLA => self.rrla(),
             Instruction::CPL => self.cpl(),
+            Instruction::RLC(target) => {
+                let value = self.register_value(&target);
+                let new_value = self.rlc(value);
+                self.set_register_by_target(&target, new_value);
+            }
             Instruction::SRA(target) => {
                 let value = self.register_value(&target);
                 let new_value = self.sra(value);
@@ -281,7 +145,7 @@ impl CPU {
             }
             Instruction::SWAP(target) => {}
         }
-        self.pc.wrapping_add(1)
+        self.pc.wrapping_add(1) // After each operation we increment the program counter
     }
 
     /// Helper method for returning the value of an 8bit register
@@ -485,7 +349,14 @@ impl CPU {
 
     fn rrc() {}
 
-    fn rlc() {}
+    fn rlc(&mut self, value: u8) -> u8 {
+        let new_value = value.rotate_left(1);
+        self.registers.f.zero = false;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = (value & 0x80) == 0x80;
+        new_value
+    }
 
     fn sra(&mut self, value: u8) -> u8 {
         let new_value = value >> 1;
@@ -506,4 +377,168 @@ impl CPU {
     }
 
     fn swap() {}
+}
+
+struct Registers {
+    a: u8,
+    b: u8,
+    c: u8,
+    d: u8,
+    e: u8,
+    f: FlagsRegister,
+    h: u8,
+    l: u8,
+}
+
+const ZERO_FLAG_BYTE_POSITION: u8 = 7;
+const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
+const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
+const CARRY_FLAG_BYTE_POSITION: u8 = 4;
+
+struct FlagsRegister {
+    zero: bool,
+    subtract: bool,
+    half_carry: bool,
+    carry: bool,
+}
+
+impl std::convert::From<&FlagsRegister> for u8 {
+    fn from(flag: &FlagsRegister) -> u8 {
+        (if flag.zero { 1 } else { 0 }) << ZERO_FLAG_BYTE_POSITION
+            | (if flag.subtract { 1 } else { 0 }) << SUBTRACT_FLAG_BYTE_POSITION
+            | (if flag.half_carry { 1 } else { 0 }) << HALF_CARRY_FLAG_BYTE_POSITION
+            | (if flag.carry { 1 } else { 0 }) << CARRY_FLAG_BYTE_POSITION
+    }
+}
+
+impl std::convert::From<u8> for FlagsRegister {
+    fn from(byte: u8) -> FlagsRegister {
+        let zero = ((byte >> ZERO_FLAG_BYTE_POSITION) & 0b1) != 0;
+        let subtract = ((byte >> SUBTRACT_FLAG_BYTE_POSITION) & 0b1) != 0;
+        let half_carry = ((byte >> HALF_CARRY_FLAG_BYTE_POSITION) & 0b1) != 0;
+        let carry = ((byte >> CARRY_FLAG_BYTE_POSITION) & 0b1) != 0;
+
+        FlagsRegister {
+            zero,
+            subtract,
+            half_carry,
+            carry,
+        }
+    }
+}
+
+impl Registers {
+    fn get_bc(&self) -> u16 {
+        (self.b as u16) << 8 | self.c as u16
+    }
+
+    fn set_bc(&mut self, value: u16) {
+        self.b = ((value & 0xFF00) >> 8) as u8;
+        self.c = (value & 0xFF) as u8;
+    }
+
+    fn get_af(&self) -> u16 {
+        let flags_register = &self.f;
+        (self.b as u16) << 8 | u8::from(flags_register) as u16
+    }
+
+    fn set_af(&mut self, value: u16) {
+        self.a = ((value & 0xFF) >> 8) as u8;
+        self.f = FlagsRegister::from((value & 0xFF) as u8)
+    }
+
+    fn get_de(&self) -> u16 {
+        (self.d as u16) << 8 | self.e as u16
+    }
+
+    fn set_de(&mut self, value: u16) {
+        self.d = ((value & 0xFF00) >> 8) as u8;
+        self.e = (value & 0xFF) as u8;
+    }
+
+    fn get_hl(&self) -> u16 {
+        (self.h as u16) << 8 | self.l as u16
+    }
+
+    fn set_hl(&mut self, value: u16) {
+        self.h = ((value & 0xFF00) >> 8) as u8;
+        self.l = (value & 0xFF) as u8;
+    }
+}
+
+pub enum Instruction {
+    ADD(ArithmeticTarget),
+    SUB(ArithmeticTarget),
+    ADDHL(SixteenBitArithmeticTarget),
+    ADDSP(SixteenBitArithmeticTarget),
+    INC16(SixteenBitArithmeticTarget),
+    DEC16(SixteenBitArithmeticTarget),
+    ADC(ArithmeticTarget),
+    SBC(ArithmeticTarget),
+    AND(ArithmeticTarget),
+    OR(ArithmeticTarget),
+    XOR(ArithmeticTarget),
+    CP(ArithmeticTarget),
+    INC(ArithmeticTarget),
+    DEC(ArithmeticTarget),
+    CCF,
+    SCF,
+    RRA,
+    RLA,
+    RRCA,
+    RRLA,
+    CPL,
+    // BIT,
+    // RESET,
+    // SET,
+    // SRL,
+    // RL,
+    // RRC,
+    RLC(ArithmeticTarget),
+    SRA(ArithmeticTarget),
+    SLA(ArithmeticTarget),
+    SWAP(ArithmeticTarget),
+}
+
+impl Instruction {
+    fn from_byte(byte: u8, prefixed: bool) -> Option<Instruction> {
+        if prefixed {
+            Instruction::from_byte_prefixed(byte)
+        } else {
+            Instruction::from_byte_not_prefixed(byte)
+        }
+    }
+
+    fn from_byte_prefixed(byte: u8) -> Option<Instruction> {
+        match byte {
+            0x00 => Some(Instruction::RLC(ArithmeticTarget::B)),
+            _ => None, // TODO: Add the rest
+        }
+    }
+
+    fn from_byte_not_prefixed(byte: u8) -> Option<Instruction> {
+        match byte {
+            0x02 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
+            0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
+            _ => None, // TODO: Add the rest
+        }
+    }
+}
+
+pub enum ArithmeticTarget {
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
+}
+
+pub enum SixteenBitArithmeticTarget {
+    AF,
+    BC,
+    DE,
+    HL,
+    // SP, // TODO: Add in the stack pointer
 }

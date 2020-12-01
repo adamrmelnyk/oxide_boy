@@ -1,4 +1,10 @@
-use gb_emulator::{ArithmeticTarget, Instruction, CPU};
+mod cpu;
+
+use gb_emulator::Instruction;
+use gb_emulator::ArithmeticTarget;
+use gb_emulator::CPU;
+
+
 
 fn main() {
     println!("Hello, world!");

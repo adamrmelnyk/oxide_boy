@@ -1,10 +1,14 @@
 #![feature(destructuring_assignment)]
 
-mod memory;
 mod cpu;
+mod memory;
 
+use cpu::registers::{FlagsRegister, Registers};
+use cpu::instructions::{JumpCond, SixteenBitArithmeticTarget};
 use memory::memory_bus::MemoryBus;
-use cpu::registers::{Registers, FlagsRegister};
+
+/// Exposed so they can be run from main
+pub use cpu::instructions::{Instruction, ArithmeticTarget};
 
 pub struct CPU {
     registers: Registers,
@@ -146,6 +150,16 @@ impl CPU {
                 self.set_register_by_target(&target, new_value);
             }
             Instruction::SWAP(target) => {}
+            Instruction::JP(condition) => {
+                let should_jump = match condition {
+                    JumpCond::NotZero => !self.registers.f.zero,
+                    JumpCond::Zero => self.registers.f.zero,
+                    JumpCond::NotCarry => !self.registers.f.carry,
+                    JumpCond::Carry => self.registers.f.carry,
+                    JumpCond::Always => true,
+                };
+                self.jump(should_jump);
+            }
         }
         self.pc.wrapping_add(1) // After each operation we increment the program counter
     }
@@ -379,81 +393,14 @@ impl CPU {
     }
 
     fn swap() {}
-}
 
-pub enum Instruction {
-    ADD(ArithmeticTarget),
-    SUB(ArithmeticTarget),
-    ADDHL(SixteenBitArithmeticTarget),
-    ADDSP(SixteenBitArithmeticTarget),
-    INC16(SixteenBitArithmeticTarget),
-    DEC16(SixteenBitArithmeticTarget),
-    ADC(ArithmeticTarget),
-    SBC(ArithmeticTarget),
-    AND(ArithmeticTarget),
-    OR(ArithmeticTarget),
-    XOR(ArithmeticTarget),
-    CP(ArithmeticTarget),
-    INC(ArithmeticTarget),
-    DEC(ArithmeticTarget),
-    CCF,
-    SCF,
-    RRA,
-    RLA,
-    RRCA,
-    RRLA,
-    CPL,
-    // BIT,
-    // RESET,
-    // SET,
-    // SRL,
-    // RL,
-    // RRC,
-    RLC(ArithmeticTarget),
-    SRA(ArithmeticTarget),
-    SLA(ArithmeticTarget),
-    SWAP(ArithmeticTarget),
-}
-
-impl Instruction {
-    fn from_byte(byte: u8, prefixed: bool) -> Option<Instruction> {
-        if prefixed {
-            Instruction::from_byte_prefixed(byte)
+    fn jump(&mut self, should_jump: bool) -> u16 {
+        if should_jump {
+            let least_sig = self.bus.read_byte(self.pc + 1) as u16;
+            let most_sig = self.bus.read_byte(self.pc + 2) as u16;
+            (most_sig << 8) | least_sig
         } else {
-            Instruction::from_byte_not_prefixed(byte)
+            self.pc.wrapping_add(3)
         }
     }
-
-    fn from_byte_prefixed(byte: u8) -> Option<Instruction> {
-        match byte {
-            0x00 => Some(Instruction::RLC(ArithmeticTarget::B)),
-            _ => None, // TODO: Add the rest
-        }
-    }
-
-    fn from_byte_not_prefixed(byte: u8) -> Option<Instruction> {
-        match byte {
-            0x02 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
-            0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
-            _ => None, // TODO: Add the rest
-        }
-    }
-}
-
-pub enum ArithmeticTarget {
-    A,
-    B,
-    C,
-    D,
-    E,
-    H,
-    L,
-}
-
-pub enum SixteenBitArithmeticTarget {
-    AF,
-    BC,
-    DE,
-    HL,
-    // SP, // TODO: Add in the stack pointer
 }

@@ -3,12 +3,12 @@
 mod cpu;
 mod memory;
 
-use cpu::registers::{FlagsRegister, Registers};
 use cpu::instructions::{JumpCond, SixteenBitArithmeticTarget};
+use cpu::registers::{FlagsRegister, Registers};
 use memory::memory_bus::MemoryBus;
 
 /// Exposed so they can be run from main
-pub use cpu::instructions::{Instruction, ArithmeticTarget};
+pub use cpu::instructions::{ArithmeticTarget, Instruction};
 
 pub struct CPU {
     registers: Registers,
@@ -79,93 +79,103 @@ impl CPU {
 
     pub fn execute(&mut self, instruction: Instruction) -> u16 {
         if !self.is_halted {
-                match instruction {
-                    Instruction::ADD(target) => {
-                        let value = self.register_value(&target);
-                        self.registers.a = self.add(value);
-                    }
-                    Instruction::ADDHL(target) => {
-                        let value = self.sixteen_bit_register_value(&target);
-                        let new_value = self.addhl(value);
-                        self.registers.set_hl(new_value);
-                    }
-                    Instruction::ADDSP(target) => {}
-                    Instruction::INC16(target) => {}
-                    Instruction::DEC16(target) => {}
-                    Instruction::SUB(target) => {
-                        let value = self.register_value(&target);
-                        self.registers.a = self.sub(value);
-                    }
-                    Instruction::ADC(target) => {
-                        let value = self.register_value(&target);
-                        self.registers.a = self.adc(value);
-                    }
-                    Instruction::SBC(target) => {
-                        let value = self.register_value(&target);
-                        self.registers.a = self.sbc(value);
-                    }
-                    Instruction::AND(target) => {
-                        let value = self.register_value(&target);
-                        self.registers.a = self.and(value);
-                    }
-                    Instruction::OR(target) => {
-                        let value = self.register_value(&target);
-                        self.registers.a = self.or(value);
-                    }
-                    Instruction::XOR(target) => {
-                        let value = self.register_value(&target);
-                        self.registers.a = self.xor(value);
-                    }
-                    Instruction::CP(target) => {
-                        let value = self.register_value(&target);
-                        self.cp(value);
-                    }
-                    Instruction::INC(target) => {
-                        let value = self.register_value(&target);
-                        let new_value = self.inc(value);
-                        self.set_register_by_target(&target, new_value);
-                    }
-                    Instruction::DEC(target) => {
-                        let value = self.register_value(&target);
-                        let new_value = self.dec(value);
-                        self.set_register_by_target(&target, new_value);
-                    }
-                    Instruction::CCF => self.ccf(),
-                    Instruction::SCF => self.scf(),
-                    Instruction::RRA => self.rra(),
-                    Instruction::RLA => self.rla(),
-                    Instruction::RRCA => self.rrca(),
-                    Instruction::RRLA => self.rrla(),
-                    Instruction::CPL => self.cpl(),
-                    Instruction::RLC(target) => {
-                        let value = self.register_value(&target);
-                        let new_value = self.rlc(value);
-                        self.set_register_by_target(&target, new_value);
-                    }
-                    Instruction::SRA(target) => {
-                        let value = self.register_value(&target);
-                        let new_value = self.sra(value);
-                        self.set_register_by_target(&target, new_value);
-                    }
-                    Instruction::SLA(target) => {
-                        let value = self.register_value(&target);
-                        let new_value = self.sla(value);
-                        self.set_register_by_target(&target, new_value);
-                    }
-                    Instruction::SWAP(target) => {}
-                    Instruction::JP(condition) => {
-                        let should_jump = match condition {
-                            JumpCond::NotZero => !self.registers.f.zero,
-                            JumpCond::Zero => self.registers.f.zero,
-                            JumpCond::NotCarry => !self.registers.f.carry,
-                            JumpCond::Carry => self.registers.f.carry,
-                            JumpCond::Always => true,
-                        };
-                        self.jump(should_jump);
-                    },
-                    Instruction::HALT => self.halt(),
-                    Instruction::NOP => { /* NO OP, simply advances the pc */ }
+            match instruction {
+                Instruction::ADD(target) => {
+                    let value = self.register_value(&target);
+                    self.registers.a = self.add(value);
                 }
+                Instruction::ADDHL(target) => {
+                    let value = self.sixteen_bit_register_value(&target);
+                    let new_value = self.addhl(value);
+                    self.registers.set_hl(new_value);
+                }
+                Instruction::ADDSP(target) => {}
+                Instruction::INC16(target) => {}
+                Instruction::DEC16(target) => {}
+                Instruction::SUB(target) => {
+                    let value = self.register_value(&target);
+                    self.registers.a = self.sub(value);
+                }
+                Instruction::ADC(target) => {
+                    let value = self.register_value(&target);
+                    self.registers.a = self.adc(value);
+                }
+                Instruction::SBC(target) => {
+                    let value = self.register_value(&target);
+                    self.registers.a = self.sbc(value);
+                }
+                Instruction::AND(target) => {
+                    let value = self.register_value(&target);
+                    self.registers.a = self.and(value);
+                }
+                Instruction::OR(target) => {
+                    let value = self.register_value(&target);
+                    self.registers.a = self.or(value);
+                }
+                Instruction::XOR(target) => {
+                    let value = self.register_value(&target);
+                    self.registers.a = self.xor(value);
+                }
+                Instruction::CP(target) => {
+                    let value = self.register_value(&target);
+                    self.cp(value);
+                }
+                Instruction::INC(target) => {
+                    let value = self.register_value(&target);
+                    let new_value = self.inc(value);
+                    self.set_register_by_target(&target, new_value);
+                }
+                Instruction::DEC(target) => {
+                    let value = self.register_value(&target);
+                    let new_value = self.dec(value);
+                    self.set_register_by_target(&target, new_value);
+                }
+                Instruction::CCF => self.ccf(),
+                Instruction::SCF => self.scf(),
+                Instruction::RRA => self.rra(),
+                Instruction::RLA => self.rla(),
+                Instruction::RRCA => self.rrca(),
+                Instruction::RRLA => self.rlca(),
+                Instruction::CPL => self.cpl(),
+                Instruction::BIT => {},
+                Instruction::RESET => {},
+                Instruction::SET => {},
+                Instruction::SRL => {},
+                Instruction::RL => {},
+                Instruction::RRC(target) => {
+                    let value = self.register_value(&target);
+                    let new_value = self.rrc(value);
+                    self.set_register_by_target(&target, new_value);
+                },
+                Instruction::RLC(target) => {
+                    let value = self.register_value(&target);
+                    let new_value = self.rlc(value);
+                    self.set_register_by_target(&target, new_value);
+                }
+                Instruction::SRA(target) => {
+                    let value = self.register_value(&target);
+                    let new_value = self.sra(value);
+                    self.set_register_by_target(&target, new_value);
+                }
+                Instruction::SLA(target) => {
+                    let value = self.register_value(&target);
+                    let new_value = self.sla(value);
+                    self.set_register_by_target(&target, new_value);
+                }
+                Instruction::SWAP(target) => {}
+                Instruction::JP(condition) => {
+                    let should_jump = match condition {
+                        JumpCond::NotZero => !self.registers.f.zero,
+                        JumpCond::Zero => self.registers.f.zero,
+                        JumpCond::NotCarry => !self.registers.f.carry,
+                        JumpCond::Carry => self.registers.f.carry,
+                        JumpCond::Always => true,
+                    };
+                    self.jump(should_jump);
+                }
+                Instruction::HALT => self.halt(),
+                Instruction::NOP => { /* NO OP, simply advances the pc */ }
+            }
         }
         self.pc.wrapping_add(1) // After each operation we increment the program counter
     }
@@ -337,19 +347,22 @@ impl CPU {
         self.registers.f.carry = true;
     }
 
+    // 0 0 0 *
     fn rra(&mut self) {
         unimplemented!();
     }
 
+    // 0 0 0 *
     fn rla(&mut self) {
         unimplemented!();
     }
 
+    // 0 0 0 *
     fn rrca(&mut self) {
         unimplemented!();
     }
 
-    fn rrla(&mut self) {
+    fn rlca(&mut self) {
         unimplemented!();
     }
 
@@ -363,23 +376,38 @@ impl CPU {
 
     fn set() {}
 
+    // * 0 0 *
     fn srl() {}
 
+    // * 0 0 *
     fn rr() {}
 
+    // * 0 0 *
     fn rl() {}
 
-    fn rrc() {}
-
-    fn rlc(&mut self, value: u8) -> u8 {
-        let new_value = value.rotate_left(1);
-        self.registers.f.zero = false;
+    // Rotate right and carry
+    // * 0 0 *
+    fn rrc(&mut self, value: u8) -> u8{
+        self.registers.f.carry = (value & 0x1) ==1;
+        let new_value = value.rotate_right(1);
+        self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = false;
         self.registers.f.half_carry = false;
-        self.registers.f.carry = (value & 0x80) == 0x80;
         new_value
     }
 
+    // Rotate left and carry
+    // * 0 0 *
+    fn rlc(&mut self, value: u8) -> u8 {
+        self.registers.f.carry = (value & 0x80) == 0x80;
+        let new_value = value.rotate_left(1);
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        new_value
+    }
+
+    // * 0 0 *
     fn sra(&mut self, value: u8) -> u8 {
         let new_value = value >> 1;
         self.registers.f.zero = new_value == 0;
@@ -389,6 +417,7 @@ impl CPU {
         new_value
     }
 
+    // * 0 0 *
     fn sla(&mut self, value: u8) -> u8 {
         let new_value = value << 1;
         self.registers.f.zero = new_value == 0;

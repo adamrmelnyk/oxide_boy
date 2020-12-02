@@ -31,6 +31,8 @@ pub enum Instruction {
     SLA(ArithmeticTarget),
     SWAP(ArithmeticTarget),
     JP(JumpCond),
+    HALT,
+    NOP,
 }
 
 impl Instruction {

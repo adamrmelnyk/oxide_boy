@@ -14,6 +14,7 @@ pub struct CPU {
     registers: Registers,
     pc: u16,
     bus: MemoryBus,
+    is_halted: bool,
 }
 
 impl Default for CPU {
@@ -36,6 +37,7 @@ impl Default for CPU {
             },
             bus: MemoryBus::default(),
             pc: 0,
+            is_halted: true,
         }
     }
 }
@@ -76,90 +78,94 @@ impl CPU {
     }
 
     pub fn execute(&mut self, instruction: Instruction) -> u16 {
-        match instruction {
-            Instruction::ADD(target) => {
-                let value = self.register_value(&target);
-                self.registers.a = self.add(value);
-            }
-            Instruction::ADDHL(target) => {
-                let value = self.sixteen_bit_register_value(&target);
-                let new_value = self.addhl(value);
-                self.registers.set_hl(new_value);
-            }
-            Instruction::ADDSP(target) => {}
-            Instruction::INC16(target) => {}
-            Instruction::DEC16(target) => {}
-            Instruction::SUB(target) => {
-                let value = self.register_value(&target);
-                self.registers.a = self.sub(value);
-            }
-            Instruction::ADC(target) => {
-                let value = self.register_value(&target);
-                self.registers.a = self.adc(value);
-            }
-            Instruction::SBC(target) => {
-                let value = self.register_value(&target);
-                self.registers.a = self.sbc(value);
-            }
-            Instruction::AND(target) => {
-                let value = self.register_value(&target);
-                self.registers.a = self.and(value);
-            }
-            Instruction::OR(target) => {
-                let value = self.register_value(&target);
-                self.registers.a = self.or(value);
-            }
-            Instruction::XOR(target) => {
-                let value = self.register_value(&target);
-                self.registers.a = self.xor(value);
-            }
-            Instruction::CP(target) => {
-                let value = self.register_value(&target);
-                self.cp(value);
-            }
-            Instruction::INC(target) => {
-                let value = self.register_value(&target);
-                let new_value = self.inc(value);
-                self.set_register_by_target(&target, new_value);
-            }
-            Instruction::DEC(target) => {
-                let value = self.register_value(&target);
-                let new_value = self.dec(value);
-                self.set_register_by_target(&target, new_value);
-            }
-            Instruction::CCF => self.ccf(),
-            Instruction::SCF => self.scf(),
-            Instruction::RRA => self.rra(),
-            Instruction::RLA => self.rla(),
-            Instruction::RRCA => self.rrca(),
-            Instruction::RRLA => self.rrla(),
-            Instruction::CPL => self.cpl(),
-            Instruction::RLC(target) => {
-                let value = self.register_value(&target);
-                let new_value = self.rlc(value);
-                self.set_register_by_target(&target, new_value);
-            }
-            Instruction::SRA(target) => {
-                let value = self.register_value(&target);
-                let new_value = self.sra(value);
-                self.set_register_by_target(&target, new_value);
-            }
-            Instruction::SLA(target) => {
-                let value = self.register_value(&target);
-                let new_value = self.sla(value);
-                self.set_register_by_target(&target, new_value);
-            }
-            Instruction::SWAP(target) => {}
-            Instruction::JP(condition) => {
-                let should_jump = match condition {
-                    JumpCond::NotZero => !self.registers.f.zero,
-                    JumpCond::Zero => self.registers.f.zero,
-                    JumpCond::NotCarry => !self.registers.f.carry,
-                    JumpCond::Carry => self.registers.f.carry,
-                    JumpCond::Always => true,
-                };
-                self.jump(should_jump);
-            }
+        if !self.is_halted {
+                match instruction {
+                    Instruction::ADD(target) => {
+                        let value = self.register_value(&target);
+                        self.registers.a = self.add(value);
+                    }
+                    Instruction::ADDHL(target) => {
+                        let value = self.sixteen_bit_register_value(&target);
+                        let new_value = self.addhl(value);
+                        self.registers.set_hl(new_value);
+                    }
+                    Instruction::ADDSP(target) => {}
+                    Instruction::INC16(target) => {}
+                    Instruction::DEC16(target) => {}
+                    Instruction::SUB(target) => {
+                        let value = self.register_value(&target);
+                        self.registers.a = self.sub(value);
+                    }
+                    Instruction::ADC(target) => {
+                        let value = self.register_value(&target);
+                        self.registers.a = self.adc(value);
+                    }
+                    Instruction::SBC(target) => {
+                        let value = self.register_value(&target);
+                        self.registers.a = self.sbc(value);
+                    }
+                    Instruction::AND(target) => {
+                        let value = self.register_value(&target);
+                        self.registers.a = self.and(value);
+                    }
+                    Instruction::OR(target) => {
+                        let value = self.register_value(&target);
+                        self.registers.a = self.or(value);
+                    }
+                    Instruction::XOR(target) => {
+                        let value = self.register_value(&target);
+                        self.registers.a = self.xor(value);
+                    }
+                    Instruction::CP(target) => {
+                        let value = self.register_value(&target);
+                        self.cp(value);
+                    }
+                    Instruction::INC(target) => {
+                        let value = self.register_value(&target);
+                        let new_value = self.inc(value);
+                        self.set_register_by_target(&target, new_value);
+                    }
+                    Instruction::DEC(target) => {
+                        let value = self.register_value(&target);
+                        let new_value = self.dec(value);
+                        self.set_register_by_target(&target, new_value);
+                    }
+                    Instruction::CCF => self.ccf(),
+                    Instruction::SCF => self.scf(),
+                    Instruction::RRA => self.rra(),
+                    Instruction::RLA => self.rla(),
+                    Instruction::RRCA => self.rrca(),
+                    Instruction::RRLA => self.rrla(),
+                    Instruction::CPL => self.cpl(),
+                    Instruction::RLC(target) => {
+                        let value = self.register_value(&target);
+                        let new_value = self.rlc(value);
+                        self.set_register_by_target(&target, new_value);
+                    }
+                    Instruction::SRA(target) => {
+                        let value = self.register_value(&target);
+                        let new_value = self.sra(value);
+                        self.set_register_by_target(&target, new_value);
+                    }
+                    Instruction::SLA(target) => {
+                        let value = self.register_value(&target);
+                        let new_value = self.sla(value);
+                        self.set_register_by_target(&target, new_value);
+                    }
+                    Instruction::SWAP(target) => {}
+                    Instruction::JP(condition) => {
+                        let should_jump = match condition {
+                            JumpCond::NotZero => !self.registers.f.zero,
+                            JumpCond::Zero => self.registers.f.zero,
+                            JumpCond::NotCarry => !self.registers.f.carry,
+                            JumpCond::Carry => self.registers.f.carry,
+                            JumpCond::Always => true,
+                        };
+                        self.jump(should_jump);
+                    },
+                    Instruction::HALT => self.halt(),
+                    Instruction::NOP => { /* NO OP, simply advances the pc */ }
+                }
         }
         self.pc.wrapping_add(1) // After each operation we increment the program counter
     }
@@ -402,5 +408,9 @@ impl CPU {
         } else {
             self.pc.wrapping_add(3)
         }
+    }
+
+    fn halt(&mut self) {
+        self.is_halted = true;
     }
 }

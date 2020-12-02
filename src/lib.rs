@@ -137,16 +137,16 @@ impl CPU {
                 Instruction::RRCA => self.rrca(),
                 Instruction::RRLA => self.rlca(),
                 Instruction::CPL => self.cpl(),
-                Instruction::BIT => {},
-                Instruction::RESET => {},
-                Instruction::SET => {},
-                Instruction::SRL => {},
-                Instruction::RL => {},
+                Instruction::BIT => {}
+                Instruction::RESET => {}
+                Instruction::SET => {}
+                Instruction::SRL => {}
+                Instruction::RL => {}
                 Instruction::RRC(target) => {
                     let value = self.register_value(&target);
                     let new_value = self.rrc(value);
                     self.set_register_by_target(&target, new_value);
-                },
+                }
                 Instruction::RLC(target) => {
                     let value = self.register_value(&target);
                     let new_value = self.rlc(value);
@@ -239,14 +239,8 @@ impl CPU {
     }
 
     // A = A + s + CY
+    // * 0 * *
     fn adc(&mut self, value: u8) -> u8 {
-        // using #![feature(destructuring_assignment)] from nightly so I don't neeed to do this
-        // let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
-        // if self.registers.f.carry {
-        //     let (t_new_value, t_did_overflow) = self.registers.a.overflowing_add(1u8); // using #![feature(destructuring_assignment)] for this
-        //     new_value = t_new_value;
-        //     did_overflow = t_did_overflow;
-        // }
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
         if self.registers.f.carry {
             (new_value, did_overflow) = self.registers.a.overflowing_add(1u8);
@@ -269,14 +263,15 @@ impl CPU {
     }
 
     // A = A - s -CY
+    // * 1 * *
     fn sbc(&mut self, value: u8) -> u8 {
         let carry: u8 = if self.registers.f.carry { 1 } else { 0 };
         let new_value = self.registers.a - value - carry;
-        self.registers.f.carry = false;
         self.registers.f.zero = new_value == 0;
         // TODO: Set the carry bits
         // self.registers.f.subtract = true;
         // self.registers.f.half_carry = false;
+        // self.registers.f.carry = false;
         new_value
     }
 
@@ -387,8 +382,8 @@ impl CPU {
 
     // Rotate right and carry
     // * 0 0 *
-    fn rrc(&mut self, value: u8) -> u8{
-        self.registers.f.carry = (value & 0x1) ==1;
+    fn rrc(&mut self, value: u8) -> u8 {
+        self.registers.f.carry = (value & 0x1) == 1;
         let new_value = value.rotate_right(1);
         self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = false;

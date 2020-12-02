@@ -1,11 +1,10 @@
 #![feature(destructuring_assignment)]
 
 mod cpu;
-mod memory;
 
 use cpu::instructions::{JumpCond, SixteenBitArithmeticTarget};
+use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, MemoryBus};
 use cpu::registers::{FlagsRegister, Registers};
-use memory::memory_bus::MemoryBus;
 
 /// Exposed so they can be run from main
 pub use cpu::instructions::{ArithmeticTarget, Instruction};
@@ -173,6 +172,30 @@ impl CPU {
                     };
                     self.jump(should_jump);
                 }
+                Instruction::LD(load_type) => match load_type {
+                    LoadType::Byte(target, source) => {
+                        let source_value = self.byte_from_lbs(&source);
+                        match target {
+                            LoadByteTarget::A => self.registers.a = source_value,
+                            LoadByteTarget::B => self.registers.b = source_value,
+                            LoadByteTarget::C => self.registers.c = source_value,
+                            LoadByteTarget::D => self.registers.d = source_value,
+                            LoadByteTarget::E => self.registers.e = source_value,
+                            LoadByteTarget::H => self.registers.h = source_value,
+                            LoadByteTarget::L => self.registers.l = source_value,
+                            LoadByteTarget::HLI => {
+                                self.bus.write_byte(self.registers.get_hl(), source_value)
+                            }
+                        }
+                        // If we read from the D8, we should move the pc up one more spot
+                        match source {
+                            LoadByteSource::D8 => {
+                                self.pc.wrapping_add(1);
+                            }
+                            _ => {}
+                        }
+                    }
+                },
                 Instruction::HALT => self.halt(),
                 Instruction::NOP => { /* NO OP, simply advances the pc */ }
             }
@@ -200,6 +223,22 @@ impl CPU {
             SixteenBitArithmeticTarget::DE => self.registers.get_de(),
             SixteenBitArithmeticTarget::HL => self.registers.get_hl(),
             // SixteenBitArithmeticTarget::SP => self.registers.get_sp(),
+        }
+    }
+
+    fn byte_from_lbs(&self, source: &LoadByteSource) -> u8 {
+        match source {
+            LoadByteSource::A => self.registers.a,
+            LoadByteSource::B => self.registers.b,
+            LoadByteSource::C => self.registers.c,
+            LoadByteSource::D => self.registers.d,
+            LoadByteSource::E => self.registers.e,
+            LoadByteSource::H => self.registers.h,
+            LoadByteSource::L => self.registers.l,
+            LoadByteSource::D8 => {
+                1u8 /*self.read_next_byte() */
+            } // TODO: implement
+            LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
         }
     }
 

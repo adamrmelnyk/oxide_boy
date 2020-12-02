@@ -1,3 +1,5 @@
+use crate::cpu::memory::LoadType;
+
 pub enum Instruction {
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
@@ -33,6 +35,7 @@ pub enum Instruction {
     JP(JumpCond),
     HALT,
     NOP,
+    LD(LoadType),
 }
 
 impl Instruction {

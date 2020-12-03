@@ -2,7 +2,7 @@
 
 mod cpu;
 
-use cpu::instructions::{JumpCond, SixteenBitArithmeticTarget};
+use cpu::instructions::{JumpCond, SixteenBitArithmeticTarget, StackTarget};
 use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, MemoryBus};
 use cpu::registers::{FlagsRegister, Registers};
 
@@ -12,6 +12,7 @@ pub use cpu::instructions::{ArithmeticTarget, Instruction};
 pub struct CPU {
     registers: Registers,
     pc: u16,
+    sp: u16,
     bus: MemoryBus,
     is_halted: bool,
 }
@@ -36,6 +37,7 @@ impl Default for CPU {
             },
             bus: MemoryBus::default(),
             pc: 0,
+            sp: 0,
             is_halted: true,
         }
     }
@@ -197,7 +199,23 @@ impl CPU {
                     }
                 },
                 Instruction::HALT => self.halt(),
-                Instruction::NOP => { /* NO OP, simply advances the pc */ }
+                Instruction::NOP => { /* NO OP, simply advances the pc */ },
+                Instruction::PUSH(target) => {
+                    let value = match target {
+                        StackTarget::BC => self.registers.get_bc(),
+                        StackTarget::DE => self.registers.get_de(),
+                        StackTarget::HL => self.registers.get_hl(),
+                    };
+                    self.push(value);
+                },
+                Instruction::POP(target) => {
+                    let result = self.pop();
+                    match target {
+                        StackTarget::BC => self.registers.set_bc(result),
+                        StackTarget::DE => self.registers.set_de(result),
+                        StackTarget::HL => self.registers.set_hl(result),
+                    }
+                }
             }
         }
         self.pc.wrapping_add(1) // After each operation we increment the program counter
@@ -475,5 +493,23 @@ impl CPU {
 
     fn halt(&mut self) {
         self.is_halted = true;
+    }
+
+    fn push(&mut self, value: u16) {
+        self.sp = self.sp.wrapping_add(1);
+        self.bus.write_byte(self.sp, ((value & 0xFF00) >> 8) as u8);
+        self.sp = self.sp.wrapping_add(1);
+        self.bus.write_byte(self.sp, ((value & 0xFF) >> 8) as u8);
+    }
+
+    fn pop(&mut self) -> u16 {
+        // least significant bit
+        let lsb = self.bus.read_byte(self.sp) as u16;
+        self.sp = self.sp.wrapping_add(1);
+
+        // most significant bit
+        let msb = self.bus.read_byte(self.sp) as u16;
+        self.sp = self.sp.wrapping_add(1);
+        (msb << 8) | lsb
     }
 }

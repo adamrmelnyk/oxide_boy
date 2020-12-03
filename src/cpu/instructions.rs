@@ -36,6 +36,8 @@ pub enum Instruction {
     HALT,
     NOP,
     LD(LoadType),
+    PUSH(StackTarget),
+    POP(StackTarget),
 }
 
 impl Instruction {
@@ -87,4 +89,10 @@ pub enum SixteenBitArithmeticTarget {
     DE,
     HL,
     // SP, // TODO: Add in the stack pointer
+}
+
+pub enum StackTarget {
+    BC,
+    DE,
+    HL,
 }

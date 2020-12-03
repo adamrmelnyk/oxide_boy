@@ -43,6 +43,21 @@ pub enum LoadByteSource {
     HLI, // read from the address stored in HL
 }
 
+pub enum LoadWordSource {
+    BC,
+    DE,
+    HL,
+    // SP, TODO: can you read from the SP as well?
+    D16, // direct 16 bit value, read the next two bytes
+}
+
+pub enum LoadWordTarget {
+    BC,
+    DE,
+    HL,
+}
+
 pub enum LoadType {
     Byte(LoadByteTarget, LoadByteSource),
+    // Word(LoadWordTarget, LoadWordSource),
 }

@@ -38,6 +38,8 @@ pub enum Instruction {
     LD(LoadType),
     PUSH(StackTarget),
     POP(StackTarget),
+    CALL(JumpCond),
+    RET(JumpCond),
 }
 
 impl Instruction {

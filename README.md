@@ -25,3 +25,7 @@ cargo run
 * Tests
 * GUI
 * I/O
+
+### Current issues
+
+* currently execute should be returning a u16 as are all the other fuctions. Right now there is some sort of inconsitency happening where I decided some of them would return and some wouldn't.

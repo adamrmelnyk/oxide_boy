@@ -172,49 +172,26 @@ impl CPU {
                         JumpCond::Carry => self.registers.f.carry,
                         JumpCond::Always => true,
                     };
-                    self.jump(should_jump);
+                    self.jump(should_jump); // We should be doing something with the val that's returned
                 }
-                Instruction::LD(load_type) => match load_type {
-                    LoadType::Byte(target, source) => {
-                        let source_value = self.byte_from_lbs(&source);
-                        match target {
-                            LoadByteTarget::A => self.registers.a = source_value,
-                            LoadByteTarget::B => self.registers.b = source_value,
-                            LoadByteTarget::C => self.registers.c = source_value,
-                            LoadByteTarget::D => self.registers.d = source_value,
-                            LoadByteTarget::E => self.registers.e = source_value,
-                            LoadByteTarget::H => self.registers.h = source_value,
-                            LoadByteTarget::L => self.registers.l = source_value,
-                            LoadByteTarget::HLI => {
-                                self.bus.write_byte(self.registers.get_hl(), source_value)
-                            }
-                        }
-                        // If we read from the D8, we should move the pc up one more spot
-                        match source {
-                            LoadByteSource::D8 => {
-                                self.pc.wrapping_add(1);
-                            }
-                            _ => {}
-                        }
-                    }
-                },
+                Instruction::LD(load_type) => self.load(load_type),
                 Instruction::HALT => self.halt(),
-                Instruction::NOP => { /* NO OP, simply advances the pc */ },
-                Instruction::PUSH(target) => {
-                    let value = match target {
-                        StackTarget::BC => self.registers.get_bc(),
-                        StackTarget::DE => self.registers.get_de(),
-                        StackTarget::HL => self.registers.get_hl(),
+                Instruction::NOP => { /* NO OP, simply advances the pc */ }
+                Instruction::PUSH(target) => self.push_from_target(target),
+                Instruction::POP(target) => self.pop_and_store(target),
+                Instruction::CALL(condition) => {
+                    let should_jump = match condition {
+                        JumpCond::NotZero => !self.registers.f.zero,
+                        _ => { panic!("TODO: Support the other conditions") }
                     };
-                    self.push(value);
+                    self.call(should_jump);
                 },
-                Instruction::POP(target) => {
-                    let result = self.pop();
-                    match target {
-                        StackTarget::BC => self.registers.set_bc(result),
-                        StackTarget::DE => self.registers.set_de(result),
-                        StackTarget::HL => self.registers.set_hl(result),
-                    }
+                Instruction::RET(condition) => {
+                    let should_jump = match condition {
+                        JumpCond::NotZero => !self.registers.f.zero,
+                        _ => { panic!("TODO: Support the other conditions") }
+                    };
+                    self.ret(should_jump);
                 }
             }
         }
@@ -253,9 +230,7 @@ impl CPU {
             LoadByteSource::E => self.registers.e,
             LoadByteSource::H => self.registers.h,
             LoadByteSource::L => self.registers.l,
-            LoadByteSource::D8 => {
-                1u8 /*self.read_next_byte() */
-            } // TODO: implement
+            LoadByteSource::D8 => self.read_next_byte(), // TODO: Double check this
             LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
         }
     }
@@ -491,25 +466,106 @@ impl CPU {
         }
     }
 
+    fn load(&mut self, load_type: LoadType) {
+        match load_type {
+            LoadType::Byte(target, source) => {
+                // TODO: This will need to be made into it's own method
+                let source_value = self.byte_from_lbs(&source);
+                match target {
+                    LoadByteTarget::A => self.registers.a = source_value,
+                    LoadByteTarget::B => self.registers.b = source_value,
+                    LoadByteTarget::C => self.registers.c = source_value,
+                    LoadByteTarget::D => self.registers.d = source_value,
+                    LoadByteTarget::E => self.registers.e = source_value,
+                    LoadByteTarget::H => self.registers.h = source_value,
+                    LoadByteTarget::L => self.registers.l = source_value,
+                    LoadByteTarget::HLI => {
+                        self.bus.write_byte(self.registers.get_hl(), source_value)
+                    }
+                }
+                // If we read from the D8, we should move the pc up one extra spot
+                match source {
+                    LoadByteSource::D8 => {
+                        self.pc.wrapping_add(1);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    // Halt CPU until an interrupt occurs.
     fn halt(&mut self) {
         self.is_halted = true;
     }
 
-    fn push(&mut self, value: u16) {
+    fn push_from_target(&mut self, target: StackTarget) {
+        let value = match target {
+            StackTarget::BC => self.registers.get_bc(),
+            StackTarget::DE => self.registers.get_de(),
+            StackTarget::HL => self.registers.get_hl(),
+        };
         self.sp = self.sp.wrapping_add(1);
         self.bus.write_byte(self.sp, ((value & 0xFF00) >> 8) as u8);
         self.sp = self.sp.wrapping_add(1);
         self.bus.write_byte(self.sp, ((value & 0xFF) >> 8) as u8);
     }
 
+    // (SP-1) = ssh, (SP-2) = ssl, SP = SP-2
+    fn push(&mut self, value: u16) {
+        self.sp = self.sp.wrapping_sub(1);
+        self.bus.write_byte(self.sp, ((value & 0xFF00) >> 8) as u8);
+    
+        self.sp = self.sp.wrapping_sub(1);
+        self.bus.write_byte(self.sp, (value & 0xFF) as u8);
+      }
+
+
+    fn pop_and_store(&mut self, target: StackTarget) {
+        let result = self.pop();
+        match target {
+            StackTarget::BC => self.registers.set_bc(result),
+            StackTarget::DE => self.registers.set_de(result),
+            StackTarget::HL => self.registers.set_hl(result),
+        }
+    }
+
+    // ddl == (SP), ddh = (SP+1), SP = SP+2
     fn pop(&mut self) -> u16 {
-        // least significant bit
         let lsb = self.bus.read_byte(self.sp) as u16;
         self.sp = self.sp.wrapping_add(1);
-
-        // most significant bit
+    
         let msb = self.bus.read_byte(self.sp) as u16;
         self.sp = self.sp.wrapping_add(1);
+    
         (msb << 8) | lsb
+    }
+
+    fn call(&mut self, should_jump: bool) -> u16 {
+        let next_pc = self.pc.wrapping_add(3);
+        if should_jump {
+            self.push(next_pc);
+            self.read_next_word()
+        } else {
+            next_pc
+        }
+    }
+
+    fn ret(&mut self, should_jump: bool) -> u16 {
+        if should_jump {
+            self.pop()
+        } else {
+            self.pc.wrapping_add(1)
+        }
+    }
+
+    // TODO: Implement
+    fn read_next_byte(&self) -> u8 {
+        unimplemented!();
+    }
+
+    // TODO: Implement
+    fn read_next_word(&self) -> u16 {
+        unimplemented!();
     }
 }

@@ -90,7 +90,7 @@ pub enum SixteenBitArithmeticTarget {
     BC,
     DE,
     HL,
-    // SP, // TODO: Add in the stack pointer
+    SP,
 }
 
 pub enum StackTarget {

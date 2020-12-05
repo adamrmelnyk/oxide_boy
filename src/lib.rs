@@ -91,8 +91,8 @@ impl CPU {
                     self.registers.set_hl(new_value);
                 }
                 Instruction::ADDSP(target) => {}
-                Instruction::INC16(target) => {}
-                Instruction::DEC16(target) => {}
+                Instruction::INC16(target) => self.inc_16(target),
+                Instruction::DEC16(target) => self.dec_16(target),
                 Instruction::SUB(target) => {
                     let value = self.register_value(&target);
                     self.registers.a = self.sub(value);
@@ -165,14 +165,7 @@ impl CPU {
                 }
                 Instruction::SWAP(target) => {}
                 Instruction::JP(condition) => {
-                    let should_jump = match condition {
-                        JumpCond::NotZero => !self.registers.f.zero,
-                        JumpCond::Zero => self.registers.f.zero,
-                        JumpCond::NotCarry => !self.registers.f.carry,
-                        JumpCond::Carry => self.registers.f.carry,
-                        JumpCond::Always => true,
-                    };
-                    self.jump(should_jump); // We should be doing something with the val that's returned
+                    self.jump(self.should_jump(condition));
                 }
                 Instruction::LD(load_type) => self.load(load_type),
                 Instruction::HALT => self.halt(),
@@ -180,22 +173,14 @@ impl CPU {
                 Instruction::PUSH(target) => self.push_from_target(target),
                 Instruction::POP(target) => self.pop_and_store(target),
                 Instruction::CALL(condition) => {
-                    let should_jump = match condition {
-                        JumpCond::NotZero => !self.registers.f.zero,
-                        _ => { panic!("TODO: Support the other conditions") }
-                    };
-                    self.call(should_jump);
-                },
+                    self.call(self.should_jump(condition));
+                }
                 Instruction::RET(condition) => {
-                    let should_jump = match condition {
-                        JumpCond::NotZero => !self.registers.f.zero,
-                        _ => { panic!("TODO: Support the other conditions") }
-                    };
-                    self.ret(should_jump);
+                    self.ret(self.should_jump(condition));
                 }
             }
         }
-        self.pc.wrapping_add(1) // After each operation we increment the program counter
+        self.pc.wrapping_add(1) // After each operation we increment the pc and return the value
     }
 
     /// Helper method for returning the value of an 8bit register
@@ -217,7 +202,7 @@ impl CPU {
             SixteenBitArithmeticTarget::BC => self.registers.get_bc(),
             SixteenBitArithmeticTarget::DE => self.registers.get_de(),
             SixteenBitArithmeticTarget::HL => self.registers.get_hl(),
-            // SixteenBitArithmeticTarget::SP => self.registers.get_sp(),
+            SixteenBitArithmeticTarget::SP => self.sp,
         }
     }
 
@@ -235,7 +220,18 @@ impl CPU {
         }
     }
 
+    fn should_jump(&self, condition: JumpCond) -> bool {
+        match condition {
+            JumpCond::NotZero => !self.registers.f.zero,
+            JumpCond::Zero => self.registers.f.zero,
+            JumpCond::NotCarry => !self.registers.f.carry,
+            JumpCond::Carry => self.registers.f.carry,
+            JumpCond::Always => true,
+        }
+    }
+
     // A = A + s
+    // * 0 * * *
     fn add(&mut self, value: u8) -> u8 {
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
         self.registers.f.zero = new_value == 0;
@@ -261,13 +257,28 @@ impl CPU {
     }
 
     // ss = ss + 1
-    fn inc_16(&mut self, value: u16) -> u16 {
-        unimplemented!();
+    // - - - -
+    fn inc_16(&mut self, target: SixteenBitArithmeticTarget) {
+        let value = self.sixteen_bit_register_value(&target).wrapping_add(1);
+        self.set_16b_register_by_target(value, target);
     }
 
     // ss = ss - 1
-    fn dec_16(&mut self, value: u16) -> u16 {
-        unimplemented!();
+    // - - - -
+    fn dec_16(&mut self, target: SixteenBitArithmeticTarget) {
+        let value = self.sixteen_bit_register_value(&target).wrapping_sub(1);
+        self.set_16b_register_by_target(value, target);
+    }
+
+    // Helper function for 16 bit registers
+    fn set_16b_register_by_target(&mut self, value: u16, target: SixteenBitArithmeticTarget) {
+        match target {
+            SixteenBitArithmeticTarget::AF => self.registers.set_af(value),
+            SixteenBitArithmeticTarget::BC => self.registers.set_bc(value),
+            SixteenBitArithmeticTarget::DE => self.registers.set_de(value),
+            SixteenBitArithmeticTarget::HL => self.registers.set_hl(value),
+            SixteenBitArithmeticTarget::SP => self.sp = value,
+        }
     }
 
     // A = A + s + CY
@@ -347,22 +358,22 @@ impl CPU {
     }
 
     // s = s + 1
+    // * 0 * -
     fn inc(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_add(1);
         self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = false;
         self.registers.f.half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
-                                                                       // Carry not affected
         new_value
     }
 
     // s = s - 1
+    // * 1 * -
     fn dec(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_sub(1);
         self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = true;
         self.registers.f.half_carry = (value & 0xF) < 1; // TODO; Double check this
-                                                         // Carry not affected
         new_value
     }
 
@@ -515,11 +526,10 @@ impl CPU {
     fn push(&mut self, value: u16) {
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, ((value & 0xFF00) >> 8) as u8);
-    
+
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, (value & 0xFF) as u8);
-      }
-
+    }
 
     fn pop_and_store(&mut self, target: StackTarget) {
         let result = self.pop();
@@ -534,10 +544,10 @@ impl CPU {
     fn pop(&mut self) -> u16 {
         let lsb = self.bus.read_byte(self.sp) as u16;
         self.sp = self.sp.wrapping_add(1);
-    
+
         let msb = self.bus.read_byte(self.sp) as u16;
         self.sp = self.sp.wrapping_add(1);
-    
+
         (msb << 8) | lsb
     }
 

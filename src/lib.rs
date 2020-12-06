@@ -2,16 +2,18 @@
 
 mod cpu;
 
-use cpu::instructions::{JumpCond, SixteenBitArithmeticTarget, StackTarget};
+use cpu::instructions::{JumpCond, StackTarget};
 use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, MemoryBus};
-use cpu::registers::{FlagsRegister, Registers};
+use cpu::registers::FlagsRegister;
 
+pub use cpu::instructions::SixteenBitArithmeticTarget;
 /// Exposed so they can be run from main
 pub use cpu::instructions::{ArithmeticTarget, Instruction};
+pub use cpu::registers::Registers;
 
 pub struct CPU {
-    registers: Registers,
-    pc: u16,
+    pub registers: Registers,
+    pub pc: u16,
     sp: u16,
     bus: MemoryBus,
     is_halted: bool,
@@ -28,7 +30,7 @@ impl Default for CPU {
                 e: 0,
                 f: FlagsRegister {
                     zero: false,
-                    subtract: false,
+                    negative: false,
                     carry: false,
                     half_carry: false,
                 },
@@ -38,7 +40,7 @@ impl Default for CPU {
             bus: MemoryBus::default(),
             pc: 0,
             sp: 0,
-            is_halted: true,
+            is_halted: false,
         }
     }
 }
@@ -184,7 +186,7 @@ impl CPU {
     }
 
     /// Helper method for returning the value of an 8bit register
-    fn register_value(&self, target: &ArithmeticTarget) -> u8 {
+    pub fn register_value(&self, target: &ArithmeticTarget) -> u8 {
         match target {
             ArithmeticTarget::A => self.registers.a,
             ArithmeticTarget::B => self.registers.b,
@@ -196,7 +198,7 @@ impl CPU {
         }
     }
 
-    fn sixteen_bit_register_value(&self, target: &SixteenBitArithmeticTarget) -> u16 {
+    pub fn sixteen_bit_register_value(&self, target: &SixteenBitArithmeticTarget) -> u16 {
         match target {
             SixteenBitArithmeticTarget::AF => self.registers.get_af(),
             SixteenBitArithmeticTarget::BC => self.registers.get_bc(),
@@ -235,7 +237,7 @@ impl CPU {
     fn add(&mut self, value: u8) -> u8 {
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.carry = did_overflow;
         self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         new_value
@@ -245,7 +247,7 @@ impl CPU {
     fn addhl(&mut self, value: u16) -> u16 {
         let (new_value, did_overflow) = self.registers.get_hl().overflowing_add(value);
         // Zero register is unaffected
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.carry = did_overflow;
         self.registers.f.half_carry = (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF; // TODO: Double check
         new_value
@@ -289,7 +291,7 @@ impl CPU {
             (new_value, did_overflow) = self.registers.a.overflowing_add(1u8);
         }
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.carry = did_overflow;
         self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         new_value
@@ -299,7 +301,7 @@ impl CPU {
     fn sub(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a.wrapping_sub(value);
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = true;
+        self.registers.f.negative = true;
         self.registers.f.carry = self.registers.a < value;
         self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
         new_value
@@ -312,7 +314,7 @@ impl CPU {
         let new_value = self.registers.a - value - carry;
         self.registers.f.zero = new_value == 0;
         // TODO: Set the carry bits
-        // self.registers.f.subtract = true;
+        // self.registers.f.negative = true;
         // self.registers.f.half_carry = false;
         // self.registers.f.carry = false;
         new_value
@@ -322,7 +324,7 @@ impl CPU {
     fn and(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a & value;
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.carry = false;
         self.registers.f.half_carry = false;
         new_value
@@ -332,7 +334,7 @@ impl CPU {
     fn or(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a | value;
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.carry = false;
         self.registers.f.half_carry = false;
         new_value
@@ -342,7 +344,7 @@ impl CPU {
     fn xor(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a ^ value;
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.carry = false;
         self.registers.f.half_carry = false;
         new_value
@@ -352,7 +354,7 @@ impl CPU {
     fn cp(&mut self, value: u8) {
         let (_, did_overflow) = self.registers.a.overflowing_sub(value);
         self.registers.f.zero = self.registers.a == value;
-        self.registers.f.subtract = true;
+        self.registers.f.negative = true;
         self.registers.f.carry = did_overflow;
         self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
     }
@@ -362,7 +364,7 @@ impl CPU {
     fn inc(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_add(1);
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
         new_value
     }
@@ -372,7 +374,7 @@ impl CPU {
     fn dec(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_sub(1);
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = true;
+        self.registers.f.negative = true;
         self.registers.f.half_carry = (value & 0xF) < 1; // TODO; Double check this
         new_value
     }
@@ -429,7 +431,7 @@ impl CPU {
         self.registers.f.carry = (value & 0x1) == 1;
         let new_value = value.rotate_right(1);
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.half_carry = false;
         new_value
     }
@@ -440,7 +442,7 @@ impl CPU {
         self.registers.f.carry = (value & 0x80) == 0x80;
         let new_value = value.rotate_left(1);
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.half_carry = false;
         new_value
     }
@@ -449,7 +451,7 @@ impl CPU {
     fn sra(&mut self, value: u8) -> u8 {
         let new_value = value >> 1;
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.half_carry = false;
         self.registers.f.carry = (value & 0x01) == 1;
         new_value
@@ -459,7 +461,7 @@ impl CPU {
     fn sla(&mut self, value: u8) -> u8 {
         let new_value = value << 1;
         self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
+        self.registers.f.negative = false;
         self.registers.f.half_carry = false;
         self.registers.f.carry = (value & 0x80) == 0x80;
         new_value

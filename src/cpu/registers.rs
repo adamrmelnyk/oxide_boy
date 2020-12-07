@@ -83,4 +83,17 @@ impl Registers {
         self.h = ((value & 0xFF00) >> 8) as u8;
         self.l = (value & 0xFF) as u8;
     }
+
+    /// Sets all flag registers in order: ZNHC
+    pub fn set_flag_registers(&mut self,
+        zero: bool,
+        negative: bool,
+        half_carry: bool,
+        carry: bool
+    ) {
+        self.f.zero = zero;
+        self.f.negative = negative;
+        self.f.half_carry = half_carry;
+        self.f.carry = carry;
+    }
 }

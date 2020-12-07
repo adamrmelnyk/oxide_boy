@@ -288,7 +288,7 @@ impl CPU {
     fn adc(&mut self, value: u8) -> u8 {
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
         if self.registers.f.carry {
-            (new_value, did_overflow) = self.registers.a.overflowing_add(1u8);
+            (new_value, did_overflow) = new_value.overflowing_add(1u8);
         }
         self.registers.f.zero = new_value == 0;
         self.registers.f.negative = false;
@@ -310,6 +310,7 @@ impl CPU {
     // A = A - s -CY
     // * 1 * *
     fn sbc(&mut self, value: u8) -> u8 {
+        // TODO: Fix this one
         let carry: u8 = if self.registers.f.carry { 1 } else { 0 };
         let new_value = self.registers.a - value - carry;
         self.registers.f.zero = new_value == 0;
@@ -321,16 +322,15 @@ impl CPU {
     }
 
     // A = A & s
+    // * 0 1 0
     fn and(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a & value;
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.carry = false;
-        self.registers.f.half_carry = false;
+        self.registers.set_flag_registers(new_value == 0, false, true, false);
         new_value
     }
 
     // A = A | s
+    // * 0 0 0
     fn or(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a | value;
         self.registers.f.zero = new_value == 0;
@@ -341,6 +341,7 @@ impl CPU {
     }
 
     // A = A ^ s
+    // * 0 0 0
     fn xor(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a ^ value;
         self.registers.f.zero = new_value == 0;
@@ -351,6 +352,7 @@ impl CPU {
     }
 
     // A - s
+    // * 1 * *
     fn cp(&mut self, value: u8) {
         let (_, did_overflow) = self.registers.a.overflowing_sub(value);
         self.registers.f.zero = self.registers.a == value;

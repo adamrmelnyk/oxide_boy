@@ -85,11 +85,12 @@ impl Registers {
     }
 
     /// Sets all flag registers in order: ZNHC
-    pub fn set_flag_registers(&mut self,
+    pub fn set_flag_registers(
+        &mut self,
         zero: bool,
         negative: bool,
         half_carry: bool,
-        carry: bool
+        carry: bool,
     ) {
         self.f.zero = zero;
         self.f.negative = negative;

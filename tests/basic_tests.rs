@@ -106,6 +106,16 @@ fn add_overflow_test() {
 }
 
 #[test]
+fn add_half_overflow_test() {
+    let mut cpu = setup();
+    cpu.registers.a = 15;
+    cpu.registers.b = 1;
+    cpu.execute(Instruction::ADD(ArithmeticTarget::B));
+    assert_eq!(16, cpu.register_value(&ArithmeticTarget::A));
+    assert_flags_znhc(cpu.registers, false, false, true, false);
+}
+
+#[test]
 fn sub_test() {
     let mut cpu = setup();
     cpu.registers.a = 255;
@@ -136,8 +146,46 @@ fn adc_test() {
 }
 
 #[test]
+fn adc_test_overflow() {
+    let mut cpu = setup();
+    cpu.registers.f.carry = true;
+    cpu.registers.a = 254;
+    cpu.registers.b = 1;
+    cpu.execute(Instruction::ADC(ArithmeticTarget::B));
+    assert_eq!(0, cpu.registers.a);
+    assert_flags_znhc(cpu.registers, true, false, true, true);
+}
+
+#[test]
+fn adc_test_half_overflow() {
+    let mut cpu = setup();
+    cpu.registers.f.carry = true;
+    cpu.registers.a = 15;
+    cpu.execute(Instruction::ADC(ArithmeticTarget::B));
+    assert_eq!(16, cpu.registers.a);
+    assert_flags_znhc(cpu.registers, false, false, true, false);
+}
+
+#[test]
 fn sbc_test() {
-    // TODO
+    let mut cpu = setup();
+    cpu.registers.a = 3;
+    cpu.registers.b = 2;
+    cpu.registers.f.carry = true;
+    cpu.execute(Instruction::SBC(ArithmeticTarget::B));
+    assert_eq!(0, cpu.registers.a);
+    assert_flags_znhc(cpu.registers, true, true, false, false);
+}
+
+#[test]
+fn sbc_test_overflow() {
+    let mut cpu = setup();
+    cpu.registers.a = 2;
+    cpu.registers.b = 2;
+    cpu.registers.f.carry = true;
+    cpu.execute(Instruction::SBC(ArithmeticTarget::B));
+    assert_eq!(255, cpu.registers.a);
+    assert_flags_znhc(cpu.registers, false, true, true, true);
 }
 
 #[test]
@@ -176,4 +224,12 @@ fn cp_test() {
     cpu.registers.b = 1;
     cpu.execute(Instruction::CP(ArithmeticTarget::B));
     assert_flags_znhc(cpu.registers, false, true, true, true);
+}
+
+#[test]
+fn halt_test() {
+    let mut cpu = setup();
+    cpu.execute(Instruction::HALT);
+    assert_eq!(true, cpu.is_halted);
+    assert_flags_znhc(cpu.registers, false, false, false, false);
 }

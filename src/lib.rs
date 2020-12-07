@@ -7,7 +7,6 @@ use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, MemoryBus};
 use cpu::registers::FlagsRegister;
 
 pub use cpu::instructions::SixteenBitArithmeticTarget;
-/// Exposed so they can be run from main
 pub use cpu::instructions::{ArithmeticTarget, Instruction};
 pub use cpu::registers::Registers;
 
@@ -16,7 +15,7 @@ pub struct CPU {
     pub pc: u16,
     sp: u16,
     bus: MemoryBus,
-    is_halted: bool,
+    pub is_halted: bool,
 }
 
 impl Default for CPU {
@@ -287,13 +286,14 @@ impl CPU {
     // * 0 * *
     fn adc(&mut self, value: u8) -> u8 {
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
+        let carry = if self.registers.f.carry {1} else {0};
         if self.registers.f.carry {
             (new_value, did_overflow) = new_value.overflowing_add(1u8);
         }
         self.registers.f.zero = new_value == 0;
         self.registers.f.negative = false;
         self.registers.f.carry = did_overflow;
-        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
+        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) + (carry & 0xF)> 0xF;
         new_value
     }
 
@@ -310,14 +310,17 @@ impl CPU {
     // A = A - s -CY
     // * 1 * *
     fn sbc(&mut self, value: u8) -> u8 {
-        // TODO: Fix this one
-        let carry: u8 = if self.registers.f.carry { 1 } else { 0 };
-        let new_value = self.registers.a - value - carry;
-        self.registers.f.zero = new_value == 0;
-        // TODO: Set the carry bits
-        // self.registers.f.negative = true;
-        // self.registers.f.half_carry = false;
-        // self.registers.f.carry = false;
+        let (mut new_value, mut did_overflow) = self.registers.a.overflowing_sub(value);
+        let carry = if self.registers.f.carry { 1 } else { 0 };
+        if self.registers.f.carry {
+            (new_value, did_overflow) = new_value.overflowing_sub(1u8);
+        }
+        self.registers.set_flag_registers(
+            new_value == 0,
+            true,
+            (self.registers.a & 0xF) < (value & 0xF) + (carry & 0xF),
+            did_overflow,
+        );
         new_value
     }
 
@@ -325,7 +328,8 @@ impl CPU {
     // * 0 1 0
     fn and(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a & value;
-        self.registers.set_flag_registers(new_value == 0, false, true, false);
+        self.registers
+            .set_flag_registers(new_value == 0, false, true, false);
         new_value
     }
 
@@ -509,7 +513,8 @@ impl CPU {
         }
     }
 
-    // Halt CPU until an interrupt occurs.
+    /// Halt CPU until an interrupt occurs.
+    /// - - - -
     fn halt(&mut self) {
         self.is_halted = true;
     }

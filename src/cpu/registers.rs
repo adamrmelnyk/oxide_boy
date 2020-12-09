@@ -97,4 +97,13 @@ impl Registers {
         self.f.half_carry = half_carry;
         self.f.carry = carry;
     }
+
+    /// Sets all flag registers except for the zero register
+    pub fn set_flag_registers_nz(
+        &mut self,
+        negative: bool,
+        half_carry: bool,
+        carry: bool,) {
+            self.set_flag_registers(self.f.zero, negative, half_carry, carry);
+    }
 }

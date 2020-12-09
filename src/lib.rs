@@ -143,7 +143,7 @@ impl CPU {
                 Instruction::RESET => {}
                 Instruction::SET => {}
                 Instruction::SRL => {}
-                Instruction::RL => {}
+                Instruction::RL(target) => {}
                 Instruction::RRC(target) => {
                     let value = self.register_value(&target);
                     let new_value = self.rrc(value);
@@ -243,16 +243,18 @@ impl CPU {
     }
 
     // HL = HL + ss; BC,DE,HL,SP
+    // - 0 * *
     fn addhl(&mut self, value: u16) -> u16 {
         let (new_value, did_overflow) = self.registers.get_hl().overflowing_add(value);
-        // Zero register is unaffected
-        self.registers.f.negative = false;
-        self.registers.f.carry = did_overflow;
-        self.registers.f.half_carry = (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF; // TODO: Double check
+        self.registers.set_flag_registers_nz(
+            false,
+            (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF,
+            did_overflow);
         new_value
     }
 
     // SP = SP + e
+    // 0 0 * *
     fn addsp(&mut self, value: u16) -> u16 {
         unimplemented!();
     }
@@ -521,6 +523,7 @@ impl CPU {
 
     fn push_from_target(&mut self, target: StackTarget) {
         let value = match target {
+            StackTarget::AF => self.registers.get_af(),
             StackTarget::BC => self.registers.get_bc(),
             StackTarget::DE => self.registers.get_de(),
             StackTarget::HL => self.registers.get_hl(),
@@ -543,6 +546,7 @@ impl CPU {
     fn pop_and_store(&mut self, target: StackTarget) {
         let result = self.pop();
         match target {
+            StackTarget::AF => self.registers.set_af(result),
             StackTarget::BC => self.registers.set_bc(result),
             StackTarget::DE => self.registers.set_de(result),
             StackTarget::HL => self.registers.set_hl(result),

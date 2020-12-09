@@ -116,6 +116,36 @@ fn add_half_overflow_test() {
 }
 
 #[test]
+fn addhl_test() {
+    let mut cpu = setup();
+    cpu.registers.set_hl(1);
+    cpu.registers.set_bc(10);
+    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
+    assert_eq!(11, cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL));
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
+fn addhl_overflow_test() {
+    let mut cpu = setup();
+    cpu.registers.set_hl(1);
+    cpu.registers.set_bc(65535);
+    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
+    assert_eq!(0, cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL));
+    assert_flags_znhc(cpu.registers, false, false, true, true);
+}
+
+#[test]
+fn addhl_half_overflow_test() {
+    let mut cpu = setup();
+    cpu.registers.set_hl(1);
+    cpu.registers.set_bc(255);
+    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
+    assert_eq!(256, cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL));
+    assert_flags_znhc(cpu.registers, false, false, true, false);
+}
+
+#[test]
 fn sub_test() {
     let mut cpu = setup();
     cpu.registers.a = 255;

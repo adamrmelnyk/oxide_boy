@@ -121,7 +121,10 @@ fn addhl_test() {
     cpu.registers.set_hl(1);
     cpu.registers.set_bc(10);
     cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
-    assert_eq!(11, cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL));
+    assert_eq!(
+        11,
+        cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL)
+    );
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
 
@@ -131,7 +134,10 @@ fn addhl_overflow_test() {
     cpu.registers.set_hl(1);
     cpu.registers.set_bc(65535);
     cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
-    assert_eq!(0, cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL));
+    assert_eq!(
+        0,
+        cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL)
+    );
     assert_flags_znhc(cpu.registers, false, false, true, true);
 }
 
@@ -141,7 +147,10 @@ fn addhl_half_overflow_test() {
     cpu.registers.set_hl(1);
     cpu.registers.set_bc(255);
     cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
-    assert_eq!(256, cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL));
+    assert_eq!(
+        256,
+        cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL)
+    );
     assert_flags_znhc(cpu.registers, false, false, true, false);
 }
 

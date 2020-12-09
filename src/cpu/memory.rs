@@ -20,6 +20,8 @@ impl MemoryBus {
     }
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum LoadByteTarget {
     A,
     B,
@@ -31,6 +33,8 @@ pub enum LoadByteTarget {
     HLI, // read from the address stored in HL
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum LoadByteSource {
     A,
     B,
@@ -43,6 +47,8 @@ pub enum LoadByteSource {
     HLI, // read from the address stored in HL
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum LoadWordSource {
     BC,
     DE,
@@ -51,12 +57,16 @@ pub enum LoadWordSource {
     D16, // direct 16 bit value, read the next two bytes
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum LoadWordTarget {
     BC,
     DE,
     HL,
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum LoadType {
     Byte(LoadByteTarget, LoadByteSource),
     // Word(LoadWordTarget, LoadWordSource),

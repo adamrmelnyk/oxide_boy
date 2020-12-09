@@ -1,5 +1,7 @@
 use crate::cpu::memory::LoadType;
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum Instruction {
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
@@ -27,6 +29,7 @@ pub enum Instruction {
     SET,
     SRL,
     RL(ArithmeticTarget),
+    RR(ArithmeticTarget),
     RRC(ArithmeticTarget),
     RLC(ArithmeticTarget),
     SRA(ArithmeticTarget),
@@ -77,6 +80,15 @@ impl Instruction {
             0x15 => Some(Instruction::RL(ArithmeticTarget::L)),
             // 0x16 => Some(Instruction::RL()) RL (HL)
             0x17 => Some(Instruction::RL(ArithmeticTarget::A)),
+            0x18 => Some(Instruction::RR(ArithmeticTarget::B)),
+            0x19 => Some(Instruction::RR(ArithmeticTarget::C)),
+            0x1A => Some(Instruction::RR(ArithmeticTarget::D)),
+            0x1B => Some(Instruction::RR(ArithmeticTarget::E)),
+            0x1C => Some(Instruction::RR(ArithmeticTarget::H)),
+            0x1D => Some(Instruction::RR(ArithmeticTarget::L)),
+            // 0x18 => Some(Instruction::RR()),
+            0x1F => Some(Instruction::RR(ArithmeticTarget::A)),
+
             _ => None, // TODO: Add the rest
         }
     }
@@ -124,6 +136,8 @@ impl Instruction {
     }
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum JumpCond {
     NotZero,
     Zero,
@@ -132,6 +146,8 @@ pub enum JumpCond {
     Always,
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum ArithmeticTarget {
     A,
     B,
@@ -142,6 +158,8 @@ pub enum ArithmeticTarget {
     L,
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum SixteenBitArithmeticTarget {
     AF,
     BC,
@@ -150,6 +168,8 @@ pub enum SixteenBitArithmeticTarget {
     SP,
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum StackTarget {
     AF,
     BC,

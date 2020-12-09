@@ -144,6 +144,7 @@ impl CPU {
                 Instruction::SET => {}
                 Instruction::SRL => {}
                 Instruction::RL(target) => {}
+                Instruction::RR(target) => {}
                 Instruction::RRC(target) => {
                     let value = self.register_value(&target);
                     let new_value = self.rrc(value);
@@ -249,7 +250,8 @@ impl CPU {
         self.registers.set_flag_registers_nz(
             false,
             (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF,
-            did_overflow);
+            did_overflow,
+        );
         new_value
     }
 
@@ -288,14 +290,15 @@ impl CPU {
     // * 0 * *
     fn adc(&mut self, value: u8) -> u8 {
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
-        let carry = if self.registers.f.carry {1} else {0};
+        let carry = if self.registers.f.carry { 1 } else { 0 };
         if self.registers.f.carry {
             (new_value, did_overflow) = new_value.overflowing_add(1u8);
         }
         self.registers.f.zero = new_value == 0;
         self.registers.f.negative = false;
         self.registers.f.carry = did_overflow;
-        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) + (carry & 0xF)> 0xF;
+        self.registers.f.half_carry =
+            (self.registers.a & 0xF) + (value & 0xF) + (carry & 0xF) > 0xF;
         new_value
     }
 

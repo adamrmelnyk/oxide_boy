@@ -20,8 +20,7 @@ impl MemoryBus {
     }
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum LoadByteTarget {
     A,
     B,
@@ -33,8 +32,23 @@ pub enum LoadByteTarget {
     HLI, // read from the address stored in HL
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+impl std::convert::From<u8> for LoadByteSource {
+    fn from(nibble: u8) -> LoadByteSource {
+        match nibble {
+            0x0 | 0x8 => LoadByteSource::B,
+            0x1 | 0x9 => LoadByteSource::C,
+            0x2 | 0xA => LoadByteSource::D,
+            0x3 | 0xB => LoadByteSource::E,
+            0x4 | 0xC => LoadByteSource::H,
+            0x5 | 0xD => LoadByteSource::L,
+            0x6 | 0xE => unimplemented!(), // (HL)
+            0x7 | 0xF => LoadByteSource::A,
+            _ => panic!("u8 {:?} cannot be converted into an LoadByteSource", nibble),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub enum LoadByteSource {
     A,
     B,
@@ -47,8 +61,7 @@ pub enum LoadByteSource {
     HLI, // read from the address stored in HL
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum LoadWordSource {
     BC,
     DE,
@@ -57,17 +70,16 @@ pub enum LoadWordSource {
     D16, // direct 16 bit value, read the next two bytes
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum LoadWordTarget {
     BC,
     DE,
     HL,
+    SP,
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum LoadType {
     Byte(LoadByteTarget, LoadByteSource),
-    // Word(LoadWordTarget, LoadWordSource),
+    Word(LoadWordTarget, LoadWordSource),
 }

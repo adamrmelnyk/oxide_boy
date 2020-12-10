@@ -1,7 +1,8 @@
-use crate::cpu::memory::LoadType;
+use crate::cpu::memory::{
+    LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget,
+};
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Instruction {
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
@@ -74,10 +75,27 @@ impl Instruction {
 
     /// Takes an byte instruction and returns an optional Instruction
     pub fn from_byte_not_prefixed(byte: u8) -> Option<Instruction> {
+        let l_nib = byte & 0x0F;
         match byte {
             0x00 => Some(Instruction::NOP),
             // 0x10 => Some(Instruction::STOP),
             0x76 => Some(Instruction::HALT),
+            0x01 => Some(Instruction::LD(LoadType::Word(
+                LoadWordTarget::BC,
+                LoadWordSource::D16,
+            ))),
+            0x11 => Some(Instruction::LD(LoadType::Word(
+                LoadWordTarget::DE,
+                LoadWordSource::D16,
+            ))),
+            0x21 => Some(Instruction::LD(LoadType::Word(
+                LoadWordTarget::HL,
+                LoadWordSource::D16,
+            ))),
+            0x31 => Some(Instruction::LD(LoadType::Word(
+                LoadWordTarget::SP,
+                LoadWordSource::D16,
+            ))),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
             0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
             0x23 => Some(Instruction::INC16(SixteenBitArithmeticTarget::HL)),
@@ -90,14 +108,52 @@ impl Instruction {
             0x15 => Some(Instruction::DEC(ArithmeticTarget::D)),
             0x25 => Some(Instruction::DEC(ArithmeticTarget::L)),
             // 0x35 => Some(Instruction::DEC()) DEC (HL)
-            0x80 => Some(Instruction::ADD(ArithmeticTarget::B)),
-            0x81 => Some(Instruction::ADD(ArithmeticTarget::C)),
-            0x82 => Some(Instruction::ADD(ArithmeticTarget::D)),
-            0x83 => Some(Instruction::ADD(ArithmeticTarget::E)),
-            0x84 => Some(Instruction::ADD(ArithmeticTarget::H)),
-            0x85 => Some(Instruction::ADD(ArithmeticTarget::L)),
-            // 0x86 => Some(Instruction::ADD())
-            0x87 => Some(Instruction::ADD(ArithmeticTarget::A)),
+            0x0C => Some(Instruction::INC(ArithmeticTarget::C)),
+            0x1C => Some(Instruction::INC(ArithmeticTarget::E)),
+            0x2C => Some(Instruction::INC(ArithmeticTarget::L)),
+            0x3C => Some(Instruction::INC(ArithmeticTarget::A)),
+            0x0D => Some(Instruction::DEC(ArithmeticTarget::C)),
+            0x1D => Some(Instruction::DEC(ArithmeticTarget::E)),
+            0x2D => Some(Instruction::DEC(ArithmeticTarget::L)),
+            0x3D => Some(Instruction::DEC(ArithmeticTarget::A)),
+            0x40..=0x47 => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::B,
+                LoadByteSource::from(l_nib),
+            ))),
+            0x48..=0x4F => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::C,
+                LoadByteSource::from(l_nib),
+            ))),
+            0x50..=0x57 => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::D,
+                LoadByteSource::from(l_nib),
+            ))),
+            0x58..=0x5F => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::E,
+                LoadByteSource::from(l_nib),
+            ))),
+            0x60..=0x67 => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::H,
+                LoadByteSource::from(l_nib),
+            ))),
+            0x68..=0x6F => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::L,
+                LoadByteSource::from(l_nib),
+            ))),
+            // 76 is skipped because it's the halt instruction
+            // 0x70..=0x75 | 0x77 => Some(Instruction::LD(LoadType::Byte(LoadByteTarget::HL, LoadByteSource::from(l_nib)))), // TODO
+            0x78..=0x7F => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::A,
+                LoadByteSource::from(l_nib),
+            ))),
+            0x80..=0x87 => Some(Instruction::ADD(ArithmeticTarget::from(l_nib))),
+            0x88..=0x8F => Some(Instruction::ADC(ArithmeticTarget::from(l_nib))),
+            0x90..=0x97 => Some(Instruction::SUB(ArithmeticTarget::from(l_nib))),
+            0x98..=0x9F => Some(Instruction::SBC(ArithmeticTarget::from(l_nib))),
+            0xA0..=0xA7 => Some(Instruction::AND(ArithmeticTarget::from(l_nib))),
+            0xA8..=0xAF => Some(Instruction::XOR(ArithmeticTarget::from(l_nib))),
+            0xB0..=0xB7 => Some(Instruction::OR(ArithmeticTarget::from(l_nib))),
+            0xB8..=0xBF => Some(Instruction::CP(ArithmeticTarget::from(l_nib))),
             0x09 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::BC)),
             0x19 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::DE)),
             0x29 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::HL)),
@@ -110,6 +166,7 @@ impl Instruction {
             0xD5 => Some(Instruction::PUSH(StackTarget::DE)),
             0xE5 => Some(Instruction::PUSH(StackTarget::HL)),
             0xF5 => Some(Instruction::PUSH(StackTarget::AF)),
+            0xCB => panic!("This is a prefixed byte! This should never happen!"),
             _ => None, // TODO: Add the rest
         }
     }
@@ -131,8 +188,7 @@ fn from_byte_to_index(byte: u8) -> u8 {
     }
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum JumpCond {
     NotZero,
     Zero,
@@ -141,8 +197,7 @@ pub enum JumpCond {
     Always,
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum ArithmeticTarget {
     A,
     B,
@@ -164,13 +219,15 @@ impl std::convert::From<u8> for ArithmeticTarget {
             0x5 | 0xD => ArithmeticTarget::L,
             0x6 | 0xE => unimplemented!(), // (HL)
             0x7 | 0xF => ArithmeticTarget::A,
-            _ => panic!("u8 {:?} cannot be converted into an ArithmeticTarget", nibble),
+            _ => panic!(
+                "u8 {:?} cannot be converted into an ArithmeticTarget",
+                nibble
+            ),
         }
     }
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum SixteenBitArithmeticTarget {
     AF,
     BC,
@@ -179,8 +236,7 @@ pub enum SixteenBitArithmeticTarget {
     SP,
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum StackTarget {
     AF,
     BC,

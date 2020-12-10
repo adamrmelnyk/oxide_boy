@@ -1,4 +1,4 @@
-use gb_emulator::{ArithmeticTarget, Instruction};
+use gb_emulator::{ArithmeticTarget, Instruction, LoadType, LoadByteTarget, LoadByteSource};
 
 #[test]
 fn from_byte_prefix_rlc() {
@@ -46,6 +46,16 @@ fn from_byte_prefix_rl() {
 fn from_byte_prefix_rr() {
     let op0 = Instruction::from_byte(0x1F, true).unwrap();
     assert_eq!(op0, Instruction::RR(ArithmeticTarget::A));
+}
+
+// TODO: ADD, ADC, SUB etc tests
+
+// TODO: LD tests
+#[test]
+fn from_byte_load() {
+    let op = Instruction::from_byte(0x40, false).unwrap();
+    assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::B, LoadByteSource::B)));
+    // TODO: Test the rest
 }
 
 #[test]

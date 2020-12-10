@@ -3,11 +3,12 @@
 mod cpu;
 
 use cpu::instructions::{JumpCond, StackTarget};
-use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, MemoryBus};
+use cpu::memory::MemoryBus;
 use cpu::registers::FlagsRegister;
 
 pub use cpu::instructions::SixteenBitArithmeticTarget;
 pub use cpu::instructions::{ArithmeticTarget, Instruction};
+pub use cpu::memory::{LoadType, LoadByteTarget, LoadByteSource};
 pub use cpu::registers::Registers;
 
 pub struct CPU {
@@ -514,6 +515,9 @@ impl CPU {
                     }
                     _ => {}
                 }
+            }
+            LoadType::Word(target, souce) => {
+                unimplemented!();
             }
         }
     }

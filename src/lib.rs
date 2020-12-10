@@ -139,10 +139,10 @@ impl CPU {
                 Instruction::RRCA => self.rrca(),
                 Instruction::RRLA => self.rlca(),
                 Instruction::CPL => self.cpl(),
-                Instruction::BIT => {}
-                Instruction::RESET => {}
-                Instruction::SET => {}
-                Instruction::SRL => {}
+                Instruction::BIT(index, target) => {}
+                Instruction::RESET(index, target) => {}
+                Instruction::SET(index, target) => {}
+                Instruction::SRL(target) => {}
                 Instruction::RL(target) => {}
                 Instruction::RR(target) => {}
                 Instruction::RRC(target) => {
@@ -428,7 +428,7 @@ impl CPU {
     fn set() {}
 
     // * 0 0 *
-    fn srl() {}
+    fn srl(&mut self) {}
 
     // * 0 0 *
     fn rr() {}

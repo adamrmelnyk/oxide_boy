@@ -43,7 +43,19 @@ fn from_byte_prefix_rl() {
 }
 
 #[test]
+fn from_byte_prefix_rr() {
+    let op0 = Instruction::from_byte(0x1F, true).unwrap();
+    assert_eq!(op0, Instruction::RR(ArithmeticTarget::A));
+}
+
+#[test]
 fn from_byte_non_prefix_nop() {
     let op = Instruction::from_byte(0x00, false).unwrap();
     assert_eq!(op, Instruction::NOP);
+}
+
+#[test]
+fn from_byte_non_prefix_halt() {
+    let op = Instruction::from_byte(0x76, false).unwrap();
+    assert_eq!(op, Instruction::HALT);
 }

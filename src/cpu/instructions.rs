@@ -103,11 +103,11 @@ impl Instruction {
             0x04 => Some(Instruction::INC(ArithmeticTarget::B)),
             0x14 => Some(Instruction::INC(ArithmeticTarget::D)),
             0x24 => Some(Instruction::INC(ArithmeticTarget::H)),
-            // 0x34 => Some(Instruction::INC()) INC (HL)
+            0x34 => Some(Instruction::INC(ArithmeticTarget::HLI)),
             0x05 => Some(Instruction::DEC(ArithmeticTarget::B)),
             0x15 => Some(Instruction::DEC(ArithmeticTarget::D)),
             0x25 => Some(Instruction::DEC(ArithmeticTarget::L)),
-            // 0x35 => Some(Instruction::DEC()) DEC (HL)
+            0x35 => Some(Instruction::DEC(ArithmeticTarget::HLI)),
             0x0C => Some(Instruction::INC(ArithmeticTarget::C)),
             0x1C => Some(Instruction::INC(ArithmeticTarget::E)),
             0x2C => Some(Instruction::INC(ArithmeticTarget::L)),
@@ -141,7 +141,10 @@ impl Instruction {
                 LoadByteSource::from(l_nib),
             ))),
             // 76 is skipped because it's the halt instruction
-            // 0x70..=0x75 | 0x77 => Some(Instruction::LD(LoadType::Byte(LoadByteTarget::HL, LoadByteSource::from(l_nib)))), // TODO
+            0x70..=0x75 | 0x77 => Some(Instruction::LD(LoadType::Byte(
+                LoadByteTarget::HLI,
+                LoadByteSource::from(l_nib),
+            ))),
             0x78..=0x7F => Some(Instruction::LD(LoadType::Byte(
                 LoadByteTarget::A,
                 LoadByteSource::from(l_nib),
@@ -206,6 +209,7 @@ pub enum ArithmeticTarget {
     E,
     H,
     L,
+    HLI,
 }
 
 impl std::convert::From<u8> for ArithmeticTarget {

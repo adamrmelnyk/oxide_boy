@@ -41,7 +41,7 @@ impl std::convert::From<u8> for LoadByteSource {
             0x3 | 0xB => LoadByteSource::E,
             0x4 | 0xC => LoadByteSource::H,
             0x5 | 0xD => LoadByteSource::L,
-            0x6 | 0xE => unimplemented!(), // (HL)
+            0x6 | 0xE => LoadByteSource::HLI,
             0x7 | 0xF => LoadByteSource::A,
             _ => panic!("u8 {:?} cannot be converted into an LoadByteSource", nibble),
         }

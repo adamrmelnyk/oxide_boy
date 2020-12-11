@@ -8,7 +8,7 @@ use cpu::registers::FlagsRegister;
 
 pub use cpu::instructions::SixteenBitArithmeticTarget;
 pub use cpu::instructions::{ArithmeticTarget, Instruction};
-pub use cpu::memory::{LoadType, LoadByteTarget, LoadByteSource};
+pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType};
 pub use cpu::registers::Registers;
 
 pub struct CPU {
@@ -55,6 +55,7 @@ impl CPU {
             ArithmeticTarget::E => self.registers.e = value,
             ArithmeticTarget::H => self.registers.h = value,
             ArithmeticTarget::L => self.registers.l = value,
+            ArithmeticTarget::HLI => unimplemented!(),
         }
     }
 
@@ -196,6 +197,7 @@ impl CPU {
             ArithmeticTarget::E => self.registers.e,
             ArithmeticTarget::H => self.registers.h,
             ArithmeticTarget::L => self.registers.l,
+            ArithmeticTarget::HLI => unimplemented!(), // TODO:
         }
     }
 

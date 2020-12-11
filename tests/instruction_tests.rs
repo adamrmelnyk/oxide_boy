@@ -50,12 +50,71 @@ fn from_byte_prefix_rr() {
 
 // TODO: ADD, ADC, SUB etc tests
 
-// TODO: LD tests
 #[test]
 fn from_byte_load() {
-    let op = Instruction::from_byte(0x40, false).unwrap();
-    assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::B, LoadByteSource::B)));
-    // TODO: Test the rest
+    for i in 0x40..0x47 {
+        let l_nib = i & 0x0F;
+        if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+            let op = Instruction::from_byte(i, false).unwrap();
+            assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::B, LoadByteSource::from(l_nib))));
+        }
+    }
+
+    for i in 0x48..0x4F {
+        let l_nib = i & 0x0F;
+        if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+            let op = Instruction::from_byte(i, false).unwrap();
+            assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::C, LoadByteSource::from(l_nib))));
+        }
+    }
+
+    for i in 0x50..0x57 {
+        let l_nib = i & 0x0F;
+        if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+            let op = Instruction::from_byte(i, false).unwrap();
+            assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::D, LoadByteSource::from(l_nib))));
+        }
+    }
+
+    for i in 0x58..0x5F {
+        let l_nib = i & 0x0F;
+        if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+            let op = Instruction::from_byte(i, false).unwrap();
+            assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::E, LoadByteSource::from(l_nib))));
+        }
+    }
+
+    for i in 0x60..0x67 {
+        let l_nib = i & 0x0F;
+        if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+            let op = Instruction::from_byte(i, false).unwrap();
+            assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::H, LoadByteSource::from(l_nib))));
+        }
+    }
+
+    for i in 0x68..0x6F {
+        let l_nib = i & 0x0F;
+        if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+            let op = Instruction::from_byte(i, false).unwrap();
+            assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::L, LoadByteSource::from(l_nib))));
+        }
+    }
+
+    // for i in 0x70..0x77 {
+    //     let l_nib = i & 0x0F;
+    //     if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+    //         let op = Instruction::from_byte(i, false).unwrap();
+    //         assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::HL, LoadByteSource::from(l_nib))));
+    //     }
+    // }
+
+    for i in 0x78..0x7F {
+        let l_nib = i & 0x0F;
+        if l_nib !=0x6 && l_nib !=0xE { // TODO: Until the LoadByteSource HL is implemented
+            let op = Instruction::from_byte(i, false).unwrap();
+            assert_eq!(op, Instruction::LD(LoadType::Byte(LoadByteTarget::A, LoadByteSource::from(l_nib))));
+        }
+    }
 }
 
 #[test]

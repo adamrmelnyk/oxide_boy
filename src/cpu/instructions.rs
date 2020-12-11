@@ -221,7 +221,7 @@ impl std::convert::From<u8> for ArithmeticTarget {
             0x3 | 0xB => ArithmeticTarget::E,
             0x4 | 0xC => ArithmeticTarget::H,
             0x5 | 0xD => ArithmeticTarget::L,
-            0x6 | 0xE => unimplemented!(), // (HL)
+            0x6 | 0xE => ArithmeticTarget::HLI,
             0x7 | 0xF => ArithmeticTarget::A,
             _ => panic!(
                 "u8 {:?} cannot be converted into an ArithmeticTarget",

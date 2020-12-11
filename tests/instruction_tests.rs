@@ -8,8 +8,7 @@ fn from_byte_prefix_rlc() {
     let op3 = Instruction::from_byte(0x03, true).unwrap();
     let op4 = Instruction::from_byte(0x04, true).unwrap();
     let op5 = Instruction::from_byte(0x05, true).unwrap();
-    // TODO: The HL op when it's implemented
-    // let op6 = Instruction::from_byte(0x06, true).unwrap();
+    let op6 = Instruction::from_byte(0x06, true).unwrap();
     let op7 = Instruction::from_byte(0x07, true).unwrap();
 
     assert_eq!(op0, Instruction::RLC(ArithmeticTarget::B));
@@ -18,6 +17,7 @@ fn from_byte_prefix_rlc() {
     assert_eq!(op3, Instruction::RLC(ArithmeticTarget::E));
     assert_eq!(op4, Instruction::RLC(ArithmeticTarget::H));
     assert_eq!(op5, Instruction::RLC(ArithmeticTarget::L));
+    assert_eq!(op6, Instruction::RLC(ArithmeticTarget::HLI));
     assert_eq!(op7, Instruction::RLC(ArithmeticTarget::A));
 }
 
@@ -29,8 +29,7 @@ fn from_byte_prefix_rl() {
     let op3 = Instruction::from_byte(0x13, true).unwrap();
     let op4 = Instruction::from_byte(0x14, true).unwrap();
     let op5 = Instruction::from_byte(0x15, true).unwrap();
-    // TODO: The HL op when it's implemented
-    // let op6 = Instruction::from_byte(0x16, true).unwrap();
+    let op6 = Instruction::from_byte(0x16, true).unwrap();
     let op7 = Instruction::from_byte(0x17, true).unwrap();
 
     assert_eq!(op0, Instruction::RL(ArithmeticTarget::B));
@@ -39,6 +38,7 @@ fn from_byte_prefix_rl() {
     assert_eq!(op3, Instruction::RL(ArithmeticTarget::E));
     assert_eq!(op4, Instruction::RL(ArithmeticTarget::H));
     assert_eq!(op5, Instruction::RL(ArithmeticTarget::L));
+    assert_eq!(op6, Instruction::RL(ArithmeticTarget::HLI));
     assert_eq!(op7, Instruction::RL(ArithmeticTarget::A));
 }
 

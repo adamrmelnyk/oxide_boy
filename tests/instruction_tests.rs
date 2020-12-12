@@ -1,4 +1,7 @@
-use gb_emulator::{ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType};
+use gb_emulator::{
+    ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
+    LoadWordTarget,
+};
 
 #[test]
 fn from_byte_prefix_rlc() {
@@ -149,6 +152,33 @@ fn from_byte_load() {
             ))
         );
     }
+}
+
+#[test]
+fn from_byte_ld_word() {
+    let op = Instruction::from_byte(0x01, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Word(LoadWordTarget::BC, LoadWordSource::D16))
+    );
+
+    let op = Instruction::from_byte(0x11, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Word(LoadWordTarget::DE, LoadWordSource::D16))
+    );
+
+    let op = Instruction::from_byte(0x21, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Word(LoadWordTarget::HL, LoadWordSource::D16))
+    );
+
+    let op = Instruction::from_byte(0x31, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16))
+    );
 }
 
 #[test]

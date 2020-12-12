@@ -43,10 +43,7 @@ impl std::convert::From<u8> for LoadByteTarget {
             0x68..=0x6F => LoadByteTarget::L,
             0x70..=0x75 | 0x77 => LoadByteTarget::HLI,
             0x78..=0x7F => LoadByteTarget::A,
-            _ => panic!(
-                "u8 {:?} cannot be converted into an LoadByteTarget",
-                byte
-            ),
+            _ => panic!("u8 {:?} cannot be converted into an LoadByteTarget", byte),
         }
     }
 }
@@ -105,7 +102,16 @@ pub enum LoadType {
 
 impl std::convert::From<u8> for LoadType {
     fn from(byte: u8) -> LoadType {
-        let l_nib = byte & 0x0F;
-        LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(l_nib))
+        match byte {
+            0x01 => LoadType::Word(LoadWordTarget::BC, LoadWordSource::D16),
+            0x11 => LoadType::Word(LoadWordTarget::DE, LoadWordSource::D16),
+            0x21 => LoadType::Word(LoadWordTarget::HL, LoadWordSource::D16),
+            0x31 => LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16),
+            0x40..=0x7F => {
+                let l_nib = byte & 0x0F;
+                LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(l_nib))
+            }
+            _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
+        }
     }
 }

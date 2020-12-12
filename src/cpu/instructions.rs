@@ -80,22 +80,7 @@ impl Instruction {
             0x00 => Some(Instruction::NOP),
             // 0x10 => Some(Instruction::STOP),
             0x76 => Some(Instruction::HALT),
-            0x01 => Some(Instruction::LD(LoadType::Word(
-                LoadWordTarget::BC,
-                LoadWordSource::D16,
-            ))),
-            0x11 => Some(Instruction::LD(LoadType::Word(
-                LoadWordTarget::DE,
-                LoadWordSource::D16,
-            ))),
-            0x21 => Some(Instruction::LD(LoadType::Word(
-                LoadWordTarget::HL,
-                LoadWordSource::D16,
-            ))),
-            0x31 => Some(Instruction::LD(LoadType::Word(
-                LoadWordTarget::SP,
-                LoadWordSource::D16,
-            ))),
+            0x01 | 0x11 | 0x21 | 0x31 => Some(Instruction::LD(LoadType::from(byte))),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
             0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
             0x23 => Some(Instruction::INC16(SixteenBitArithmeticTarget::HL)),

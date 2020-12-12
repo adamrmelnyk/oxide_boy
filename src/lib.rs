@@ -8,7 +8,7 @@ use cpu::registers::FlagsRegister;
 
 pub use cpu::instructions::SixteenBitArithmeticTarget;
 pub use cpu::instructions::{ArithmeticTarget, Instruction};
-pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType};
+pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget};
 pub use cpu::registers::Registers;
 
 pub struct CPU {
@@ -519,7 +519,18 @@ impl CPU {
                 }
             }
             LoadType::Word(target, souce) => {
-                unimplemented!();
+                match target {
+                    LoadWordTarget::BC => unimplemented!(),
+                    LoadWordTarget::DE => unimplemented!(),
+                    LoadWordTarget::HL => unimplemented!(),
+                    LoadWordTarget::SP => unimplemented!(),
+                }
+                match souce {
+                    LoadWordSource::BC => unimplemented!(),
+                    LoadWordSource::DE => unimplemented!(),
+                    LoadWordSource::HL => unimplemented!(),
+                    LoadWordSource::D16 => unimplemented!(),
+                }
             }
         }
     }

@@ -14,7 +14,7 @@ pub use cpu::registers::Registers;
 pub struct CPU {
     pub registers: Registers,
     pub pc: u16,
-    sp: u16,
+    pub sp: u16,
     bus: MemoryBus,
     pub is_halted: bool,
 }
@@ -93,7 +93,11 @@ impl CPU {
                     let new_value = self.addhl(value);
                     self.registers.set_hl(new_value);
                 }
-                Instruction::ADDSP(target) => {}
+                Instruction::ADDSP(target) => {
+                    let value = self.sixteen_bit_register_value(&target);
+                    let new_value = self.addsp(value);
+                    self.sp = new_value;
+                }
                 Instruction::INC16(target) => self.inc_16(target),
                 Instruction::DEC16(target) => self.dec_16(target),
                 Instruction::SUB(target) => {
@@ -238,11 +242,11 @@ impl CPU {
     // A = A + s
     // * 0 * * *
     fn add(&mut self, value: u8) -> u8 {
+        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
         self.registers.f.zero = new_value == 0;
         self.registers.f.negative = false;
         self.registers.f.carry = did_overflow;
-        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         new_value
     }
 
@@ -261,7 +265,10 @@ impl CPU {
     // SP = SP + e
     // 0 0 * *
     fn addsp(&mut self, value: u16) -> u16 {
-        unimplemented!();
+        let half_carry = (self.sp & 0xFF) + (value & 0xFF) > 0xFF;
+        let (new_value, did_overflow) = self.sp.overflowing_add(value);
+        self.registers.set_flag_registers(false, false, half_carry, did_overflow);
+        new_value
     }
 
     // ss = ss + 1
@@ -393,12 +400,16 @@ impl CPU {
         new_value
     }
 
+    /// Complement the carry flag
+    /// - 0 0 *
     fn ccf(&mut self) {
-        self.registers.f.carry = !self.registers.f.carry;
+        self.registers.set_flag_registers_nz(false, false, !self.registers.f.carry);
     }
 
+    /// Set the carry flag
+    /// - 0 0 1
     fn scf(&mut self) {
-        self.registers.f.carry = true;
+        self.registers.set_flag_registers_nz(false, false, true);
     }
 
     // 0 0 0 *

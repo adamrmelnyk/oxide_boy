@@ -155,6 +155,45 @@ fn addhl_half_overflow_test() {
 }
 
 #[test]
+fn addsp_test() {
+    let mut cpu = setup();
+    cpu.registers.set_bc(1);
+    cpu.sp = 10;
+    cpu.execute(Instruction::ADDSP(SixteenBitArithmeticTarget::BC));
+    assert_eq!(
+        11,
+        cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::SP)
+    );
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
+fn addsp_overflow_test() {
+    let mut cpu = setup();
+    cpu.registers.set_bc(65535);
+    cpu.sp = 1;
+    cpu.execute(Instruction::ADDSP(SixteenBitArithmeticTarget::BC));
+    assert_eq!(
+        0,
+        cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::SP)
+    );
+    assert_flags_znhc(cpu.registers, false, false, true, true);
+}
+
+#[test]
+fn addsp_half_overflow_test() {
+    let mut cpu = setup();
+    cpu.sp = 1;
+    cpu.registers.set_bc(255);
+    cpu.execute(Instruction::ADDSP(SixteenBitArithmeticTarget::BC));
+    assert_eq!(
+        256,
+        cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::SP)
+    );
+    assert_flags_znhc(cpu.registers, false, false, true, false);
+}
+
+#[test]
 fn sub_test() {
     let mut cpu = setup();
     cpu.registers.a = 255;
@@ -271,4 +310,18 @@ fn halt_test() {
     cpu.execute(Instruction::HALT);
     assert_eq!(true, cpu.is_halted);
     assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
+fn ccf_test() {
+    let mut cpu = setup();
+    cpu.execute(Instruction::CCF);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn scf_tst() {
+    let mut cpu = setup();
+    cpu.execute(Instruction::SCF);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
 }

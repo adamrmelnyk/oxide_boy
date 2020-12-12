@@ -116,39 +116,7 @@ impl Instruction {
             0x1D => Some(Instruction::DEC(ArithmeticTarget::E)),
             0x2D => Some(Instruction::DEC(ArithmeticTarget::L)),
             0x3D => Some(Instruction::DEC(ArithmeticTarget::A)),
-            0x40..=0x47 => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::B,
-                LoadByteSource::from(l_nib),
-            ))),
-            0x48..=0x4F => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::C,
-                LoadByteSource::from(l_nib),
-            ))),
-            0x50..=0x57 => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::D,
-                LoadByteSource::from(l_nib),
-            ))),
-            0x58..=0x5F => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::E,
-                LoadByteSource::from(l_nib),
-            ))),
-            0x60..=0x67 => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::H,
-                LoadByteSource::from(l_nib),
-            ))),
-            0x68..=0x6F => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::L,
-                LoadByteSource::from(l_nib),
-            ))),
-            // 76 is skipped because it's the halt instruction
-            0x70..=0x75 | 0x77 => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::HLI,
-                LoadByteSource::from(l_nib),
-            ))),
-            0x78..=0x7F => Some(Instruction::LD(LoadType::Byte(
-                LoadByteTarget::A,
-                LoadByteSource::from(l_nib),
-            ))),
+            0x40..=0x7F => Some(Instruction::LD(LoadType::from(byte))),
             0x80..=0x87 => Some(Instruction::ADD(ArithmeticTarget::from(l_nib))),
             0x88..=0x8F => Some(Instruction::ADC(ArithmeticTarget::from(l_nib))),
             0x90..=0x97 => Some(Instruction::SUB(ArithmeticTarget::from(l_nib))),

@@ -32,6 +32,25 @@ pub enum LoadByteTarget {
     HLI, // read from the address stored in HL
 }
 
+impl std::convert::From<u8> for LoadByteTarget {
+    fn from(byte: u8) -> LoadByteTarget {
+        match byte {
+            0x40..=0x47 => LoadByteTarget::B,
+            0x48..=0x4F => LoadByteTarget::C,
+            0x50..=0x57 => LoadByteTarget::D,
+            0x58..=0x5F => LoadByteTarget::E,
+            0x60..=0x67 => LoadByteTarget::H,
+            0x68..=0x6F => LoadByteTarget::L,
+            0x70..=0x75 | 0x77 => LoadByteTarget::HLI,
+            0x78..=0x7F => LoadByteTarget::A,
+            _ => panic!(
+                "u8 {:?} cannot be converted into an LoadByteTarget",
+                byte
+            ),
+        }
+    }
+}
+
 impl std::convert::From<u8> for LoadByteSource {
     fn from(nibble: u8) -> LoadByteSource {
         match nibble {
@@ -82,4 +101,11 @@ pub enum LoadWordTarget {
 pub enum LoadType {
     Byte(LoadByteTarget, LoadByteSource),
     Word(LoadWordTarget, LoadWordSource),
+}
+
+impl std::convert::From<u8> for LoadType {
+    fn from(byte: u8) -> LoadType {
+        let l_nib = byte & 0x0F;
+        LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(l_nib))
+    }
 }

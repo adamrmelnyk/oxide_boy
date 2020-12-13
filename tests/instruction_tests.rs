@@ -51,7 +51,85 @@ fn from_byte_prefix_rr() {
     assert_eq!(op0, Instruction::RR(ArithmeticTarget::A));
 }
 
-// TODO: ADD, ADC, SUB etc tests
+#[test]
+fn from_byte_add() {
+    for byte in 0x80..0x87 {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::ADD(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xC6, false).unwrap();
+    assert_eq!(op, Instruction::ADD(ArithmeticTarget::D8));
+}
+
+#[test]
+fn from_byte_adc() {
+    for byte in 0x88..0x8F {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::ADC(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xCE, false).unwrap();
+    assert_eq!(op, Instruction::ADC(ArithmeticTarget::D8));
+}
+
+#[test]
+fn from_byte_sub() {
+    for byte in 0x90..0x97 {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::SUB(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xD6, false).unwrap();
+    assert_eq!(op, Instruction::SUB(ArithmeticTarget::D8));
+}
+
+#[test]
+fn from_byte_sbc() {
+    for byte in 0x98..0x9F {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::SBC(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xDE, false).unwrap();
+    assert_eq!(op, Instruction::SBC(ArithmeticTarget::D8));
+}
+
+#[test]
+fn from_byte_and() {
+    for byte in 0xA0..0xA7 {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::AND(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xE6, false).unwrap();
+    assert_eq!(op, Instruction::AND(ArithmeticTarget::D8));
+}
+
+#[test]
+fn from_byte_xor() {
+    for byte in 0xA8..0xAF {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::XOR(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xEE, false).unwrap();
+    assert_eq!(op, Instruction::XOR(ArithmeticTarget::D8));
+}
+
+#[test]
+fn from_byte_or() {
+    for byte in 0xB0..0xB7 {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::OR(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xF6, false).unwrap();
+    assert_eq!(op, Instruction::OR(ArithmeticTarget::D8));
+}
+
+#[test]
+fn from_byte_cp() {
+    for byte in 0xB8..0xBF {
+        let op = Instruction::from_byte(byte, false).unwrap();
+        assert_eq!(op, Instruction::CP(ArithmeticTarget::from(byte)));
+    }
+    let op = Instruction::from_byte(0xFE, false).unwrap();
+    assert_eq!(op, Instruction::CP(ArithmeticTarget::D8));
+}
 
 #[test]
 fn from_byte_load() {

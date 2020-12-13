@@ -56,6 +56,7 @@ impl CPU {
             ArithmeticTarget::H => self.registers.h = value,
             ArithmeticTarget::L => self.registers.l = value,
             ArithmeticTarget::HLI => unimplemented!(),
+            ArithmeticTarget::D8 => unimplemented!(),
         }
     }
 
@@ -178,6 +179,7 @@ impl CPU {
                 Instruction::LD(load_type) => self.load(load_type),
                 Instruction::HALT => self.halt(),
                 Instruction::NOP => { /* NO OP, simply advances the pc */ }
+                Instruction::STOP => { unimplemented!() },
                 Instruction::PUSH(target) => self.push_from_target(target),
                 Instruction::POP(target) => self.pop_and_store(target),
                 Instruction::CALL(condition) => {
@@ -202,6 +204,7 @@ impl CPU {
             ArithmeticTarget::H => self.registers.h,
             ArithmeticTarget::L => self.registers.l,
             ArithmeticTarget::HLI => unimplemented!(), // TODO:
+            ArithmeticTarget::D8 => unimplemented!(), // TODO
         }
     }
 

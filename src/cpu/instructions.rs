@@ -39,6 +39,7 @@ pub enum Instruction {
     JP(JumpCond),
     HALT,
     NOP,
+    STOP,
     LD(LoadType),
     PUSH(StackTarget),
     POP(StackTarget),
@@ -75,10 +76,9 @@ impl Instruction {
 
     /// Takes an byte instruction and returns an optional Instruction
     pub fn from_byte_not_prefixed(byte: u8) -> Option<Instruction> {
-        let l_nib = byte & 0x0F;
         match byte {
             0x00 => Some(Instruction::NOP),
-            // 0x10 => Some(Instruction::STOP),
+            0x10 => Some(Instruction::STOP),
             0x76 => Some(Instruction::HALT),
             0x01 | 0x11 | 0x21 | 0x31 => Some(Instruction::LD(LoadType::from(byte))),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
@@ -102,14 +102,14 @@ impl Instruction {
             0x2D => Some(Instruction::DEC(ArithmeticTarget::L)),
             0x3D => Some(Instruction::DEC(ArithmeticTarget::A)),
             0x40..=0x7F => Some(Instruction::LD(LoadType::from(byte))),
-            0x80..=0x87 => Some(Instruction::ADD(ArithmeticTarget::from(l_nib))),
-            0x88..=0x8F => Some(Instruction::ADC(ArithmeticTarget::from(l_nib))),
-            0x90..=0x97 => Some(Instruction::SUB(ArithmeticTarget::from(l_nib))),
-            0x98..=0x9F => Some(Instruction::SBC(ArithmeticTarget::from(l_nib))),
-            0xA0..=0xA7 => Some(Instruction::AND(ArithmeticTarget::from(l_nib))),
-            0xA8..=0xAF => Some(Instruction::XOR(ArithmeticTarget::from(l_nib))),
-            0xB0..=0xB7 => Some(Instruction::OR(ArithmeticTarget::from(l_nib))),
-            0xB8..=0xBF => Some(Instruction::CP(ArithmeticTarget::from(l_nib))),
+            0x80..=0x87 | 0xC6 => Some(Instruction::ADD(ArithmeticTarget::from(byte))),
+            0x88..=0x8F | 0xCE => Some(Instruction::ADC(ArithmeticTarget::from(byte))),
+            0x90..=0x97 | 0xD6 => Some(Instruction::SUB(ArithmeticTarget::from(byte))),
+            0x98..=0x9F | 0xDE => Some(Instruction::SBC(ArithmeticTarget::from(byte))),
+            0xA0..=0xA7 | 0xE6 => Some(Instruction::AND(ArithmeticTarget::from(byte))),
+            0xA8..=0xAF | 0xEE => Some(Instruction::XOR(ArithmeticTarget::from(byte))),
+            0xB0..=0xB7 | 0xF6 => Some(Instruction::OR(ArithmeticTarget::from(byte))),
+            0xB8..=0xBF | 0xFE => Some(Instruction::CP(ArithmeticTarget::from(byte))),
             0x09 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::BC)),
             0x19 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::DE)),
             0x29 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::HL)),
@@ -122,6 +122,14 @@ impl Instruction {
             0xD5 => Some(Instruction::PUSH(StackTarget::DE)),
             0xE5 => Some(Instruction::PUSH(StackTarget::HL)),
             0xF5 => Some(Instruction::PUSH(StackTarget::AF)),
+            0xC0 => Some(Instruction::RET(JumpCond::NotZero)),
+            0xD0 => Some(Instruction::RET(JumpCond::NotCarry)),
+            0xC8 => Some(Instruction::RET(JumpCond::Zero)),
+            0xD8 => Some(Instruction::RET(JumpCond::Carry)),
+            0xC9 => Some(Instruction::RET(JumpCond::Always)),
+            0xC2 => Some(Instruction::JP(JumpCond::NotZero)),
+            0xD2 => Some(Instruction::JP(JumpCond::NotCarry)),
+            0xC3 => Some(Instruction::JP(JumpCond::Always)),
             0xCB => panic!("This is a prefixed byte! This should never happen!"),
             _ => None, // TODO: Add the rest
         }
@@ -163,23 +171,30 @@ pub enum ArithmeticTarget {
     H,
     L,
     HLI,
+    D8,
 }
 
 impl std::convert::From<u8> for ArithmeticTarget {
-    fn from(nibble: u8) -> ArithmeticTarget {
-        match nibble {
-            0x0 | 0x8 => ArithmeticTarget::B,
-            0x1 | 0x9 => ArithmeticTarget::C,
-            0x2 | 0xA => ArithmeticTarget::D,
-            0x3 | 0xB => ArithmeticTarget::E,
-            0x4 | 0xC => ArithmeticTarget::H,
-            0x5 | 0xD => ArithmeticTarget::L,
-            0x6 | 0xE => ArithmeticTarget::HLI,
-            0x7 | 0xF => ArithmeticTarget::A,
-            _ => panic!(
-                "u8 {:?} cannot be converted into an ArithmeticTarget",
-                nibble
-            ),
+    fn from(byte: u8) -> ArithmeticTarget {
+        match byte {
+            0xC6 | 0xD6 | 0xE6 | 0xF6 | 0xCE | 0xDE | 0xEE | 0xFE => ArithmeticTarget::D8,
+            _ => {
+                let nibble = byte & 0x0F;
+                match nibble {
+                    0x0 | 0x8 => ArithmeticTarget::B,
+                    0x1 | 0x9 => ArithmeticTarget::C,
+                    0x2 | 0xA => ArithmeticTarget::D,
+                    0x3 | 0xB => ArithmeticTarget::E,
+                    0x4 | 0xC => ArithmeticTarget::H,
+                    0x5 | 0xD => ArithmeticTarget::L,
+                    0x6 | 0xE => ArithmeticTarget::HLI,
+                    0x7 | 0xF => ArithmeticTarget::A,
+                    _ => panic!(
+                        "u8 {:?} cannot be converted into an ArithmeticTarget",
+                        nibble
+                    ),
+                }
+            }
         }
     }
 }

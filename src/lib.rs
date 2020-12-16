@@ -15,7 +15,7 @@ pub struct CPU {
     pub registers: Registers,
     pub pc: u16,
     pub sp: u16,
-    bus: MemoryBus,
+    pub bus: MemoryBus,
     pub is_halted: bool,
 }
 
@@ -230,7 +230,11 @@ impl CPU {
             LoadByteSource::H => self.registers.h,
             LoadByteSource::L => self.registers.l,
             LoadByteSource::D8 => self.read_next_byte(), // TODO: Double check this
-            LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
+            LoadByteSource::HLI | LoadByteSource::HLINC | LoadByteSource::HLDEC => {
+                self.bus.read_byte(self.registers.get_hl())
+            }
+            LoadByteSource::BCI => self.bus.read_byte(self.registers.get_bc()),
+            LoadByteSource::DEI => self.bus.read_byte(self.registers.get_de()),
         }
     }
 
@@ -527,6 +531,17 @@ impl CPU {
                     LoadByteTarget::HLI => {
                         self.bus.write_byte(self.registers.get_hl(), source_value)
                     }
+                    // I think the only possible source value here comes from register a.
+                    LoadByteTarget::BCI => self.bus.write_byte(self.registers.get_bc(), source_value), // write to the location in memory stored at the address stored in this register
+                    LoadByteTarget::DEI => self.bus.write_byte(self.registers.get_de(), source_value),
+                    LoadByteTarget::HLINC => {
+                        self.bus.write_byte(self.registers.get_hl(), source_value);
+                        self.registers.set_hl(self.registers.get_hl().wrapping_add(1));
+                    },
+                    LoadByteTarget::HLDEC => {
+                        self.bus.write_byte(self.registers.get_hl(), source_value);
+                        self.registers.set_hl(self.registers.get_hl().wrapping_sub(1));
+                    },
                 }
                 // If we read from the D8, we should move the pc up one extra spot
                 match source {

@@ -15,8 +15,8 @@ impl MemoryBus {
         self.memory[address as usize]
     }
 
-    pub fn write_byte(&self, address: u16, value: u8) {
-        unimplemented!();
+    pub fn write_byte(&mut self, address: u16, value: u8) {
+        self.memory[address as usize] = value;
     }
 }
 
@@ -30,19 +30,27 @@ pub enum LoadByteTarget {
     H,
     L,
     HLI, // read from the address stored in HL
+    BCI,
+    DEI,
+    HLINC, // TODO: Maybe combine
+    HLDEC,
 }
 
 impl std::convert::From<u8> for LoadByteTarget {
     fn from(byte: u8) -> LoadByteTarget {
         match byte {
+            0x02 => LoadByteTarget::BCI,
+            0x12 => LoadByteTarget::DEI,
+            0x22 => LoadByteTarget::HLINC,
+            0x32 => LoadByteTarget::HLDEC,
             0x40..=0x47 | 0x06 => LoadByteTarget::B,
-            0x48..=0x4F => LoadByteTarget::C,
+            0x48..=0x4F | 0x0E => LoadByteTarget::C,
             0x50..=0x57 | 0x16 => LoadByteTarget::D,
-            0x58..=0x5F => LoadByteTarget::E,
+            0x58..=0x5F | 0x1E => LoadByteTarget::E,
             0x60..=0x67 | 0x26 => LoadByteTarget::H,
-            0x68..=0x6F => LoadByteTarget::L,
+            0x68..=0x6F | 0x2E => LoadByteTarget::L,
             0x70..=0x75 | 0x77 | 0x36 => LoadByteTarget::HLI,
-            0x78..=0x7F => LoadByteTarget::A,
+            0x78..=0x7F | 0x3E => LoadByteTarget::A,
             _ => panic!("u8 {:?} cannot be converted into an LoadByteTarget", byte),
         }
     }
@@ -52,7 +60,12 @@ impl std::convert::From<u8> for LoadByteSource {
     fn from(byte: u8) -> LoadByteSource {
         // TODO: Add the other bytes
         match byte {
-            0x06 | 0x16 | 0x26 | 0x36 => LoadByteSource::D8,
+            0x06 | 0x16 | 0x26 | 0x36 | 0x0E | 0x1E | 0x2E | 0x3E => LoadByteSource::D8,
+            0x02 | 0x12 | 0x22 | 0x32 => LoadByteSource::A, 
+            0x0A => LoadByteSource::BCI,
+            0x1A => LoadByteSource::DEI,
+            0x2A => LoadByteSource::HLINC,
+            0x3A => LoadByteSource::HLDEC,
             _ => {
                 let nibble = byte & 0x0F;
                 match nibble {
@@ -82,6 +95,10 @@ pub enum LoadByteSource {
     L,
     D8,  // direct 8 bit value, read next byte
     HLI, // read from the address stored in HL
+    BCI,
+    DEI,
+    HLINC, // TODO: Maybe combine these with HLI, whatever makes the code simpler
+    HLDEC,
 }
 
 #[derive(Debug, PartialEq)]
@@ -121,7 +138,9 @@ impl std::convert::From<u8> for LoadType {
             }
             0x02 | 0x12 | 0x22 | 0x32 => unimplemented!(),
             0x0A | 0x1A | 0x2A | 0x3A => unimplemented!(),
-            0x0E | 0x1E | 0x2E | 0x3E => unimplemented!(),
+            0x0E | 0x1E | 0x2E | 0x3E => {
+                LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte))
+            }
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }
     }

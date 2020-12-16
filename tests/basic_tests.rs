@@ -1,4 +1,4 @@
-use gb_emulator::{ArithmeticTarget, Instruction, Registers, SixteenBitArithmeticTarget, CPU};
+use gb_emulator::{ArithmeticTarget, Instruction, Registers, SixteenBitArithmeticTarget, CPU, LoadType, LoadByteSource, LoadByteTarget};
 
 pub fn setup() -> CPU {
     CPU::default()
@@ -320,8 +320,48 @@ fn ccf_test() {
 }
 
 #[test]
-fn scf_tst() {
+fn scf_test() {
     let mut cpu = setup();
     cpu.execute(Instruction::SCF);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
+
+#[test]
+fn load_test_bci() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x10;
+    cpu.registers.set_bc(0xA1A1);
+    cpu.execute(Instruction::LD(LoadType::Byte(LoadByteTarget::BCI, LoadByteSource::A)));
+    assert_eq!(cpu.bus.read_byte(0x0A1A1), 0x10);
+}
+
+#[test]
+fn load_test_dei() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x10;
+    cpu.registers.set_de(0xA1A1);
+    cpu.execute(Instruction::LD(LoadType::Byte(LoadByteTarget::DEI, LoadByteSource::A)));
+    assert_eq!(cpu.bus.read_byte(0x0A1A1), 0x10);
+}
+
+#[test]
+fn load_test_hlinc() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x10;
+    cpu.registers.set_hl(0xA1A1);
+    cpu.execute(Instruction::LD(LoadType::Byte(LoadByteTarget::HLINC, LoadByteSource::A)));
+    assert_eq!(cpu.bus.read_byte(0x0A1A1), 0x10);
+    assert_eq!(cpu.registers.get_hl() - 1, 0xA1A1);
+}
+
+#[test]
+fn load_test_hldec() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x10;
+    cpu.registers.set_hl(0xA1A1);
+    cpu.execute(Instruction::LD(LoadType::Byte(LoadByteTarget::HLDEC, LoadByteSource::A)));
+    assert_eq!(cpu.bus.read_byte(0x0A1A1), 0x10);
+    assert_eq!(cpu.registers.get_hl() + 1, 0xA1A1);
+}
+
+// TODO: Add more load tests

@@ -3,6 +3,8 @@ use gb_emulator::{
     LoadWordTarget,
 };
 
+// TODO: Add more load tests
+
 #[test]
 fn from_byte_prefix_rlc() {
     let op0 = Instruction::from_byte(0x00, true).unwrap();
@@ -202,13 +204,13 @@ fn from_byte_load() {
         );
     }
 
-    for i in vec![0x06, 0x16, 0x26, 0x36] {
+    for i in vec![0x06, 0x16, 0x26, 0x36, 0x0E, 0x1E, 0x2E, 0x3E] {
         let op = Instruction::from_byte(i, false).unwrap();
         assert_eq!(
             op,
             Instruction::LD(LoadType::Byte(
                 LoadByteTarget::from(i),
-                LoadByteSource::from(i),
+                LoadByteSource::D8,
             ))
         )
     }

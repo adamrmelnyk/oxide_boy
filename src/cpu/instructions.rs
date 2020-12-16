@@ -1,13 +1,11 @@
-use crate::cpu::memory::{
-    LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget,
-};
+use crate::cpu::memory::LoadType;
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
     ADDHL(SixteenBitArithmeticTarget),
-    ADDSP(SixteenBitArithmeticTarget),
+    ADDSP(SixteenBitArithmeticTarget), // TODO: I don't think this is right
     INC16(SixteenBitArithmeticTarget),
     DEC16(SixteenBitArithmeticTarget),
     ADC(ArithmeticTarget),
@@ -80,7 +78,12 @@ impl Instruction {
             0x00 => Some(Instruction::NOP),
             0x10 => Some(Instruction::STOP),
             0x76 => Some(Instruction::HALT),
-            0x01 | 0x11 | 0x21 | 0x31 => Some(Instruction::LD(LoadType::from(byte))),
+            0x40..=0x7F
+            | 0x01 | 0x11 | 0x21 | 0x31
+            | 0x06 | 0x16 | 0x26 | 0x36
+            | 0x02 | 0x12 | 0x22 | 0x32
+            | 0x0A | 0x1A | 0x2A | 0x3A
+            | 0x0E | 0x1E | 0x2E | 0x3E => Some(Instruction::LD(LoadType::from(byte))),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
             0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
             0x23 => Some(Instruction::INC16(SixteenBitArithmeticTarget::HL)),
@@ -101,7 +104,6 @@ impl Instruction {
             0x1D => Some(Instruction::DEC(ArithmeticTarget::E)),
             0x2D => Some(Instruction::DEC(ArithmeticTarget::L)),
             0x3D => Some(Instruction::DEC(ArithmeticTarget::A)),
-            0x40..=0x7F => Some(Instruction::LD(LoadType::from(byte))),
             0x80..=0x87 | 0xC6 => Some(Instruction::ADD(ArithmeticTarget::from(byte))),
             0x88..=0x8F | 0xCE => Some(Instruction::ADC(ArithmeticTarget::from(byte))),
             0x90..=0x97 | 0xD6 => Some(Instruction::SUB(ArithmeticTarget::from(byte))),

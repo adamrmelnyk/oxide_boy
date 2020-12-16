@@ -179,7 +179,9 @@ impl CPU {
                 Instruction::LD(load_type) => self.load(load_type),
                 Instruction::HALT => self.halt(),
                 Instruction::NOP => { /* NO OP, simply advances the pc */ }
-                Instruction::STOP => { unimplemented!() },
+                Instruction::STOP => {
+                    unimplemented!()
+                }
                 Instruction::PUSH(target) => self.push_from_target(target),
                 Instruction::POP(target) => self.pop_and_store(target),
                 Instruction::CALL(condition) => {
@@ -204,7 +206,7 @@ impl CPU {
             ArithmeticTarget::H => self.registers.h,
             ArithmeticTarget::L => self.registers.l,
             ArithmeticTarget::HLI => unimplemented!(), // TODO:
-            ArithmeticTarget::D8 => unimplemented!(), // TODO
+            ArithmeticTarget::D8 => unimplemented!(),  // TODO
         }
     }
 
@@ -270,7 +272,8 @@ impl CPU {
     fn addsp(&mut self, value: u16) -> u16 {
         let half_carry = (self.sp & 0xFF) + (value & 0xFF) > 0xFF;
         let (new_value, did_overflow) = self.sp.overflowing_add(value);
-        self.registers.set_flag_registers(false, false, half_carry, did_overflow);
+        self.registers
+            .set_flag_registers(false, false, half_carry, did_overflow);
         new_value
     }
 
@@ -406,7 +409,8 @@ impl CPU {
     /// Complement the carry flag
     /// - 0 0 *
     fn ccf(&mut self) {
-        self.registers.set_flag_registers_nz(false, false, !self.registers.f.carry);
+        self.registers
+            .set_flag_registers_nz(false, false, !self.registers.f.carry);
     }
 
     /// Set the carry flag

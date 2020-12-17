@@ -43,6 +43,7 @@ pub enum Instruction {
     POP(StackTarget),
     CALL(JumpCond),
     RET(JumpCond),
+    RST,
 }
 
 impl Instruction {
@@ -104,6 +105,10 @@ impl Instruction {
             0x1D => Some(Instruction::DEC(ArithmeticTarget::E)),
             0x2D => Some(Instruction::DEC(ArithmeticTarget::L)),
             0x3D => Some(Instruction::DEC(ArithmeticTarget::A)),
+            0x0F => Some(Instruction::RRCA),
+            0x1F => Some(Instruction::RRA),
+            0x2F => Some(Instruction::CPL),
+            0x3F => Some(Instruction::CCF),
             0x80..=0x87 | 0xC6 => Some(Instruction::ADD(ArithmeticTarget::from(byte))),
             0x88..=0x8F | 0xCE => Some(Instruction::ADC(ArithmeticTarget::from(byte))),
             0x90..=0x97 | 0xD6 => Some(Instruction::SUB(ArithmeticTarget::from(byte))),
@@ -132,7 +137,18 @@ impl Instruction {
             0xC2 => Some(Instruction::JP(JumpCond::NotZero)),
             0xD2 => Some(Instruction::JP(JumpCond::NotCarry)),
             0xC3 => Some(Instruction::JP(JumpCond::Always)),
+            0xCF => Some(Instruction::RST), // TODO: All of these have addresses that go with them
+            0xDF => Some(Instruction::RST),
+            0xEF => Some(Instruction::RST),
+            0xC7 => Some(Instruction::RST),
+            0xD7 => Some(Instruction::RST),
+            0xE7 => Some(Instruction::RST),
+            0xF7 => Some(Instruction::RST),
             0xCB => panic!("This is a prefixed byte! This should never happen!"),
+            0xD3 | 0xE3 | 0xE4 | 0xF4 | 0xDB | 0xEB | 0xEC | 0xFC | 0xDD | 0xED | 0xFD => {
+                println!("{} is an undefined function", byte);
+                None
+            },
             _ => None, // TODO: Add the rest
         }
     }

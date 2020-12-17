@@ -251,3 +251,11 @@ fn from_byte_non_prefix_halt() {
     let op = Instruction::from_byte(0x76, false).unwrap();
     assert_eq!(op, Instruction::HALT);
 }
+
+#[test]
+fn undefined_function_tests() {
+    for i in vec!(0xD3, 0xE3, 0xE4, 0xF4, 0xDB, 0xEB, 0xEC, 0xFC, 0xDD, 0xED, 0xFD) {
+        let op = Instruction::from_byte(i, false);
+        assert_eq!(op, None);
+    }
+}

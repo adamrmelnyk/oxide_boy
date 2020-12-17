@@ -190,6 +190,7 @@ impl CPU {
                 Instruction::RET(condition) => {
                     self.ret(self.should_jump(condition));
                 }
+                Instruction::RST => {},
             }
         }
         self.pc.wrapping_add(1) // After each operation we increment the pc and return the value

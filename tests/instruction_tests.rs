@@ -208,10 +208,7 @@ fn from_byte_load() {
         let op = Instruction::from_byte(i, false).unwrap();
         assert_eq!(
             op,
-            Instruction::LD(LoadType::Byte(
-                LoadByteTarget::from(i),
-                LoadByteSource::D8,
-            ))
+            Instruction::LD(LoadType::Byte(LoadByteTarget::from(i), LoadByteSource::D8,))
         )
     }
 }

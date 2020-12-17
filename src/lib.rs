@@ -196,7 +196,7 @@ impl CPU {
     }
 
     /// Helper method for returning the value of an 8bit register
-    pub fn register_value(&self, target: &ArithmeticTarget) -> u8 {
+    pub fn register_value(&mut self, target: &ArithmeticTarget) -> u8 {
         match target {
             ArithmeticTarget::A => self.registers.a,
             ArithmeticTarget::B => self.registers.b,
@@ -205,8 +205,8 @@ impl CPU {
             ArithmeticTarget::E => self.registers.e,
             ArithmeticTarget::H => self.registers.h,
             ArithmeticTarget::L => self.registers.l,
-            ArithmeticTarget::HLI => unimplemented!(), // TODO:
-            ArithmeticTarget::D8 => unimplemented!(),  // TODO
+            ArithmeticTarget::HLI => self.bus.read_byte(self.registers.get_hl()),
+            ArithmeticTarget::D8 => self.read_next_byte(),
         }
     }
 
@@ -217,24 +217,6 @@ impl CPU {
             SixteenBitArithmeticTarget::DE => self.registers.get_de(),
             SixteenBitArithmeticTarget::HL => self.registers.get_hl(),
             SixteenBitArithmeticTarget::SP => self.sp,
-        }
-    }
-
-    fn byte_from_lbs(&self, source: &LoadByteSource) -> u8 {
-        match source {
-            LoadByteSource::A => self.registers.a,
-            LoadByteSource::B => self.registers.b,
-            LoadByteSource::C => self.registers.c,
-            LoadByteSource::D => self.registers.d,
-            LoadByteSource::E => self.registers.e,
-            LoadByteSource::H => self.registers.h,
-            LoadByteSource::L => self.registers.l,
-            LoadByteSource::D8 => self.read_next_byte(), // TODO: Double check this
-            LoadByteSource::HLI | LoadByteSource::HLINC | LoadByteSource::HLDEC => {
-                self.bus.read_byte(self.registers.get_hl())
-            }
-            LoadByteSource::BCI => self.bus.read_byte(self.registers.get_bc()),
-            LoadByteSource::DEI => self.bus.read_byte(self.registers.get_de()),
         }
     }
 
@@ -517,54 +499,93 @@ impl CPU {
 
     fn load(&mut self, load_type: LoadType) {
         match load_type {
-            LoadType::Byte(target, source) => {
-                // TODO: This will need to be made into it's own method
-                let source_value = self.byte_from_lbs(&source);
-                match target {
-                    LoadByteTarget::A => self.registers.a = source_value,
-                    LoadByteTarget::B => self.registers.b = source_value,
-                    LoadByteTarget::C => self.registers.c = source_value,
-                    LoadByteTarget::D => self.registers.d = source_value,
-                    LoadByteTarget::E => self.registers.e = source_value,
-                    LoadByteTarget::H => self.registers.h = source_value,
-                    LoadByteTarget::L => self.registers.l = source_value,
-                    LoadByteTarget::HLI => {
-                        self.bus.write_byte(self.registers.get_hl(), source_value)
-                    }
-                    // I think the only possible source value here comes from register a.
-                    LoadByteTarget::BCI => self.bus.write_byte(self.registers.get_bc(), source_value), // write to the location in memory stored at the address stored in this register
-                    LoadByteTarget::DEI => self.bus.write_byte(self.registers.get_de(), source_value),
-                    LoadByteTarget::HLINC => {
-                        self.bus.write_byte(self.registers.get_hl(), source_value);
-                        self.registers.set_hl(self.registers.get_hl().wrapping_add(1));
-                    },
-                    LoadByteTarget::HLDEC => {
-                        self.bus.write_byte(self.registers.get_hl(), source_value);
-                        self.registers.set_hl(self.registers.get_hl().wrapping_sub(1));
-                    },
-                }
-                // If we read from the D8, we should move the pc up one extra spot
-                match source {
-                    LoadByteSource::D8 => {
-                        self.pc.wrapping_add(1);
-                    }
-                    _ => {}
-                }
+            LoadType::Byte(target, source) => self.load_byte_type(target, source),
+            LoadType::Word(target, source) => self.load_word_type(target, source),
+        }
+    }
+
+    fn load_byte_type(&mut self, target: LoadByteTarget, source: LoadByteSource) {
+        let source_value = self.byte_from_lbs(&source);
+        match target {
+            LoadByteTarget::A => self.registers.a = source_value,
+            LoadByteTarget::B => self.registers.b = source_value,
+            LoadByteTarget::C => self.registers.c = source_value,
+            LoadByteTarget::D => self.registers.d = source_value,
+            LoadByteTarget::E => self.registers.e = source_value,
+            LoadByteTarget::H => self.registers.h = source_value,
+            LoadByteTarget::L => self.registers.l = source_value,
+            LoadByteTarget::HLI => self.bus.write_byte(self.registers.get_hl(), source_value),
+            // I think the only possible source value here comes from register a.
+            LoadByteTarget::BCI => self.bus.write_byte(self.registers.get_bc(), source_value), // write to the location in memory stored at the address stored in this register
+            LoadByteTarget::DEI => self.bus.write_byte(self.registers.get_de(), source_value),
+            LoadByteTarget::HLINC => {
+                self.bus.write_byte(self.registers.get_hl(), source_value);
+                self.registers
+                    .set_hl(self.registers.get_hl().wrapping_add(1));
             }
-            LoadType::Word(target, souce) => {
-                match target {
-                    LoadWordTarget::BC => unimplemented!(),
-                    LoadWordTarget::DE => unimplemented!(),
-                    LoadWordTarget::HL => unimplemented!(),
-                    LoadWordTarget::SP => unimplemented!(),
-                }
-                match souce {
-                    LoadWordSource::BC => unimplemented!(),
-                    LoadWordSource::DE => unimplemented!(),
-                    LoadWordSource::HL => unimplemented!(),
-                    LoadWordSource::D16 => unimplemented!(),
-                }
+            LoadByteTarget::HLDEC => {
+                self.bus.write_byte(self.registers.get_hl(), source_value);
+                self.registers
+                    .set_hl(self.registers.get_hl().wrapping_sub(1));
             }
+        }
+        match source {
+            // If we read from the D8, we should move the pc up one extra spot
+            LoadByteSource::D8 => {
+                self.pc.wrapping_add(1);
+            }
+            LoadByteSource::HLINC => {
+                self.registers
+                    .set_hl(self.registers.get_hl().wrapping_add(1));
+            }
+            LoadByteSource::HLDEC => {
+                self.registers
+                    .set_hl(self.registers.get_hl().wrapping_sub(1));
+            }
+            _ => {}
+        }
+    }
+
+    fn byte_from_lbs(&self, source: &LoadByteSource) -> u8 {
+        match source {
+            LoadByteSource::A => self.registers.a,
+            LoadByteSource::B => self.registers.b,
+            LoadByteSource::C => self.registers.c,
+            LoadByteSource::D => self.registers.d,
+            LoadByteSource::E => self.registers.e,
+            LoadByteSource::H => self.registers.h,
+            LoadByteSource::L => self.registers.l,
+            LoadByteSource::D8 => self.read_next_byte(), // TODO: Double check this
+            LoadByteSource::HLI | LoadByteSource::HLINC | LoadByteSource::HLDEC => {
+                self.bus.read_byte(self.registers.get_hl())
+            }
+            LoadByteSource::BCI => self.bus.read_byte(self.registers.get_bc()),
+            LoadByteSource::DEI => self.bus.read_byte(self.registers.get_de()),
+        }
+    }
+
+    fn load_word_type(&mut self, target: LoadWordTarget, source: LoadWordSource) {
+        let source_value = self.word_from_lws(&source);
+        match target {
+            LoadWordTarget::BC => self.registers.set_bc(source_value),
+            LoadWordTarget::DE => self.registers.set_de(source_value),
+            LoadWordTarget::HL => self.registers.set_hl(source_value),
+            LoadWordTarget::SP => self.sp = source_value,
+        }
+        match source {
+            LoadWordSource::D16 => {
+                self.pc.wrapping_add(2);
+            }
+            _ => {}
+        }
+    }
+
+    fn word_from_lws(&self, source: &LoadWordSource) -> u16 {
+        match source {
+            LoadWordSource::BC => self.registers.get_bc(),
+            LoadWordSource::DE => self.registers.get_de(),
+            LoadWordSource::HL => self.registers.get_hl(),
+            LoadWordSource::D16 => self.read_next_word(),
         }
     }
 

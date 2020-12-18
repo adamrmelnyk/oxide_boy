@@ -5,7 +5,7 @@ pub enum Instruction {
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
     ADDHL(SixteenBitArithmeticTarget),
-    ADDSP(SixteenBitArithmeticTarget), // TODO: I don't think this is right
+    ADDSP,
     INC16(SixteenBitArithmeticTarget),
     DEC16(SixteenBitArithmeticTarget),
     ADC(ArithmeticTarget),
@@ -21,7 +21,8 @@ pub enum Instruction {
     RRA,
     RLA,
     RRCA,
-    RRLA,
+    RLCA,
+    DAA,
     CPL,
     BIT(u8, ArithmeticTarget),
     RESET(u8, ArithmeticTarget),
@@ -35,15 +36,24 @@ pub enum Instruction {
     SLA(ArithmeticTarget),
     SWAP(ArithmeticTarget),
     JP(JumpCond),
+    JPHL,
     HALT,
     NOP,
+    JR(JumpCond),
     STOP,
     LD(LoadType),
     PUSH(StackTarget),
     POP(StackTarget),
     CALL(JumpCond),
     RET(JumpCond),
+    RETI,
     RST,
+    EI,
+    DI,
+    LDHA,
+    LDHA8,
+    LDA16,
+    LDA,
 }
 
 impl Instruction {
@@ -78,17 +88,26 @@ impl Instruction {
         match byte {
             0x00 => Some(Instruction::NOP),
             0x10 => Some(Instruction::STOP),
+            0x20 => Some(Instruction::JR(JumpCond::NotZero)),
+            0x30 => Some(Instruction::JR(JumpCond::NotCarry)),
+            0x18 => Some(Instruction::JR(JumpCond::Always)),
+            0x28 => Some(Instruction::JR(JumpCond::Zero)),
+            0x38 => Some(Instruction::JR(JumpCond::Carry)),
             0x76 => Some(Instruction::HALT),
             0x40..=0x7F
             | 0x01 | 0x11 | 0x21 | 0x31
             | 0x06 | 0x16 | 0x26 | 0x36
             | 0x02 | 0x12 | 0x22 | 0x32
             | 0x0A | 0x1A | 0x2A | 0x3A
-            | 0x0E | 0x1E | 0x2E | 0x3E => Some(Instruction::LD(LoadType::from(byte))),
+            | 0x0E | 0x1E | 0x2E | 0x3E | 0x08 => Some(Instruction::LD(LoadType::from(byte))),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
             0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
             0x23 => Some(Instruction::INC16(SixteenBitArithmeticTarget::HL)),
             0x33 => Some(Instruction::INC16(SixteenBitArithmeticTarget::SP)),
+            0x0B => Some(Instruction::DEC16(SixteenBitArithmeticTarget::BC)),
+            0x1B => Some(Instruction::DEC16(SixteenBitArithmeticTarget::DE)),
+            0x2B => Some(Instruction::DEC16(SixteenBitArithmeticTarget::HL)),
+            0x3B => Some(Instruction::DEC16(SixteenBitArithmeticTarget::SP)),
             0x04 => Some(Instruction::INC(ArithmeticTarget::B)),
             0x14 => Some(Instruction::INC(ArithmeticTarget::D)),
             0x24 => Some(Instruction::INC(ArithmeticTarget::H)),
@@ -107,6 +126,10 @@ impl Instruction {
             0x3D => Some(Instruction::DEC(ArithmeticTarget::A)),
             0x0F => Some(Instruction::RRCA),
             0x1F => Some(Instruction::RRA),
+            0x07 => Some(Instruction::RLCA),
+            0x17 => Some(Instruction::RLA),
+            0x27 => Some(Instruction::DAA),
+            0x37 => Some(Instruction::SCF),
             0x2F => Some(Instruction::CPL),
             0x3F => Some(Instruction::CCF),
             0x80..=0x87 | 0xC6 => Some(Instruction::ADD(ArithmeticTarget::from(byte))),
@@ -121,6 +144,7 @@ impl Instruction {
             0x19 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::DE)),
             0x29 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::HL)),
             0x39 => Some(Instruction::ADDHL(SixteenBitArithmeticTarget::SP)),
+            0xE8 => Some(Instruction::ADDSP),
             0xC1 => Some(Instruction::POP(StackTarget::BC)),
             0xD1 => Some(Instruction::POP(StackTarget::DE)),
             0xE1 => Some(Instruction::POP(StackTarget::HL)),
@@ -134,9 +158,17 @@ impl Instruction {
             0xC8 => Some(Instruction::RET(JumpCond::Zero)),
             0xD8 => Some(Instruction::RET(JumpCond::Carry)),
             0xC9 => Some(Instruction::RET(JumpCond::Always)),
+            0xD9 => Some(Instruction::RETI),
             0xC2 => Some(Instruction::JP(JumpCond::NotZero)),
             0xD2 => Some(Instruction::JP(JumpCond::NotCarry)),
             0xC3 => Some(Instruction::JP(JumpCond::Always)),
+            0xCA => Some(Instruction::JP(JumpCond::Zero)),
+            0xDA => Some(Instruction::JP(JumpCond::Carry)),
+            0xE9 => Some(Instruction::JPHL),
+            0xC4 => Some(Instruction::CALL(JumpCond::NotZero)),
+            0xD4 => Some(Instruction::CALL(JumpCond::NotCarry)),
+            0xCC => Some(Instruction::CALL(JumpCond::Zero)),
+            0xDC => Some(Instruction::CALL(JumpCond::Carry)),
             0xCF => Some(Instruction::RST), // TODO: All of these have addresses that go with them
             0xDF => Some(Instruction::RST),
             0xEF => Some(Instruction::RST),
@@ -144,11 +176,17 @@ impl Instruction {
             0xD7 => Some(Instruction::RST),
             0xE7 => Some(Instruction::RST),
             0xF7 => Some(Instruction::RST),
+            0xFB => Some(Instruction::EI),
+            0xF3 => Some(Instruction::DI),
+            0xEA => Some(Instruction::LDA16),
+            0xFA => Some(Instruction::LDA),
             0xCB => panic!("This is a prefixed byte! This should never happen!"),
             0xD3 | 0xE3 | 0xE4 | 0xF4 | 0xDB | 0xEB | 0xEC | 0xFC | 0xDD | 0xED | 0xFD => {
                 println!("{} is an undefined function", byte);
                 None
-            },
+            }
+            0xE0 => Some(Instruction::LDHA),
+            0xF0 => Some(Instruction::LDHA8),
             _ => None, // TODO: Add the rest
         }
     }

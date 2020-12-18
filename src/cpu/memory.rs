@@ -18,6 +18,19 @@ impl MemoryBus {
     pub fn write_byte(&mut self, address: u16, value: u8) {
         self.memory[address as usize] = value;
     }
+
+    pub fn read_word(&self, address: u16) -> u16 {
+        let l_byte = self.memory[address as usize];
+        let h_byte = self.memory[(address + 1) as usize];
+        ((h_byte as u16) << 8) | l_byte as u16
+    }
+
+    pub fn write_word(&mut self, address: u16, value: u16) {
+        let h_byte = (value >> 8) as u8;
+        let l_byte = value as u8;
+        self.write_byte(address, l_byte);
+        self.write_byte(address + 1, h_byte);
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -106,7 +119,7 @@ pub enum LoadWordSource {
     BC,
     DE,
     HL,
-    // SP, TODO: can you read from the SP as well?
+    SP,
     D16, // direct 16 bit value, read the next two bytes
 }
 
@@ -116,6 +129,7 @@ pub enum LoadWordTarget {
     DE,
     HL,
     SP,
+    D16, // direct 16 bit value, read the next two bytes
 }
 
 #[derive(Debug, PartialEq)]
@@ -131,6 +145,7 @@ impl std::convert::From<u8> for LoadType {
             0x11 => LoadType::Word(LoadWordTarget::DE, LoadWordSource::D16),
             0x21 => LoadType::Word(LoadWordTarget::HL, LoadWordSource::D16),
             0x31 => LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16),
+            0x08 => LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
             // TODO: The load types should all have the same arm, whatever looks the least messy
             0x40..=0x7F => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
             0x06 | 0x16 | 0x26 | 0x36 => {
@@ -141,6 +156,7 @@ impl std::convert::From<u8> for LoadType {
             0x0E | 0x1E | 0x2E | 0x3E => {
                 LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte))
             }
+            0xEA | 0xFA => unimplemented!(),
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }
     }

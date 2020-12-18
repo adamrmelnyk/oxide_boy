@@ -94,8 +94,8 @@ impl CPU {
                     let new_value = self.addhl(value);
                     self.registers.set_hl(new_value);
                 }
-                Instruction::ADDSP(target) => {
-                    let value = self.sixteen_bit_register_value(&target);
+                Instruction::ADDSP => {
+                    let value = self.read_next_byte();
                     let new_value = self.addsp(value);
                     self.sp = new_value;
                 }
@@ -144,7 +144,8 @@ impl CPU {
                 Instruction::RRA => self.rra(),
                 Instruction::RLA => self.rla(),
                 Instruction::RRCA => self.rrca(),
-                Instruction::RRLA => self.rlca(),
+                Instruction::RLCA => self.rlca(),
+                Instruction::DAA => {}
                 Instruction::CPL => self.cpl(),
                 Instruction::BIT(index, target) => {}
                 Instruction::RESET(index, target) => {}
@@ -176,6 +177,10 @@ impl CPU {
                 Instruction::JP(condition) => {
                     self.jump(self.should_jump(condition));
                 }
+                Instruction::JPHL => {},
+                Instruction::JR(condition) => {
+                    self.jump_relative(self.should_jump(condition));
+                }
                 Instruction::LD(load_type) => self.load(load_type),
                 Instruction::HALT => self.halt(),
                 Instruction::NOP => { /* NO OP, simply advances the pc */ }
@@ -190,7 +195,14 @@ impl CPU {
                 Instruction::RET(condition) => {
                     self.ret(self.should_jump(condition));
                 }
+                Instruction::RETI => {},
                 Instruction::RST => {},
+                Instruction::EI => self.enable_interupts(),
+                Instruction::DI => self.disable_interupts(),
+                Instruction::LDHA => {},
+                Instruction::LDHA8 => {},
+                Instruction::LDA16 => {},
+                Instruction::LDA => {},
             }
         }
         self.pc.wrapping_add(1) // After each operation we increment the pc and return the value
@@ -246,7 +258,7 @@ impl CPU {
     // - 0 * *
     fn addhl(&mut self, value: u16) -> u16 {
         let (new_value, did_overflow) = self.registers.get_hl().overflowing_add(value);
-        self.registers.set_flag_registers_nz(
+        self.registers.set_flags_nz(
             false,
             (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF,
             did_overflow,
@@ -256,11 +268,11 @@ impl CPU {
 
     // SP = SP + e
     // 0 0 * *
-    fn addsp(&mut self, value: u16) -> u16 {
-        let half_carry = (self.sp & 0xFF) + (value & 0xFF) > 0xFF;
-        let (new_value, did_overflow) = self.sp.overflowing_add(value);
-        self.registers
-            .set_flag_registers(false, false, half_carry, did_overflow);
+    fn addsp(&mut self, value: u8) -> u16 {
+        let signed_val = i16::from(value as i8) as u16;
+        let half_carry = (self.sp & 0xFF) + (signed_val & 0xFF) > 0xFF;
+        let (new_value, did_overflow) = self.sp.overflowing_add(signed_val);
+        self.registers.set_flags(false, false, half_carry, did_overflow);
         new_value
     }
 
@@ -323,7 +335,7 @@ impl CPU {
         if self.registers.f.carry {
             (new_value, did_overflow) = new_value.overflowing_sub(1u8);
         }
-        self.registers.set_flag_registers(
+        self.registers.set_flags(
             new_value == 0,
             true,
             (self.registers.a & 0xF) < (value & 0xF) + (carry & 0xF),
@@ -337,7 +349,7 @@ impl CPU {
     fn and(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a & value;
         self.registers
-            .set_flag_registers(new_value == 0, false, true, false);
+            .set_flags(new_value == 0, false, true, false);
         new_value
     }
 
@@ -397,13 +409,13 @@ impl CPU {
     /// - 0 0 *
     fn ccf(&mut self) {
         self.registers
-            .set_flag_registers_nz(false, false, !self.registers.f.carry);
+            .set_flags_nz(false, false, !self.registers.f.carry);
     }
 
     /// Set the carry flag
     /// - 0 0 1
     fn scf(&mut self) {
-        self.registers.set_flag_registers_nz(false, false, true);
+        self.registers.set_flags_nz(false, false, true);
     }
 
     // 0 0 0 *
@@ -422,6 +434,10 @@ impl CPU {
     }
 
     fn rlca(&mut self) {
+        unimplemented!();
+    }
+
+    fn daa() {
         unimplemented!();
     }
 
@@ -498,6 +514,11 @@ impl CPU {
         }
     }
 
+    // Could be combined with jump and add a jump type?
+    fn jump_relative(&mut self, should_jump: bool) {
+        unimplemented!();
+    }
+
     fn load(&mut self, load_type: LoadType) {
         match load_type {
             LoadType::Byte(target, source) => self.load_byte_type(target, source),
@@ -547,7 +568,7 @@ impl CPU {
         }
     }
 
-    fn byte_from_lbs(&self, source: &LoadByteSource) -> u8 {
+    fn byte_from_lbs(&mut self, source: &LoadByteSource) -> u8 {
         match source {
             LoadByteSource::A => self.registers.a,
             LoadByteSource::B => self.registers.b,
@@ -572,6 +593,10 @@ impl CPU {
             LoadWordTarget::DE => self.registers.set_de(source_value),
             LoadWordTarget::HL => self.registers.set_hl(source_value),
             LoadWordTarget::SP => self.sp = source_value,
+            LoadWordTarget::D16 => {
+                let addr = self.read_next_word();
+                self.bus.write_word(addr, self.sp)
+            },
         }
         match source {
             LoadWordSource::D16 => {
@@ -581,11 +606,12 @@ impl CPU {
         }
     }
 
-    fn word_from_lws(&self, source: &LoadWordSource) -> u16 {
+    fn word_from_lws(&mut self, source: &LoadWordSource) -> u16 {
         match source {
             LoadWordSource::BC => self.registers.get_bc(),
             LoadWordSource::DE => self.registers.get_de(),
             LoadWordSource::HL => self.registers.get_hl(),
+            LoadWordSource::SP => unimplemented!(),
             LoadWordSource::D16 => self.read_next_word(),
         }
     }
@@ -657,13 +683,23 @@ impl CPU {
         }
     }
 
-    // TODO: Implement
-    fn read_next_byte(&self) -> u8 {
+    fn enable_interupts(&self) {
         unimplemented!();
     }
 
-    // TODO: Implement
-    fn read_next_word(&self) -> u16 {
+    fn disable_interupts(&self) {
         unimplemented!();
+    }
+
+    fn read_next_byte(&mut self) -> u8 {
+        let byte = self.bus.read_byte(self.pc);
+        self.pc = self.pc + 1;
+        byte
+    }
+
+    fn read_next_word(&mut self) -> u16 {
+        let word = self.bus.read_word(self.pc);
+        self.pc = self.pc + 2;
+        word
     }
 }

@@ -100,6 +100,8 @@ impl Instruction {
             | 0x02 | 0x12 | 0x22 | 0x32
             | 0x0A | 0x1A | 0x2A | 0x3A
             | 0x0E | 0x1E | 0x2E | 0x3E | 0x08 => Some(Instruction::LD(LoadType::from(byte))),
+            0xE2 => unimplemented!(),
+            0xF2 => unimplemented!(),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
             0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
             0x23 => Some(Instruction::INC16(SixteenBitArithmeticTarget::HL)),
@@ -169,9 +171,11 @@ impl Instruction {
             0xD4 => Some(Instruction::CALL(JumpCond::NotCarry)),
             0xCC => Some(Instruction::CALL(JumpCond::Zero)),
             0xDC => Some(Instruction::CALL(JumpCond::Carry)),
+            0xCD => Some(Instruction::CALL(JumpCond::Always)),
             0xCF => Some(Instruction::RST), // TODO: All of these have addresses that go with them
             0xDF => Some(Instruction::RST),
             0xEF => Some(Instruction::RST),
+            0xFF => Some(Instruction::RST),
             0xC7 => Some(Instruction::RST),
             0xD7 => Some(Instruction::RST),
             0xE7 => Some(Instruction::RST),
@@ -180,6 +184,8 @@ impl Instruction {
             0xF3 => Some(Instruction::DI),
             0xEA => Some(Instruction::LDA16),
             0xFA => Some(Instruction::LDA),
+            0xF8 => unimplemented!(),
+            0xF9 => unimplemented!(),
             0xCB => panic!("This is a prefixed byte! This should never happen!"),
             0xD3 | 0xE3 | 0xE4 | 0xF4 | 0xDB | 0xEB | 0xEC | 0xFC | 0xDD | 0xED | 0xFD => {
                 println!("{} is an undefined function", byte);
@@ -187,7 +193,6 @@ impl Instruction {
             }
             0xE0 => Some(Instruction::LDHA),
             0xF0 => Some(Instruction::LDHA8),
-            _ => None, // TODO: Add the rest
         }
     }
 }

@@ -45,7 +45,7 @@ pub enum LoadByteTarget {
     HLI, // read from the address stored in HL
     BCI,
     DEI,
-    HLINC, // TODO: Maybe combine
+    HLINC,
     HLDEC,
 }
 
@@ -156,7 +156,9 @@ impl std::convert::From<u8> for LoadType {
             0x0E | 0x1E | 0x2E | 0x3E => {
                 LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte))
             }
-            0xEA | 0xFA => unimplemented!(),
+            // Might not need these two below
+            0xEA => unimplemented!(),
+            0xFA => unimplemented!(),
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }
     }

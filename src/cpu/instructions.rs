@@ -54,6 +54,8 @@ pub enum Instruction {
     LDHA8,
     LDA16,
     LDA,
+    LDAC, // Put value at address $FF00 + register C into A.  Same as: LD A,($FF00+C)
+    LDCA, // Put A into address $FF00 + register C.
 }
 
 impl Instruction {
@@ -100,8 +102,8 @@ impl Instruction {
             | 0x02 | 0x12 | 0x22 | 0x32
             | 0x0A | 0x1A | 0x2A | 0x3A
             | 0x0E | 0x1E | 0x2E | 0x3E | 0x08 => Some(Instruction::LD(LoadType::from(byte))),
-            0xE2 => unimplemented!(),
-            0xF2 => unimplemented!(),
+            0xE2 => Some(Instruction::LDCA),
+            0xF2 => Some(Instruction::LDAC),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
             0x13 => Some(Instruction::INC16(SixteenBitArithmeticTarget::DE)),
             0x23 => Some(Instruction::INC16(SixteenBitArithmeticTarget::HL)),
@@ -191,7 +193,7 @@ impl Instruction {
                 println!("{} is an undefined function", byte);
                 None
             }
-            0xE0 => Some(Instruction::LDHA),
+            0xE0 => Some(Instruction::LDHA), // TODO remove these ops from the convert in instruction if we keep this
             0xF0 => Some(Instruction::LDHA8),
         }
     }

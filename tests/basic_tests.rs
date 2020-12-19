@@ -440,3 +440,21 @@ fn load_test_a_from_hldec() {
     assert_eq!(cpu.registers.a, 0x10);
     assert_eq!(cpu.registers.get_hl(), 0xA1A0);
 }
+
+#[test]
+fn load_a_from_c_plus_0xff00() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0xff11, 0x10);
+    cpu.registers.c = 0x11;
+    cpu.execute(Instruction::LDAC);
+    assert_eq!(cpu.registers.a, 0x10);
+}
+
+#[test]
+fn load_c_plus_0xff00_from_a() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x10;
+    cpu.registers.c = 0x11;
+    cpu.execute(Instruction::LDCA);
+    assert_eq!(cpu.bus.read_byte(0xFF11), 0x10);
+}

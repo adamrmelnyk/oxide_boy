@@ -182,6 +182,8 @@ impl CPU {
                     self.jump_relative(self.should_jump(condition));
                 }
                 Instruction::LD(load_type) => self.load(load_type),
+                Instruction::LDAC => self.ldac(),
+                Instruction::LDCA => self.ldca(),
                 Instruction::HALT => self.halt(),
                 Instruction::NOP => { /* NO OP, simply advances the pc */ }
                 Instruction::STOP => {
@@ -614,6 +616,19 @@ impl CPU {
             LoadWordSource::SP => unimplemented!(),
             LoadWordSource::D16 => self.read_next_word(),
         }
+    }
+
+    // A = mem[0xff00 + C]
+    // - - - -
+    fn ldac(&mut self) {
+        let value = self.bus.read_byte(0xFF00 + self.registers.c as u16);
+        self.registers.a = value;
+    }
+
+    // mem[0xff00 + C] = A
+    // - - - -
+    fn ldca(& mut self) {
+        self.bus.write_byte(0xFF00 + self.registers.c as u16, self.registers.a);
     }
 
     /// Halt CPU until an interrupt occurs.

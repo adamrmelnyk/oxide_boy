@@ -241,6 +241,18 @@ fn from_byte_ld_word() {
 }
 
 #[test]
+fn load_a_from_c_plus_0xff00() {
+    let op = Instruction::from_byte(0xF2, false).unwrap();
+    assert_eq!(op, Instruction::LDAC);
+}
+
+#[test]
+fn load_c_plus_0xff00_from_a() {
+    let op = Instruction::from_byte(0xE2, false).unwrap();
+    assert_eq!(op, Instruction::LDCA);
+}
+
+#[test]
 fn from_byte_non_prefix_nop() {
     let op = Instruction::from_byte(0x00, false).unwrap();
     assert_eq!(op, Instruction::NOP);

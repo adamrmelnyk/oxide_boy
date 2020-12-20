@@ -52,10 +52,10 @@ pub enum Instruction {
     DI,
     LDHA,
     LDHA8,
-    LDA16,
+    LDABY,
     LDA,
     LDAC, // Put value at address $FF00 + register C into A.  Same as: LD A,($FF00+C)
-    LDCA, // Put A into address $FF00 + register C.
+    LDCA, // Put A intoLDABY address $FF00 + register C.
 }
 
 impl Instruction {
@@ -184,7 +184,7 @@ impl Instruction {
             0xF7 => Some(Instruction::RST),
             0xFB => Some(Instruction::EI),
             0xF3 => Some(Instruction::DI),
-            0xEA => Some(Instruction::LDA16),
+            0xEA => Some(Instruction::LDABY),
             0xFA => Some(Instruction::LDA),
             0xF8 => unimplemented!(),
             0xF9 => unimplemented!(),

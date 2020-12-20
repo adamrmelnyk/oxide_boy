@@ -147,10 +147,10 @@ impl CPU {
                 Instruction::RLCA => self.rlca(),
                 Instruction::DAA => {}
                 Instruction::CPL => self.cpl(),
-                Instruction::BIT(index, target) => {}
-                Instruction::RESET(index, target) => {}
-                Instruction::SET(index, target) => {}
-                Instruction::SRL(target) => {}
+                Instruction::BIT(index, target) => self.bit(index, target),
+                Instruction::RESET(index, target) => self.reset(index, target),
+                Instruction::SET(index, target) => self.set(index, target),
+                Instruction::SRL(target) => {},
                 Instruction::RL(target) => {}
                 Instruction::RR(target) => {}
                 Instruction::RRC(target) => {
@@ -203,13 +203,14 @@ impl CPU {
                 Instruction::DI => self.disable_interupts(),
                 Instruction::LDHA => {},
                 Instruction::LDHA8 => {},
-                Instruction::LDA16 => {},
-                Instruction::LDA => {},
+                Instruction::LDABY => self.load_a_into_next_byte(),
+                Instruction::LDA => self.load_byte_at_next_address_into_a(),
             }
         }
         self.pc.wrapping_add(1) // After each operation we increment the pc and return the value
     }
 
+    
     /// Helper method for returning the value of an 8bit register
     pub fn register_value(&mut self, target: &ArithmeticTarget) -> u8 {
         match target {
@@ -433,11 +434,17 @@ impl CPU {
         unimplemented!();
     }
 
-    fn bit() {}
+    fn bit(&mut self, bit: u8, target: ArithmeticTarget) {
+        unimplemented!();
+    }
 
-    fn reset() {}
+    fn reset(&mut self, bit: u8, target: ArithmeticTarget) {
+        unimplemented!();
+    }
 
-    fn set() {}
+    fn set(&mut self, bit: u8, target: ArithmeticTarget) {
+        unimplemented!();
+    }
 
     // * 0 0 *
     fn srl(&mut self) {}
@@ -494,8 +501,8 @@ impl CPU {
 
     fn jump(&mut self, should_jump: bool) -> u16 {
         if should_jump {
-            let least_sig = self.bus.read_byte(self.pc + 1) as u16;
-            let most_sig = self.bus.read_byte(self.pc + 2) as u16;
+            let least_sig = self.bus.read_byte(self.pc.wrapping_add(1)) as u16;
+            let most_sig = self.bus.read_byte(self.pc.wrapping_add(2)) as u16;
             (most_sig << 8) | least_sig
         } else {
             self.pc.wrapping_add(3)
@@ -604,6 +611,20 @@ impl CPU {
         }
     }
 
+    // mem.next() = A
+    // - - - -
+    fn load_a_into_next_byte(&mut self) {
+        self.bus.write_byte(self.pc, self.registers.a);
+    }
+
+    // A = mem[nn]; n = next_word()
+    // - - - -
+    fn load_byte_at_next_address_into_a(&mut self) {
+        // TODO: Double check this one
+        let addr = self.read_next_word();
+        self.registers.a = self.bus.read_byte(addr);
+    }
+
     // A = mem[0xff00 + C]
     // - - - -
     fn ldac(&mut self) {
@@ -694,13 +715,13 @@ impl CPU {
 
     fn read_next_byte(&mut self) -> u8 {
         let byte = self.bus.read_byte(self.pc);
-        self.pc = self.pc + 1;
+        self.pc = self.pc.wrapping_add(1);
         byte
     }
 
     fn read_next_word(&mut self) -> u16 {
         let word = self.bus.read_word(self.pc);
-        self.pc = self.pc + 2;
+        self.pc = self.pc.wrapping_add(2);
         word
     }
 }

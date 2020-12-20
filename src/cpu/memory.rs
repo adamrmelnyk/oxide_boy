@@ -63,7 +63,7 @@ impl std::convert::From<u8> for LoadByteTarget {
             0x60..=0x67 | 0x26 => LoadByteTarget::H,
             0x68..=0x6F | 0x2E => LoadByteTarget::L,
             0x70..=0x75 | 0x77 | 0x36 => LoadByteTarget::HLI,
-            0x78..=0x7F | 0x3E => LoadByteTarget::A,
+            0x78..=0x7F | 0x3E | 0x0A | 0x1A | 0x2A | 0x3A => LoadByteTarget::A,
             _ => panic!("u8 {:?} cannot be converted into an LoadByteTarget", byte),
         }
     }
@@ -146,15 +146,13 @@ impl std::convert::From<u8> for LoadType {
             0x21 => LoadType::Word(LoadWordTarget::HL, LoadWordSource::D16),
             0x31 => LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16),
             0x08 => LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
-            // TODO: The load types should all have the same arm, whatever looks the least messy
-            0x40..=0x7F => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
-            0x06 | 0x16 | 0x26 | 0x36 => {
-                LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte))
-            }
-            0x02 | 0x12 | 0x22 | 0x32 => unimplemented!(),
-            0x0A | 0x1A | 0x2A | 0x3A => unimplemented!(),
+            // TODO: Add some tests for these
+            0x40..=0x7F |
+            0x06 | 0x16 | 0x26 | 0x36 |
+            0x02 | 0x12 | 0x22 | 0x32 |
+            0x0A | 0x1A | 0x2A | 0x3A |
             0x0E | 0x1E | 0x2E | 0x3E => {
-                LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte))
+                           LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte))
             }
             // Might not need these two below
             0xEA => unimplemented!(),

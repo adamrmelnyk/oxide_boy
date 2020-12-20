@@ -237,10 +237,10 @@ impl CPU {
 
     fn should_jump(&self, condition: JumpCond) -> bool {
         match condition {
-            JumpCond::NotZero => !self.registers.f.zero,
-            JumpCond::Zero => self.registers.f.zero,
-            JumpCond::NotCarry => !self.registers.f.carry,
-            JumpCond::Carry => self.registers.f.carry,
+            JumpCond::NotZero => !self.registers.zero(),
+            JumpCond::Zero => self.registers.zero(),
+            JumpCond::NotCarry => !self.registers.carry(),
+            JumpCond::Carry => self.registers.carry(),
             JumpCond::Always => true,
         }
     }
@@ -248,11 +248,9 @@ impl CPU {
     // A = A + s
     // * 0 * * *
     fn add(&mut self, value: u8) -> u8 {
-        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
+        let half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.carry = did_overflow;
+        self.registers.set_flags(new_value == 0, false, half_carry, did_overflow);
         new_value
     }
 
@@ -260,11 +258,8 @@ impl CPU {
     // - 0 * *
     fn addhl(&mut self, value: u16) -> u16 {
         let (new_value, did_overflow) = self.registers.get_hl().overflowing_add(value);
-        self.registers.set_flags_nz(
-            false,
-            (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF,
-            did_overflow,
-        );
+        let half_carry = (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF;
+        self.registers.set_flags_nz(false, half_carry, did_overflow);
         new_value
     }
 
@@ -308,24 +303,19 @@ impl CPU {
     fn adc(&mut self, value: u8) -> u8 {
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
         let carry = if self.registers.f.carry { 1 } else { 0 };
-        if self.registers.f.carry {
+        if self.registers.carry() {
             (new_value, did_overflow) = new_value.overflowing_add(1u8);
         }
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.carry = did_overflow;
-        self.registers.f.half_carry =
-            (self.registers.a & 0xF) + (value & 0xF) + (carry & 0xF) > 0xF;
+        let half_carry = (self.registers.a & 0xF) + (value & 0xF) + (carry & 0xF) > 0xF;
+        self.registers.set_flags(new_value == 0, false, half_carry, did_overflow);
         new_value
     }
 
     // A = A - s
     fn sub(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a.wrapping_sub(value);
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = true;
-        self.registers.f.carry = self.registers.a < value;
-        self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
+        let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
+        self.registers.set_flags(new_value == 0, true, half_carry, self.registers.a < value);
         new_value
     }
 
@@ -334,15 +324,11 @@ impl CPU {
     fn sbc(&mut self, value: u8) -> u8 {
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_sub(value);
         let carry = if self.registers.f.carry { 1 } else { 0 };
-        if self.registers.f.carry {
+        if self.registers.carry() {
             (new_value, did_overflow) = new_value.overflowing_sub(1u8);
         }
-        self.registers.set_flags(
-            new_value == 0,
-            true,
-            (self.registers.a & 0xF) < (value & 0xF) + (carry & 0xF),
-            did_overflow,
-        );
+        let half_carry =(self.registers.a & 0xF) < (value & 0xF) + (carry & 0xF);
+        self.registers.set_flags(new_value == 0, true, half_carry, did_overflow);
         new_value
     }
 

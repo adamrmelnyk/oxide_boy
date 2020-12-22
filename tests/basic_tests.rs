@@ -471,3 +471,11 @@ fn load_word_from_sp() {
     )));
     assert_eq!(cpu.bus.read_word(0xA1A1), 0xAAAA);
 }
+
+#[test]
+fn cpl_test() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x10;
+    cpu.execute(Instruction::CPL);
+    assert_eq!(cpu.registers.a, 0xEF);
+}

@@ -310,6 +310,12 @@ fn load_hlec() {
 }
 
 #[test]
+fn cpl() {
+    let op = Instruction::from_byte(0x2F, false).unwrap();
+    assert_eq!(op, Instruction::CPL);
+}
+
+#[test]
 fn undefined_function_tests() {
     for i in vec![
         0xD3, 0xE3, 0xE4, 0xF4, 0xDB, 0xEB, 0xEC, 0xFC, 0xDD, 0xED, 0xFD,

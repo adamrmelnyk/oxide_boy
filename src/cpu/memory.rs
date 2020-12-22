@@ -146,7 +146,6 @@ impl std::convert::From<u8> for LoadType {
             0x21 => LoadType::Word(LoadWordTarget::HL, LoadWordSource::D16),
             0x31 => LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16),
             0x08 => LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
-            // TODO: Add some tests for these
             0x40..=0x7F
             | 0x06 | 0x16 | 0x26 | 0x36
             | 0x02 | 0x12 | 0x22 | 0x32

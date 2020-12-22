@@ -314,6 +314,7 @@ impl CPU {
     }
 
     // A = A - s
+    // * 1 * *
     fn sub(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a.wrapping_sub(value);
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
@@ -432,8 +433,11 @@ impl CPU {
         unimplemented!();
     }
 
+    // Complement the A register
+    // - 1 1 -
     fn cpl(&mut self) {
-        unimplemented!();
+        self.registers.a = !self.registers.a;
+        self.registers.set_flags_nz(true, true, self.registers.carry());
     }
 
     fn bit(&mut self, bit: u8, target: ArithmeticTarget) {

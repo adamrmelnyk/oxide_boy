@@ -47,7 +47,7 @@ pub enum Instruction {
     CALL(JumpCond),
     RET(JumpCond),
     RETI,
-    RST,
+    RST(RestartAddr),
     EI,
     DI,
     LDHA,
@@ -101,7 +101,8 @@ impl Instruction {
             | 0x06 | 0x16 | 0x26 | 0x36
             | 0x02 | 0x12 | 0x22 | 0x32
             | 0x0A | 0x1A | 0x2A | 0x3A
-            | 0x0E | 0x1E | 0x2E | 0x3E | 0x08 => Some(Instruction::LD(LoadType::from(byte))),
+            | 0x0E | 0x1E | 0x2E | 0x3E
+            | 0x08 => Some(Instruction::LD(LoadType::from(byte))),
             0xE2 => Some(Instruction::LDCA),
             0xF2 => Some(Instruction::LDAC),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
@@ -174,14 +175,14 @@ impl Instruction {
             0xCC => Some(Instruction::CALL(JumpCond::Zero)),
             0xDC => Some(Instruction::CALL(JumpCond::Carry)),
             0xCD => Some(Instruction::CALL(JumpCond::Always)),
-            0xCF => Some(Instruction::RST), // TODO: All of these have addresses that go with them
-            0xDF => Some(Instruction::RST),
-            0xEF => Some(Instruction::RST),
-            0xFF => Some(Instruction::RST),
-            0xC7 => Some(Instruction::RST),
-            0xD7 => Some(Instruction::RST),
-            0xE7 => Some(Instruction::RST),
-            0xF7 => Some(Instruction::RST),
+            0xC7 => Some(Instruction::RST(RestartAddr::H00)),
+            0xD7 => Some(Instruction::RST(RestartAddr::H10)),
+            0xE7 => Some(Instruction::RST(RestartAddr::H20)),
+            0xF7 => Some(Instruction::RST(RestartAddr::H30)),
+            0xCF => Some(Instruction::RST(RestartAddr::H08)),
+            0xDF => Some(Instruction::RST(RestartAddr::H18)),
+            0xEF => Some(Instruction::RST(RestartAddr::H28)),
+            0xFF => Some(Instruction::RST(RestartAddr::H38)),
             0xFB => Some(Instruction::EI),
             0xF3 => Some(Instruction::DI),
             0xEA => Some(Instruction::LDABY),
@@ -277,4 +278,16 @@ pub enum StackTarget {
     BC,
     DE,
     HL,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum RestartAddr {
+    H00,
+    H08,
+    H10,
+    H18,
+    H20,
+    H28,
+    H30,
+    H38,
 }

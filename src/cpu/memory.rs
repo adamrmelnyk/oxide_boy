@@ -147,13 +147,11 @@ impl std::convert::From<u8> for LoadType {
             0x31 => LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16),
             0x08 => LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
             // TODO: Add some tests for these
-            0x40..=0x7F |
-            0x06 | 0x16 | 0x26 | 0x36 |
-            0x02 | 0x12 | 0x22 | 0x32 |
-            0x0A | 0x1A | 0x2A | 0x3A |
-            0x0E | 0x1E | 0x2E | 0x3E => {
-                           LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte))
-            }
+            0x40..=0x7F
+            | 0x06 | 0x16 | 0x26 | 0x36
+            | 0x02 | 0x12 | 0x22 | 0x32
+            | 0x0A | 0x1A | 0x2A | 0x3A
+            | 0x0E | 0x1E | 0x2E | 0x3E => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
             // Might not need these two below
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }

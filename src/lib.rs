@@ -6,8 +6,9 @@ use cpu::instructions::{JumpCond, StackTarget};
 use cpu::memory::MemoryBus;
 use cpu::registers::FlagsRegister;
 
-pub use cpu::instructions::SixteenBitArithmeticTarget;
-pub use cpu::instructions::{ArithmeticTarget, Instruction};
+pub use cpu::instructions::{
+    ArithmeticTarget, Instruction, RestartAddr, SixteenBitArithmeticTarget,
+};
 pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget};
 pub use cpu::registers::Registers;
 
@@ -145,14 +146,14 @@ impl CPU {
                 Instruction::RLA => self.rla(),
                 Instruction::RRCA => self.rrca(),
                 Instruction::RLCA => self.rlca(),
-                Instruction::DAA => {}
+                Instruction::DAA => self.daa(),
                 Instruction::CPL => self.cpl(),
                 Instruction::BIT(index, target) => self.bit(index, target),
                 Instruction::RESET(index, target) => self.reset(index, target),
                 Instruction::SET(index, target) => self.set(index, target),
-                Instruction::SRL(target) => {},
-                Instruction::RL(target) => {}
-                Instruction::RR(target) => {}
+                Instruction::SRL(target) => self.srl(target),
+                Instruction::RL(target) => self.rl(target),
+                Instruction::RR(target) => self.rr(target),
                 Instruction::RRC(target) => {
                     let value = self.register_value(&target);
                     let new_value = self.rrc(value);
@@ -173,11 +174,11 @@ impl CPU {
                     let new_value = self.sla(value);
                     self.set_register_by_target(&target, new_value);
                 }
-                Instruction::SWAP(target) => {}
+                Instruction::SWAP(target) => self.swap(target),
                 Instruction::JP(condition) => {
                     self.jump(self.should_jump(condition));
                 }
-                Instruction::JPHL => {},
+                Instruction::JPHL => self.jphl(),
                 Instruction::JR(condition) => {
                     self.jump_relative(self.should_jump(condition));
                 }
@@ -186,9 +187,7 @@ impl CPU {
                 Instruction::LDCA => self.ldca(),
                 Instruction::HALT => self.halt(),
                 Instruction::NOP => { /* NO OP, simply advances the pc */ }
-                Instruction::STOP => {
-                    unimplemented!()
-                }
+                Instruction::STOP => unimplemented!(),
                 Instruction::PUSH(target) => self.push_from_target(target),
                 Instruction::POP(target) => self.pop_and_store(target),
                 Instruction::CALL(condition) => {
@@ -197,12 +196,12 @@ impl CPU {
                 Instruction::RET(condition) => {
                     self.ret(self.should_jump(condition));
                 }
-                Instruction::RETI => {},
-                Instruction::RST => {},
+                Instruction::RETI => {}
+                Instruction::RST(addr) => self.rst(addr),
                 Instruction::EI => self.enable_interupts(),
                 Instruction::DI => self.disable_interupts(),
-                Instruction::LDHA => {},
-                Instruction::LDHA8 => {},
+                Instruction::LDHA => {}
+                Instruction::LDHA8 => {}
                 Instruction::LDABY => self.load_a_into_next_byte(),
                 Instruction::LDA => self.load_byte_at_next_address_into_a(),
             }
@@ -210,7 +209,6 @@ impl CPU {
         self.pc.wrapping_add(1) // After each operation we increment the pc and return the value
     }
 
-    
     /// Helper method for returning the value of an 8bit register
     pub fn register_value(&mut self, target: &ArithmeticTarget) -> u8 {
         match target {
@@ -251,7 +249,8 @@ impl CPU {
     fn add(&mut self, value: u8) -> u8 {
         let half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
-        self.registers.set_flags(new_value == 0, false, half_carry, did_overflow);
+        self.registers
+            .set_flags(new_value == 0, false, half_carry, did_overflow);
         new_value
     }
 
@@ -270,7 +269,8 @@ impl CPU {
         let signed_val = i16::from(value as i8) as u16;
         let half_carry = (self.sp & 0xFF) + (signed_val & 0xFF) > 0xFF;
         let (new_value, did_overflow) = self.sp.overflowing_add(signed_val);
-        self.registers.set_flags(false, false, half_carry, did_overflow);
+        self.registers
+            .set_flags(false, false, half_carry, did_overflow);
         new_value
     }
 
@@ -308,7 +308,8 @@ impl CPU {
             (new_value, did_overflow) = new_value.overflowing_add(1u8);
         }
         let half_carry = (self.registers.a & 0xF) + (value & 0xF) + (carry & 0xF) > 0xF;
-        self.registers.set_flags(new_value == 0, false, half_carry, did_overflow);
+        self.registers
+            .set_flags(new_value == 0, false, half_carry, did_overflow);
         new_value
     }
 
@@ -316,7 +317,8 @@ impl CPU {
     fn sub(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a.wrapping_sub(value);
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
-        self.registers.set_flags(new_value == 0, true, half_carry, self.registers.a < value);
+        self.registers
+            .set_flags(new_value == 0, true, half_carry, self.registers.a < value);
         new_value
     }
 
@@ -328,8 +330,9 @@ impl CPU {
         if self.registers.carry() {
             (new_value, did_overflow) = new_value.overflowing_sub(1u8);
         }
-        let half_carry =(self.registers.a & 0xF) < (value & 0xF) + (carry & 0xF);
-        self.registers.set_flags(new_value == 0, true, half_carry, did_overflow);
+        let half_carry = (self.registers.a & 0xF) < (value & 0xF) + (carry & 0xF);
+        self.registers
+            .set_flags(new_value == 0, true, half_carry, did_overflow);
         new_value
     }
 
@@ -337,8 +340,7 @@ impl CPU {
     // * 0 1 0
     fn and(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a & value;
-        self.registers
-            .set_flags(new_value == 0, false, true, false);
+        self.registers.set_flags(new_value == 0, false, true, false);
         new_value
     }
 
@@ -426,7 +428,7 @@ impl CPU {
         unimplemented!();
     }
 
-    fn daa() {
+    fn daa(&self) {
         unimplemented!();
     }
 
@@ -447,13 +449,19 @@ impl CPU {
     }
 
     // * 0 0 *
-    fn srl(&mut self) {}
+    fn srl(&mut self, target: ArithmeticTarget) {
+        unimplemented!();
+    }
 
     // * 0 0 *
-    fn rr() {}
+    fn rr(&self, target: ArithmeticTarget) {
+        unimplemented!();
+    }
 
     // * 0 0 *
-    fn rl() {}
+    fn rl(&self, target: ArithmeticTarget) {
+        unimplemented!();
+    }
 
     // Rotate right and carry
     // * 0 0 *
@@ -497,7 +505,9 @@ impl CPU {
         new_value
     }
 
-    fn swap() {}
+    fn swap(&self, target: ArithmeticTarget) {
+        unimplemented!();
+    }
 
     fn jump(&mut self, should_jump: bool) -> u16 {
         if should_jump {
@@ -591,7 +601,7 @@ impl CPU {
             LoadWordTarget::D16 => {
                 let addr = self.read_next_word();
                 self.bus.write_word(addr, self.sp)
-            },
+            }
         }
         match source {
             LoadWordSource::D16 => {
@@ -606,7 +616,7 @@ impl CPU {
             LoadWordSource::BC => self.registers.get_bc(),
             LoadWordSource::DE => self.registers.get_de(),
             LoadWordSource::HL => self.registers.get_hl(),
-            LoadWordSource::SP => unimplemented!(),
+            LoadWordSource::SP => self.sp,
             LoadWordSource::D16 => self.read_next_word(),
         }
     }
@@ -634,8 +644,9 @@ impl CPU {
 
     // mem[0xff00 + C] = A
     // - - - -
-    fn ldca(& mut self) {
-        self.bus.write_byte(0xFF00 + self.registers.c as u16, self.registers.a);
+    fn ldca(&mut self) {
+        self.bus
+            .write_byte(0xFF00 + self.registers.c as u16, self.registers.a);
     }
 
     /// Halt CPU until an interrupt occurs.
@@ -703,6 +714,14 @@ impl CPU {
         } else {
             self.pc.wrapping_add(1)
         }
+    }
+
+    fn rst(&self, addr: RestartAddr) {
+        unimplemented!();
+    }
+
+    fn jphl(&self) {
+        unimplemented!();
     }
 
     fn enable_interupts(&self) {

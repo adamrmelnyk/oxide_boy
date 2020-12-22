@@ -1,6 +1,6 @@
 use gb_emulator::{
-    ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, Registers,
-    SixteenBitArithmeticTarget, CPU,
+    ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
+    LoadWordTarget, Registers, SixteenBitArithmeticTarget, CPU,
 };
 
 pub fn setup() -> CPU {
@@ -457,4 +457,17 @@ fn load_c_plus_0xff00_from_a() {
     cpu.registers.c = 0x11;
     cpu.execute(Instruction::LDCA);
     assert_eq!(cpu.bus.read_byte(0xFF11), 0x10);
+}
+
+#[test]
+fn load_word_from_sp() {
+    let mut cpu = setup();
+    cpu.pc = 0x1000;
+    cpu.bus.write_word(0x1000, 0xA1A1);
+    cpu.sp = 0xAAAA;
+    cpu.execute(Instruction::LD(LoadType::Word(
+        LoadWordTarget::D16,
+        LoadWordSource::SP,
+    )));
+    assert_eq!(cpu.bus.read_word(0xA1A1), 0xAAAA);
 }

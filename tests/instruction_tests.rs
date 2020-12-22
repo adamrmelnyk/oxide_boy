@@ -265,6 +265,51 @@ fn from_byte_non_prefix_halt() {
 }
 
 #[test]
+fn load_word_from_sp() {
+    let op = Instruction::from_byte(0x08, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP))
+    );
+}
+
+#[test]
+fn load_bci() {
+    let op = Instruction::from_byte(0x02, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Byte(LoadByteTarget::BCI, LoadByteSource::A))
+    );
+}
+
+#[test]
+fn load_dei() {
+    let op = Instruction::from_byte(0x12, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Byte(LoadByteTarget::DEI, LoadByteSource::A))
+    );
+}
+
+#[test]
+fn load_hlinc() {
+    let op = Instruction::from_byte(0x22, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Byte(LoadByteTarget::HLINC, LoadByteSource::A))
+    );
+}
+
+#[test]
+fn load_hlec() {
+    let op = Instruction::from_byte(0x32, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Byte(LoadByteTarget::HLDEC, LoadByteSource::A))
+    );
+}
+
+#[test]
 fn undefined_function_tests() {
     for i in vec![
         0xD3, 0xE3, 0xE4, 0xF4, 0xDB, 0xEB, 0xEC, 0xFC, 0xDD, 0xED, 0xFD,

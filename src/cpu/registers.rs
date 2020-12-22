@@ -96,18 +96,12 @@ impl Registers {
         self.f.half_carry
     }
 
-    pub fn carry(&self) -> bool{
+    pub fn carry(&self) -> bool {
         self.f.carry
     }
 
     /// Sets all flag registers in order: ZNHC
-    pub fn set_flags(
-        &mut self,
-        zero: bool,
-        negative: bool,
-        half_carry: bool,
-        carry: bool,
-    ) {
+    pub fn set_flags(&mut self, zero: bool, negative: bool, half_carry: bool, carry: bool) {
         self.f.zero = zero;
         self.f.negative = negative;
         self.f.half_carry = half_carry;

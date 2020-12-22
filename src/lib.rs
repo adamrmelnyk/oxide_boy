@@ -56,8 +56,8 @@ impl CPU {
             ArithmeticTarget::E => self.registers.e = value,
             ArithmeticTarget::H => self.registers.h = value,
             ArithmeticTarget::L => self.registers.l = value,
-            ArithmeticTarget::HLI => unimplemented!(),
-            ArithmeticTarget::D8 => unimplemented!(),
+            ArithmeticTarget::HLI => self.bus.write_byte(self.registers.get_hl(), value),
+            _ => panic!("target: {:?}, not allowed", target),
         }
     }
 
@@ -204,6 +204,7 @@ impl CPU {
                 Instruction::LDHA8 => {}
                 Instruction::LDABY => self.load_a_into_next_byte(),
                 Instruction::LDA => self.load_byte_at_next_address_into_a(),
+                Instruction::LDHLSP => self.ldhlsp(),
             }
         }
         self.pc.wrapping_add(1) // After each operation we increment the pc and return the value
@@ -470,22 +471,18 @@ impl CPU {
     // Rotate right and carry
     // * 0 0 *
     fn rrc(&mut self, value: u8) -> u8 {
-        self.registers.f.carry = (value & 0x1) == 1;
+        let carry = (value & 0x1) == 1;
         let new_value = value.rotate_right(1);
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.half_carry = false;
+        self.registers.set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
     // Rotate left and carry
     // * 0 0 *
     fn rlc(&mut self, value: u8) -> u8 {
-        self.registers.f.carry = (value & 0x80) == 0x80;
+        let carry = (value & 0x80) == 0x80;
         let new_value = value.rotate_left(1);
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.half_carry = false;
+        self.registers.set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
@@ -502,10 +499,8 @@ impl CPU {
     // * 0 0 *
     fn sla(&mut self, value: u8) -> u8 {
         let new_value = value << 1;
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.half_carry = false;
-        self.registers.f.carry = (value & 0x80) == 0x80;
+        let carry = (value & 0x80) == 0x80;
+        self.registers.set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
@@ -651,6 +646,14 @@ impl CPU {
     fn ldca(&mut self) {
         self.bus
             .write_byte(0xFF00 + self.registers.c as u16, self.registers.a);
+    }
+
+    // Put sp plus n effective address into hl
+    // 0 0 H C
+    fn ldhlsp(&mut self) {       
+        let byte = self.read_next_byte(); 
+        let new_value = self.addsp(byte);
+        self.registers.set_hl(new_value);
     }
 
     /// Halt CPU until an interrupt occurs.

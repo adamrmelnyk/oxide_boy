@@ -56,6 +56,7 @@ pub enum Instruction {
     LDA,
     LDAC, // Put value at address $FF00 + register C into A.  Same as: LD A,($FF00+C)
     LDCA, // Put A intoLDABY address $FF00 + register C.
+    LDHLSP, // Put sp plus n effective address into hl
 }
 
 impl Instruction {
@@ -102,7 +103,7 @@ impl Instruction {
             | 0x02 | 0x12 | 0x22 | 0x32
             | 0x0A | 0x1A | 0x2A | 0x3A
             | 0x0E | 0x1E | 0x2E | 0x3E
-            | 0x08 => Some(Instruction::LD(LoadType::from(byte))),
+            | 0x08 | 0xF9 => Some(Instruction::LD(LoadType::from(byte))),
             0xE2 => Some(Instruction::LDCA),
             0xF2 => Some(Instruction::LDAC),
             0x03 => Some(Instruction::INC16(SixteenBitArithmeticTarget::BC)),
@@ -187,8 +188,7 @@ impl Instruction {
             0xF3 => Some(Instruction::DI),
             0xEA => Some(Instruction::LDABY),
             0xFA => Some(Instruction::LDA),
-            0xF8 => unimplemented!(),
-            0xF9 => unimplemented!(),
+            0xF8 => Some(Instruction::LDHLSP),
             0xCB => panic!("This is a prefixed byte! This should never happen!"),
             0xD3 | 0xE3 | 0xE4 | 0xF4 | 0xDB | 0xEB | 0xEC | 0xFC | 0xDD | 0xED | 0xFD => {
                 println!("{} is an undefined function", byte);

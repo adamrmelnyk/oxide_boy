@@ -62,6 +62,24 @@ fn inc_test_overflow() {
 }
 
 #[test]
+fn inc_test_hli() {
+    let mut cpu =setup();
+    cpu.registers.set_hl(0xA1A1);
+    cpu.bus.write_byte(0xA1A1, 0x01);
+    cpu.execute(Instruction::INC(ArithmeticTarget::HLI));
+    assert_eq!(cpu.bus.read_byte(0xA1A1), 0x02);
+}
+
+#[test]
+fn dec_test_hli() {
+    let mut cpu =setup();
+    cpu.registers.set_hl(0xA1A1);
+    cpu.bus.write_byte(0xA1A1, 0x01);
+    cpu.execute(Instruction::DEC(ArithmeticTarget::HLI));
+    assert_eq!(cpu.bus.read_byte(0xA1A1), 0x00);
+}
+
+#[test]
 fn dec_test() {
     let mut cpu = setup();
     cpu.registers.b = 1;
@@ -463,6 +481,14 @@ fn load_word_from_sp() {
         LoadWordSource::SP,
     )));
     assert_eq!(cpu.bus.read_word(0xA1A1), 0xAAAA);
+}
+
+#[test]
+fn load_hl_into_sp() {
+    let mut cpu = setup();
+    cpu.registers.set_hl(0xA1A1);
+    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::SP, LoadWordSource::HL)));
+    assert_eq!(cpu.sp, 0xA1A1);
 }
 
 #[test]

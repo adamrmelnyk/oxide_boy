@@ -3,8 +3,6 @@ use gb_emulator::{
     LoadWordTarget,
 };
 
-// TODO: Add more load tests
-
 #[test]
 fn from_byte_prefix_rlc() {
     let op0 = Instruction::from_byte(0x00, true).unwrap();
@@ -306,6 +304,15 @@ fn load_hlec() {
     assert_eq!(
         op,
         Instruction::LD(LoadType::Byte(LoadByteTarget::HLDEC, LoadByteSource::A))
+    );
+}
+
+#[test]
+fn load_hl_from_sp() {
+    let op = Instruction::from_byte(0xF9, false).unwrap();
+    assert_eq!(
+        op,
+        Instruction::LD(LoadType::Word(LoadWordTarget::SP, LoadWordSource::HL))
     );
 }
 

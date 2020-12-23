@@ -112,4 +112,8 @@ impl Registers {
     pub fn set_flags_nz(&mut self, negative: bool, half_carry: bool, carry: bool) {
         self.set_flags(self.f.zero, negative, half_carry, carry);
     }
+
+    pub fn set_zero(&mut self, zero: bool) {
+        self.f.zero = zero;
+    }
 }

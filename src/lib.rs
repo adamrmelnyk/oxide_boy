@@ -441,16 +441,25 @@ impl CPU {
         self.registers.set_flags_nz(true, true, self.registers.carry());
     }
 
+    // Test the bit in a register
+    // * 0 1 -
     fn bit(&mut self, bit: u8, target: ArithmeticTarget) {
-        unimplemented!();
+        let zero = (self.register_value(&target) & (1 << bit)) == 0;
+        self.registers.set_flags(zero, false, true, self.registers.carry());
     }
 
+    // Reset the bit at the given index
+    // - - - -
     fn reset(&mut self, bit: u8, target: ArithmeticTarget) {
-        unimplemented!();
+        let value = self.register_value(&target) & !(1 << bit);
+        self.set_register_by_target(&target, value);
     }
 
+    // Set the bit at the given index
+    // - - - -
     fn set(&mut self, bit: u8, target: ArithmeticTarget) {
-        unimplemented!();
+        let value = self.register_value(&target) | (1 << bit);
+        self.set_register_by_target(&target, value);
     }
 
     // * 0 0 *
@@ -504,8 +513,13 @@ impl CPU {
         new_value
     }
 
-    fn swap(&self, target: ArithmeticTarget) {
-        unimplemented!();
+    // Swap upper and lower nibbles of a register
+    // - - - -
+    fn swap(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
+        let swapped = (value & 0x0F) << 4 | (value & 0xF0) >> 4;
+        self.set_register_by_target(&target, swapped);
+        self.registers.set_zero(swapped == 0);
     }
 
     fn jump(&mut self, should_jump: bool) -> u16 {

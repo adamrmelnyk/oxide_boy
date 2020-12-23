@@ -208,7 +208,7 @@ fn addsp_half_overflow_test() {
     assert_flags_znhc(cpu.registers, false, false, true, false);
 }
 
-// #[test]
+#[test]
 fn sub_test() {
     let mut cpu = setup();
     cpu.registers.a = 255;
@@ -497,4 +497,36 @@ fn cpl_test() {
     cpu.registers.a = 0x10;
     cpu.execute(Instruction::CPL);
     assert_eq!(cpu.registers.a, 0xEF);
+}
+
+#[test]
+fn bit_test() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0000;
+    cpu.execute(Instruction::BIT(7, ArithmeticTarget::A));
+    assert_eq!(cpu.registers.zero(), false);
+}
+
+#[test]
+fn res_test() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0000;
+    cpu.execute(Instruction::RESET(7, ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0000_0000);
+}
+
+#[test]
+fn set_test() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b0000_0000;
+    cpu.execute(Instruction::SET(0, ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0000_0001);
+}
+
+#[test]
+fn swap_test() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1111_0000;
+    cpu.execute(Instruction::SWAP(ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0000_1111);
 }

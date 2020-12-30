@@ -540,11 +540,50 @@ fn test_rra() {
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
 
+
+#[test]
+fn test_rra_carry() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.registers.set_flags_nz(false, false, true);
+    cpu.execute(Instruction::RRA);
+    assert_eq!(cpu.registers.a, 0b1100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
 #[test]
 fn test_rla() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0000;
     cpu.execute(Instruction::RLA);
     assert_eq!(cpu.registers.a, 0);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rla_carry() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0000;
+    cpu.registers.set_flags_nz(false, false, true);
+    cpu.execute(Instruction::RLA);
+    assert_eq!(cpu.registers.a, 1);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rrca() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.execute(Instruction::RRCA);
+    assert_eq!(cpu.registers.a, 0b1100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rlca() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0000;
+    cpu.execute(Instruction::RLCA);
+    assert_eq!(cpu.registers.a, 1);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }

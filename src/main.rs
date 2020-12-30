@@ -15,4 +15,5 @@ fn main() {
     cpu.execute(Instruction::XOR(ArithmeticTarget::C));
     cpu.execute(Instruction::INC(ArithmeticTarget::A));
     cpu.execute(Instruction::DEC(ArithmeticTarget::A));
+    cpu.execute(Instruction::SWAP(ArithmeticTarget::A));
 }

@@ -413,25 +413,31 @@ impl CPU {
 
     // 0 0 0 *
     fn rra(&mut self) {
-        let carry = (self.registers.a & 0x1) == 1;
-        self.registers.a = self.registers.a >> 1;
-        self.registers.set_flags(false, false, false, carry);
+        let curr_carry = if self.registers.carry() { 128 } else { 0 };
+        let will_carry = (self.registers.a & 0x1) == 1;
+        self.registers.a = curr_carry | (self.registers.a >> 1);
+        self.registers.set_flags(false, false, false, will_carry);
     }
 
     // 0 0 0 *
     fn rla(&mut self) {
-        let carry = (self.registers.a & 0x80 ) == 0x80;
-        self.registers.a = self.registers.a << 1;
-        self.registers.set_flags(false, false, false, carry);
+        let curr_carry = if self.registers.carry() { 1 } else { 0 };
+        let will_carry = (self.registers.a & 0x80 ) == 0x80;
+        self.registers.a = curr_carry | (self.registers.a << 1);
+        self.registers.set_flags(false, false, false, will_carry);
     }
 
     // 0 0 0 *
     fn rrca(&mut self) {
-        unimplemented!();
+        let carry = (self.registers.a & 0x1) == 1;
+        self.registers.a = self.registers.a.rotate_right(1);
+        self.registers.set_flags(false, false, false, carry);
     }
 
     fn rlca(&mut self) {
-        unimplemented!();
+        let carry = (self.registers.a & 0x80 ) == 0x80;
+        self.registers.a = self.registers.a.rotate_left(1);
+        self.registers.set_flags(false, false, false, carry);
     }
 
     fn daa(&self) {

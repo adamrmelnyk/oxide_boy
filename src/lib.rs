@@ -413,12 +413,16 @@ impl CPU {
 
     // 0 0 0 *
     fn rra(&mut self) {
-        unimplemented!();
+        let carry = (self.registers.a & 0x1) == 1;
+        self.registers.a = self.registers.a >> 1;
+        self.registers.set_flags(false, false, false, carry);
     }
 
     // 0 0 0 *
     fn rla(&mut self) {
-        unimplemented!();
+        let carry = (self.registers.a & 0x80 ) == 0x80;
+        self.registers.a = self.registers.a << 1;
+        self.registers.set_flags(false, false, false, carry);
     }
 
     // 0 0 0 *

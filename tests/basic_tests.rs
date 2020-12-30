@@ -530,3 +530,21 @@ fn swap_test() {
     cpu.execute(Instruction::SWAP(ArithmeticTarget::A));
     assert_eq!(cpu.registers.a, 0b0000_1111);
 }
+
+#[test]
+fn test_rra() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.execute(Instruction::RRA);
+    assert_eq!(cpu.registers.a, 0b0100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rla() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0000;
+    cpu.execute(Instruction::RLA);
+    assert_eq!(cpu.registers.a, 0);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}

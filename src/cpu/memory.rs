@@ -152,7 +152,6 @@ impl std::convert::From<u8> for LoadType {
             | 0x02 | 0x12 | 0x22 | 0x32
             | 0x0A | 0x1A | 0x2A | 0x3A
             | 0x0E | 0x1E | 0x2E | 0x3E => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
-            // Might not need these two below
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }
     }

@@ -54,8 +54,8 @@ pub enum Instruction {
     LDHA8,
     LDABY,
     LDA,
-    LDAC, // Put value at address $FF00 + register C into A.  Same as: LD A,($FF00+C)
-    LDCA, // Put A intoLDABY address $FF00 + register C.
+    LDAC,   // Put value at address $FF00 + register C into A.  Same as: LD A,($FF00+C)
+    LDCA,   // Put A intoLDABY address $FF00 + register C.
     LDHLSP, // Put sp plus n effective address into hl
 }
 

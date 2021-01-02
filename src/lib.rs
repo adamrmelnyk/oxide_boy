@@ -422,7 +422,7 @@ impl CPU {
     // 0 0 0 *
     fn rla(&mut self) {
         let curr_carry = if self.registers.carry() { 1 } else { 0 };
-        let will_carry = (self.registers.a & 0x80 ) == 0x80;
+        let will_carry = (self.registers.a & 0x80) == 0x80;
         self.registers.a = curr_carry | (self.registers.a << 1);
         self.registers.set_flags(false, false, false, will_carry);
     }
@@ -435,7 +435,7 @@ impl CPU {
     }
 
     fn rlca(&mut self) {
-        let carry = (self.registers.a & 0x80 ) == 0x80;
+        let carry = (self.registers.a & 0x80) == 0x80;
         self.registers.a = self.registers.a.rotate_left(1);
         self.registers.set_flags(false, false, false, carry);
     }
@@ -448,14 +448,16 @@ impl CPU {
     // - 1 1 -
     fn cpl(&mut self) {
         self.registers.a = !self.registers.a;
-        self.registers.set_flags_nz(true, true, self.registers.carry());
+        self.registers
+            .set_flags_nz(true, true, self.registers.carry());
     }
 
     // Test the bit in a register
     // * 0 1 -
     fn bit(&mut self, bit: u8, target: ArithmeticTarget) {
         let zero = (self.register_value(&target) & (1 << bit)) == 0;
-        self.registers.set_flags(zero, false, true, self.registers.carry());
+        self.registers
+            .set_flags(zero, false, true, self.registers.carry());
     }
 
     // Reset the bit at the given index
@@ -478,7 +480,8 @@ impl CPU {
         let new_value = value >> 1;
         let carry = (value & 0x1) == 1;
         self.set_register_by_target(&target, new_value);
-        self.registers.set_flags(new_value == 0, false, false, carry);
+        self.registers
+            .set_flags(new_value == 0, false, false, carry);
     }
 
     // * 0 0 *
@@ -488,7 +491,8 @@ impl CPU {
         let new_value = curr_carry | (value >> 1);
         let carry = (value & 0x1) == 1;
         self.set_register_by_target(&target, new_value);
-        self.registers.set_flags(new_value == 0, false, false, carry);
+        self.registers
+            .set_flags(new_value == 0, false, false, carry);
     }
 
     // * 0 0 *
@@ -498,7 +502,8 @@ impl CPU {
         let new_value = curr_carry | (value << 1);
         let carry = (value & 0x80) == 0x80;
         self.set_register_by_target(&target, new_value);
-        self.registers.set_flags(new_value == 0, false, false, carry);
+        self.registers
+            .set_flags(new_value == 0, false, false, carry);
     }
 
     // Rotate right and carry
@@ -506,7 +511,8 @@ impl CPU {
     fn rrc(&mut self, value: u8) -> u8 {
         let carry = (value & 0x1) == 1;
         let new_value = value.rotate_right(1);
-        self.registers.set_flags(new_value == 0, false, false, carry);
+        self.registers
+            .set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
@@ -515,7 +521,8 @@ impl CPU {
     fn rlc(&mut self, value: u8) -> u8 {
         let carry = (value & 0x80) == 0x80;
         let new_value = value.rotate_left(1);
-        self.registers.set_flags(new_value == 0, false, false, carry);
+        self.registers
+            .set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
@@ -533,7 +540,8 @@ impl CPU {
     fn sla(&mut self, value: u8) -> u8 {
         let new_value = value << 1;
         let carry = (value & 0x80) == 0x80;
-        self.registers.set_flags(new_value == 0, false, false, carry);
+        self.registers
+            .set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
@@ -687,8 +695,8 @@ impl CPU {
 
     // Put sp plus n effective address into hl
     // 0 0 H C
-    fn ldhlsp(&mut self) {       
-        let byte = self.read_next_byte(); 
+    fn ldhlsp(&mut self) {
+        let byte = self.read_next_byte();
         let new_value = self.addsp(byte);
         self.registers.set_hl(new_value);
     }

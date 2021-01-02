@@ -1,6 +1,6 @@
 use gb_emulator::{
     ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
-    LoadWordTarget, Registers, SixteenBitArithmeticTarget, CPU, RestartAddr
+    LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU,
 };
 
 pub fn setup() -> CPU {
@@ -16,8 +16,14 @@ pub fn assert_flags_znhc(
     carry: bool,
 ) {
     assert_eq!(registers.f.zero, zero, "Zero flag does not match");
-    assert_eq!(registers.f.negative, negative, "Negative flag does not match");
-    assert_eq!(registers.f.half_carry, half_carry, "Half Carry flag does not match");
+    assert_eq!(
+        registers.f.negative, negative,
+        "Negative flag does not match"
+    );
+    assert_eq!(
+        registers.f.half_carry, half_carry,
+        "Half Carry flag does not match"
+    );
     assert_eq!(registers.f.carry, carry, "Carry flag does not match");
 }
 
@@ -63,7 +69,7 @@ fn inc_test_overflow() {
 
 #[test]
 fn inc_test_hli() {
-    let mut cpu =setup();
+    let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x01);
     cpu.execute(Instruction::INC(ArithmeticTarget::HLI));
@@ -72,7 +78,7 @@ fn inc_test_hli() {
 
 #[test]
 fn dec_test_hli() {
-    let mut cpu =setup();
+    let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x01);
     cpu.execute(Instruction::DEC(ArithmeticTarget::HLI));
@@ -487,7 +493,10 @@ fn load_word_from_sp() {
 fn load_hl_into_sp() {
     let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
-    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::SP, LoadWordSource::HL)));
+    cpu.execute(Instruction::LD(LoadType::Word(
+        LoadWordTarget::SP,
+        LoadWordSource::HL,
+    )));
     assert_eq!(cpu.sp, 0xA1A1);
 }
 
@@ -549,7 +558,6 @@ fn test_rra() {
     assert_eq!(cpu.registers.a, 0b0100_0000);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
-
 
 #[test]
 fn test_rra_carry() {

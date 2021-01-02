@@ -667,7 +667,6 @@ impl CPU {
     // A = mem[nn]; n = next_word()
     // - - - -
     fn load_byte_at_next_address_into_a(&mut self) {
-        // TODO: Double check this one
         let addr = self.read_next_word();
         self.registers.a = self.bus.read_byte(addr);
     }

@@ -194,7 +194,7 @@ impl Instruction {
                 println!("{} is an undefined function", byte);
                 None
             }
-            0xE0 => Some(Instruction::LDHA), // TODO remove these ops from the convert in instruction if we keep this
+            0xE0 => Some(Instruction::LDHA),
             0xF0 => Some(Instruction::LDHA8),
         }
     }

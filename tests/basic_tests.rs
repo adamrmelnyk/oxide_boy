@@ -492,6 +492,16 @@ fn load_hl_into_sp() {
 }
 
 #[test]
+fn load_byte_at_next_address_into_a_test() {
+    let mut cpu = setup();
+    cpu.pc = 0x1000;
+    cpu.bus.write_word(0x1000, 0xA1A1);
+    cpu.bus.write_byte(0xA1A1, 0xAA);
+    cpu.execute(Instruction::LDA);
+    assert_eq!(cpu.registers.a, 0xAA);
+}
+
+#[test]
 fn cpl_test() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;

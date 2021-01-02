@@ -1,6 +1,6 @@
 use gb_emulator::{
     ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
-    LoadWordTarget, Registers, SixteenBitArithmeticTarget, CPU,
+    LoadWordTarget, Registers, SixteenBitArithmeticTarget, CPU, RestartAddr
 };
 
 pub fn setup() -> CPU {
@@ -15,10 +15,10 @@ pub fn assert_flags_znhc(
     half_carry: bool,
     carry: bool,
 ) {
-    assert_eq!(registers.f.zero, zero);
-    assert_eq!(registers.f.negative, negative);
-    assert_eq!(registers.f.half_carry, half_carry);
-    assert_eq!(registers.f.carry, carry);
+    assert_eq!(registers.f.zero, zero, "Zero flag does not match");
+    assert_eq!(registers.f.negative, negative, "Negative flag does not match");
+    assert_eq!(registers.f.half_carry, half_carry, "Half Carry flag does not match");
+    assert_eq!(registers.f.carry, carry, "Carry flag does not match");
 }
 
 #[test]
@@ -586,4 +586,70 @@ fn test_rlca() {
     cpu.execute(Instruction::RLCA);
     assert_eq!(cpu.registers.a, 1);
     assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_srl() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0000;
+    cpu.execute(Instruction::SRL(ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0100_0000);
+    assert_eq!(0x80 & cpu.registers.a, 0); // MSB is zero
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
+fn test_srl_overflow() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.execute(Instruction::SRL(ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0100_0000);
+    assert_eq!(0x80 & cpu.registers.a, 0); // MSB is zero
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rr() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.execute(Instruction::RR(ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rr_carry() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.registers.set_flags_nz(false, false, true);
+    cpu.execute(Instruction::RR(ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b1100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rl() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.execute(Instruction::RL(ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0000_0010);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rl_carry() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0011;
+    cpu.registers.set_flags_nz(false, false, true);
+    cpu.execute(Instruction::RL(ArithmeticTarget::A));
+    assert_eq!(cpu.registers.a, 0b0000_0111);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn test_rst() {
+    let mut cpu = setup();
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::RST(RestartAddr::H28));
+    assert_eq!(cpu.pc, 0x0028);
 }

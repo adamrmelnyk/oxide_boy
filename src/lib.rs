@@ -40,7 +40,7 @@ impl Default for CPU {
             },
             bus: MemoryBus::default(),
             pc: 0,
-            sp: 0,
+            sp: 0xFFFE,
             is_halted: false,
         }
     }
@@ -474,17 +474,31 @@ impl CPU {
 
     // * 0 0 *
     fn srl(&mut self, target: ArithmeticTarget) {
-        unimplemented!();
+        let value = self.register_value(&target);
+        let new_value = value >> 1;
+        let carry = (value & 0x1) == 1;
+        self.set_register_by_target(&target, new_value);
+        self.registers.set_flags(new_value == 0, false, false, carry);
     }
 
     // * 0 0 *
-    fn rr(&self, target: ArithmeticTarget) {
-        unimplemented!();
+    fn rr(&mut self, target: ArithmeticTarget) {
+        let curr_carry = if self.registers.carry() { 128 } else { 0 };
+        let value = self.register_value(&target);
+        let new_value = curr_carry | (value >> 1);
+        let carry = (value & 0x1) == 1;
+        self.set_register_by_target(&target, new_value);
+        self.registers.set_flags(new_value == 0, false, false, carry);
     }
 
     // * 0 0 *
-    fn rl(&self, target: ArithmeticTarget) {
-        unimplemented!();
+    fn rl(&mut self, target: ArithmeticTarget) {
+        let curr_carry = if self.registers.carry() { 1 } else { 0 };
+        let value = self.register_value(&target);
+        let new_value = curr_carry | (value << 1);
+        let carry = (value & 0x80) == 0x80;
+        self.set_register_by_target(&target, new_value);
+        self.registers.set_flags(new_value == 0, false, false, carry);
     }
 
     // Rotate right and carry
@@ -747,8 +761,9 @@ impl CPU {
         }
     }
 
-    fn rst(&self, addr: RestartAddr) {
-        unimplemented!();
+    fn rst(&mut self, addr: RestartAddr) {
+        self.push(self.pc);
+        self.pc = u16::from(addr);
     }
 
     fn jphl(&self) {

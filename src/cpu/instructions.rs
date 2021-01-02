@@ -291,3 +291,18 @@ pub enum RestartAddr {
     H30,
     H38,
 }
+
+impl std::convert::From<RestartAddr> for u16 {
+    fn from(restart: RestartAddr) -> u16 {
+        match restart {
+            RestartAddr::H00 => 0x0000,
+            RestartAddr::H08 => 0x0080,
+            RestartAddr::H10 => 0x0010,
+            RestartAddr::H18 => 0x0018,
+            RestartAddr::H20 => 0x0020,
+            RestartAddr::H28 => 0x0028,
+            RestartAddr::H30 => 0x0030,
+            RestartAddr::H38 => 0x0038,
+        }
+    }
+}

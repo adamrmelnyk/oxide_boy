@@ -20,11 +20,8 @@ cargo run
 
 ## TODO
 
-* Switch to use_flag_registers
 * make registers private
 * Implement the rest of the operations
-* Implement loading functions
-* Tests
 * GUI
 * I/O
 

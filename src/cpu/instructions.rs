@@ -91,11 +91,7 @@ impl Instruction {
         match byte {
             0x00 => Some(Instruction::NOP),
             0x10 => Some(Instruction::STOP),
-            0x20 => Some(Instruction::JR(JumpCond::NotZero)),
-            0x30 => Some(Instruction::JR(JumpCond::NotCarry)),
-            0x18 => Some(Instruction::JR(JumpCond::Always)),
-            0x28 => Some(Instruction::JR(JumpCond::Zero)),
-            0x38 => Some(Instruction::JR(JumpCond::Carry)),
+            0x20 | 0x30 | 0x18 | 0x28 | 0x38 => Some(Instruction::JR(JumpCond::from(byte))),
             0x76 => Some(Instruction::HALT),
             0x40..=0x7F
             | 0x01 | 0x11 | 0x21 | 0x31
@@ -223,6 +219,22 @@ pub enum JumpCond {
     NotCarry,
     Carry,
     Always,
+}
+
+impl std::convert::From<u8> for JumpCond {
+    fn from(byte: u8) -> JumpCond {
+        match byte {
+            0x18 => JumpCond::Always,
+            0x20 => JumpCond::NotZero,
+            0x28 => JumpCond::Zero,
+            0x30 => JumpCond::NotCarry,
+            0x38 => JumpCond::Carry,
+            _ => panic!(
+                "u8 {:?} cannot be converted into an JumpCond",
+                byte
+            ),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

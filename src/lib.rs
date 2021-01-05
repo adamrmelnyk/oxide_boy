@@ -2,12 +2,12 @@
 
 mod cpu;
 
-use cpu::instructions::{JumpCond, StackTarget};
+use cpu::instructions::StackTarget;
 use cpu::memory::MemoryBus;
 use cpu::registers::FlagsRegister;
 
 pub use cpu::instructions::{
-    ArithmeticTarget, Instruction, RestartAddr, SixteenBitArithmeticTarget,
+    ArithmeticTarget, Instruction, RestartAddr, SixteenBitArithmeticTarget, JumpCond
 };
 pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget};
 pub use cpu::registers::Registers;
@@ -235,6 +235,7 @@ impl CPU {
         }
     }
 
+    // Move this into an impl for Jumpcond?
     fn should_jump(&self, condition: JumpCond) -> bool {
         match condition {
             JumpCond::NotZero => !self.registers.zero(),
@@ -564,11 +565,22 @@ impl CPU {
         }
     }
 
-    // Could be combined with jump and add a jump type?
+    // - - - -
     fn jump_relative(&mut self, should_jump: bool) {
-        unimplemented!();
+        if should_jump {
+            let next_byte = self.read_next_byte() as i8;
+            // read_next_byte increases the pc, so we sub an extra one below
+            if next_byte > 0 {
+                let jump_addr = next_byte as u16;
+                self.pc = self.pc.wrapping_add(jump_addr - 1);
+            } else {
+                let jump_addr = next_byte.abs() as u16;
+                self.pc = self.pc.wrapping_sub(jump_addr + 1);
+            }
+        }
     }
 
+    // - - - -
     fn load(&mut self, load_type: LoadType) {
         match load_type {
             LoadType::Byte(target, source) => self.load_byte_type(target, source),

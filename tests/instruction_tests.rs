@@ -1,6 +1,6 @@
 use gb_emulator::{
     ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
-    LoadWordTarget,
+    LoadWordTarget, JumpCond,
 };
 
 #[test]
@@ -322,6 +322,35 @@ fn cpl() {
     assert_eq!(op, Instruction::CPL);
 }
 
+#[test]
+fn jump_relative_test() {
+    let op = Instruction::from_byte(0x18, false).unwrap();
+    assert_eq!(op, Instruction::JR(JumpCond::Always));
+}
+
+#[test]
+fn jump_relative_test_nz() {
+    let op = Instruction::from_byte(0x20, false).unwrap();
+    assert_eq!(op, Instruction::JR(JumpCond::NotZero));
+}
+
+#[test]
+fn jump_relative_test_z() {
+    let op = Instruction::from_byte(0x28, false).unwrap();
+    assert_eq!(op, Instruction::JR(JumpCond::Zero));
+}
+
+#[test]
+fn jump_relative_test_nc() {
+    let op = Instruction::from_byte(0x30, false).unwrap();
+    assert_eq!(op, Instruction::JR(JumpCond::NotCarry));
+}
+
+#[test]
+fn jump_relative_test_c() {
+    let op = Instruction::from_byte(0x38, false).unwrap();
+    assert_eq!(op, Instruction::JR(JumpCond::Carry));
+}
 #[test]
 fn undefined_function_tests() {
     for i in vec![

@@ -1,6 +1,6 @@
 use gb_emulator::{
     ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
-    LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU,
+    LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU, JumpCond,
 };
 
 pub fn setup() -> CPU {
@@ -670,4 +670,22 @@ fn test_rst() {
     cpu.pc = 0x1000;
     cpu.execute(Instruction::RST(RestartAddr::H28));
     assert_eq!(cpu.pc, 0x0028);
+}
+
+#[test]
+fn test_jump_relative() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1000, 0b0000_0001);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::JR(JumpCond::Always));
+    assert_eq!(cpu.pc, 0x1001);
+}
+
+#[test]
+fn test_jump_relative_negative() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1000, 0b1111_1111);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::JR(JumpCond::Always));
+    assert_eq!(cpu.pc, 0x0FFF);
 }

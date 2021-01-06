@@ -689,3 +689,11 @@ fn test_jump_relative_negative() {
     cpu.execute(Instruction::JR(JumpCond::Always));
     assert_eq!(cpu.pc, 0x0FFF);
 }
+
+#[test]
+fn test_jump_to_hl() {
+    let mut cpu = setup();
+    cpu.registers.set_hl(0x1000);
+    cpu.execute(Instruction::JPHL);
+    assert_eq!(cpu.pc, 0x1000);
+}

@@ -351,6 +351,13 @@ fn jump_relative_test_c() {
     let op = Instruction::from_byte(0x38, false).unwrap();
     assert_eq!(op, Instruction::JR(JumpCond::Carry));
 }
+
+#[test]
+fn test_jphl() {
+    let op = Instruction::from_byte(0xE9, false).unwrap();
+    assert_eq!(op, Instruction::JPHL);
+}
+
 #[test]
 fn undefined_function_tests() {
     for i in vec![

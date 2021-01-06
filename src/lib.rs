@@ -18,6 +18,7 @@ pub struct CPU {
     pub sp: u16,
     pub bus: MemoryBus,
     pub is_halted: bool,
+    ime: bool, // Interrupt Master Enable
 }
 
 impl Default for CPU {
@@ -42,6 +43,7 @@ impl Default for CPU {
             pc: 0,
             sp: 0xFFFE,
             is_halted: false,
+            ime: false,
         }
     }
 }
@@ -178,7 +180,7 @@ impl CPU {
                 Instruction::JP(condition) => {
                     self.jump(self.should_jump(condition));
                 }
-                Instruction::JPHL => self.jphl(),
+                Instruction::JPHL => self.jump_to_address_hl(),
                 Instruction::JR(condition) => {
                     self.jump_relative(self.should_jump(condition));
                 }
@@ -196,7 +198,7 @@ impl CPU {
                 Instruction::RET(condition) => {
                     self.ret(self.should_jump(condition));
                 }
-                Instruction::RETI => {}
+                Instruction::RETI => unimplemented!(),
                 Instruction::RST(addr) => self.rst(addr),
                 Instruction::EI => self.enable_interupts(),
                 Instruction::DI => self.disable_interupts(),
@@ -442,6 +444,7 @@ impl CPU {
     }
 
     fn daa(&self) {
+
         unimplemented!();
     }
 
@@ -785,12 +788,13 @@ impl CPU {
         self.pc = u16::from(addr);
     }
 
-    fn jphl(&self) {
-        unimplemented!();
+    // - - - -
+    fn jump_to_address_hl(&mut self) {
+        self.pc = self.registers.get_hl();
     }
 
-    fn enable_interupts(&self) {
-        unimplemented!();
+    fn enable_interupts(&mut self) {
+        self.ime = true;
     }
 
     fn disable_interupts(&self) {

@@ -359,6 +359,18 @@ fn test_jphl() {
 }
 
 #[test]
+fn test_ldha() {
+    let op = Instruction::from_byte(0xE0, false).unwrap();
+    assert_eq!(op, Instruction::LDHA);
+}
+
+#[test]
+fn test_ldha8() {
+    let op = Instruction::from_byte(0xF0, false).unwrap();
+    assert_eq!(op, Instruction::LDHA8);
+}
+
+#[test]
 fn undefined_function_tests() {
     for i in vec![
         0xD3, 0xE3, 0xE4, 0xF4, 0xDB, 0xEB, 0xEC, 0xFC, 0xDD, 0xED, 0xFD,

@@ -697,3 +697,23 @@ fn test_jump_to_hl() {
     cpu.execute(Instruction::JPHL);
     assert_eq!(cpu.pc, 0x1000);
 }
+
+#[test]
+fn test_ldha() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0xAAAA, 0x11);
+    cpu.pc = 0xAAAA;
+    cpu.registers.a = 0x12;
+    cpu.execute(Instruction::LDHA);
+    assert_eq!(cpu.bus.read_byte(0xFF11), cpu.registers.a);
+}
+
+#[test]
+fn test_ld8a() {
+    let mut cpu = setup();
+    cpu.pc = 0x0011;
+    cpu.bus.write_byte(0x0011, 0x11);
+    cpu.bus.write_byte(0xFF11, 0x10);
+    cpu.execute(Instruction::LDHA8);
+    assert_eq!(cpu.registers.a, 0x10);
+}

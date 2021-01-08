@@ -202,8 +202,8 @@ impl CPU {
                 Instruction::RST(addr) => self.rst(addr),
                 Instruction::EI => self.enable_interupts(),
                 Instruction::DI => self.disable_interupts(),
-                Instruction::LDHA => {}
-                Instruction::LDHA8 => {}
+                Instruction::LDHA => self.ldha(),
+                Instruction::LDHA8 => self.ldha8(),
                 Instruction::LDABY => self.load_a_into_next_byte(),
                 Instruction::LDA => self.load_byte_at_next_address_into_a(),
                 Instruction::LDHLSP => self.ldhlsp(),
@@ -799,6 +799,20 @@ impl CPU {
 
     fn disable_interupts(&self) {
         unimplemented!();
+    }
+
+    // mem[FF00 + n] = A, n = mem.next
+    // - - - -
+    fn ldha(&mut self) {
+        let n = self.read_next_byte();
+        self.bus.write_byte(0xFF00 + n as u16, self.registers.a);
+    }
+
+    // A = mem[FF00 + n], n = mem.next
+    // - - - -
+    fn ldha8(&mut self) {
+        let n = self.read_next_byte();
+        self.registers.a = self.bus.read_byte(0xFF00 + n as u16);
     }
 
     fn read_next_byte(&mut self) -> u8 {

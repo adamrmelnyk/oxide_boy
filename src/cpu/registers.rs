@@ -4,10 +4,21 @@ const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
 const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
 pub struct FlagsRegister {
-    pub zero: bool,
-    pub negative: bool,
-    pub half_carry: bool,
-    pub carry: bool,
+    zero: bool,
+    negative: bool,
+    half_carry: bool,
+    carry: bool,
+}
+
+impl Default for FlagsRegister {
+    fn default() -> FlagsRegister {
+        FlagsRegister {
+            zero: false,
+            negative: false,
+            half_carry: false,
+            carry: false,
+        }
+    }
 }
 
 impl std::convert::From<&FlagsRegister> for u8 {

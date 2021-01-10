@@ -18,7 +18,7 @@ pub struct CPU {
     pub sp: u16,
     pub bus: MemoryBus,
     pub is_halted: bool,
-    ime: bool, // Interrupt Master Enable
+    pub ime: bool, // Interrupt Master Enable
 }
 
 impl Default for CPU {
@@ -30,12 +30,7 @@ impl Default for CPU {
                 c: 0,
                 d: 0,
                 e: 0,
-                f: FlagsRegister {
-                    zero: false,
-                    negative: false,
-                    carry: false,
-                    half_carry: false,
-                },
+                f: FlagsRegister::default(),
                 h: 0,
                 l: 0,
             },
@@ -198,7 +193,7 @@ impl CPU {
                 Instruction::RET(condition) => {
                     self.ret(self.should_jump(condition));
                 }
-                Instruction::RETI => unimplemented!(),
+                Instruction::RETI => { self.reti(); },
                 Instruction::RST(addr) => self.rst(addr),
                 Instruction::EI => self.enable_interupts(),
                 Instruction::DI => self.disable_interupts(),
@@ -307,7 +302,7 @@ impl CPU {
     // * 0 * *
     fn adc(&mut self, value: u8) -> u8 {
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
-        let carry = if self.registers.f.carry { 1 } else { 0 };
+        let carry = if self.registers.carry() { 1 } else { 0 };
         if self.registers.carry() {
             (new_value, did_overflow) = new_value.overflowing_add(1u8);
         }
@@ -331,7 +326,7 @@ impl CPU {
     // * 1 * *
     fn sbc(&mut self, value: u8) -> u8 {
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_sub(value);
-        let carry = if self.registers.f.carry { 1 } else { 0 };
+        let carry = if self.registers.carry() { 1 } else { 0 };
         if self.registers.carry() {
             (new_value, did_overflow) = new_value.overflowing_sub(1u8);
         }
@@ -353,10 +348,7 @@ impl CPU {
     // * 0 0 0
     fn or(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a | value;
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.carry = false;
-        self.registers.f.half_carry = false;
+        self.registers.set_flags(new_value == 0, false, false, false);
         new_value
     }
 
@@ -364,30 +356,25 @@ impl CPU {
     // * 0 0 0
     fn xor(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a ^ value;
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.carry = false;
-        self.registers.f.half_carry = false;
+        self.registers.set_flags(new_value == 0, false, false, false);
         new_value
     }
 
     // A - s
     // * 1 * *
     fn cp(&mut self, value: u8) {
-        let (_, did_overflow) = self.registers.a.overflowing_sub(value);
-        self.registers.f.zero = self.registers.a == value;
-        self.registers.f.negative = true;
-        self.registers.f.carry = did_overflow;
-        self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
+        let (zero, did_overflow) = self.registers.a.overflowing_sub(value);
+        let zero = zero == 0;
+        let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
+        self.registers.set_flags(zero, true, half_carry, did_overflow);
     }
 
     // s = s + 1
     // * 0 * -
     fn inc(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_add(1);
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
+        let half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
+        self.registers.set_flags(new_value == 0, false, half_carry, self.registers.carry());
         new_value
     }
 
@@ -395,9 +382,8 @@ impl CPU {
     // * 1 * -
     fn dec(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_sub(1);
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = true;
-        self.registers.f.half_carry = (value & 0xF) < 1; // TODO; Double check this
+        let half_carry = (value & 0xF) < 1; // TODO; Double check this
+        self.registers.set_flags(new_value == 0, true, half_carry, self.registers.carry());
         new_value
     }
 
@@ -405,7 +391,7 @@ impl CPU {
     /// - 0 0 *
     fn ccf(&mut self) {
         self.registers
-            .set_flags_nz(false, false, !self.registers.f.carry);
+            .set_flags_nz(false, false, !self.registers.carry());
     }
 
     /// Set the carry flag
@@ -533,10 +519,8 @@ impl CPU {
     // * 0 0 *
     fn sra(&mut self, value: u8) -> u8 {
         let new_value = value >> 1;
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.negative = false;
-        self.registers.f.half_carry = false;
-        self.registers.f.carry = (value & 0x01) == 1;
+        let carry = (value & 0x01) == 1;
+        self.registers.set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
@@ -558,6 +542,7 @@ impl CPU {
         self.registers.set_zero(swapped == 0);
     }
 
+    // - - - - 
     fn jump(&mut self, should_jump: bool) -> u16 {
         if should_jump {
             let least_sig = self.bus.read_byte(self.pc.wrapping_add(1)) as u16;
@@ -783,6 +768,13 @@ impl CPU {
         }
     }
 
+    fn reti(&mut self) -> u16 {
+        self.pop();
+        unimplemented!();
+        // TODO: Jump to that location
+        // TODO: disable interrupts
+    }
+
     fn rst(&mut self, addr: RestartAddr) {
         self.push(self.pc);
         self.pc = u16::from(addr);
@@ -797,8 +789,8 @@ impl CPU {
         self.ime = true;
     }
 
-    fn disable_interupts(&self) {
-        unimplemented!();
+    fn disable_interupts(&mut self) {
+        self.ime = false;
     }
 
     // mem[FF00 + n] = A, n = mem.next

@@ -371,6 +371,18 @@ fn test_ldha8() {
 }
 
 #[test]
+fn test_ei() {
+    let op = Instruction::from_byte(0xFB, false).unwrap();
+    assert_eq!(op, Instruction::EI);
+}
+
+#[test]
+fn test_di() {
+    let op = Instruction::from_byte(0xF3, false).unwrap();
+    assert_eq!(op, Instruction::DI);
+}
+
+#[test]
 fn undefined_function_tests() {
     for i in vec![
         0xD3, 0xE3, 0xE4, 0xF4, 0xDB, 0xEB, 0xEC, 0xFC, 0xDD, 0xED, 0xFD,

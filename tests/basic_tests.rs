@@ -15,16 +15,16 @@ pub fn assert_flags_znhc(
     half_carry: bool,
     carry: bool,
 ) {
-    assert_eq!(registers.f.zero, zero, "Zero flag does not match");
+    assert_eq!(registers.zero(), zero, "Zero flag does not match");
     assert_eq!(
-        registers.f.negative, negative,
+        registers.negative(), negative,
         "Negative flag does not match"
     );
     assert_eq!(
-        registers.f.half_carry, half_carry,
+        registers.half_carry(), half_carry,
         "Half Carry flag does not match"
     );
-    assert_eq!(registers.f.carry, carry, "Carry flag does not match");
+    assert_eq!(registers.carry(), carry, "Carry flag does not match");
 }
 
 #[test]
@@ -236,7 +236,7 @@ fn sub_underflow_test() {
 #[test]
 fn adc_test() {
     let mut cpu = setup();
-    cpu.registers.f.carry = true;
+    cpu.registers.set_flags_nz(false, false, true);
     cpu.registers.a = 1;
     cpu.registers.b = 1;
     cpu.execute(Instruction::ADC(ArithmeticTarget::B));
@@ -247,7 +247,7 @@ fn adc_test() {
 #[test]
 fn adc_test_overflow() {
     let mut cpu = setup();
-    cpu.registers.f.carry = true;
+    cpu.registers.set_flags_nz(false, false, true);
     cpu.registers.a = 254;
     cpu.registers.b = 1;
     cpu.execute(Instruction::ADC(ArithmeticTarget::B));
@@ -258,7 +258,7 @@ fn adc_test_overflow() {
 #[test]
 fn adc_test_half_overflow() {
     let mut cpu = setup();
-    cpu.registers.f.carry = true;
+    cpu.registers.set_flags_nz(false, false, true);
     cpu.registers.a = 15;
     cpu.execute(Instruction::ADC(ArithmeticTarget::B));
     assert_eq!(16, cpu.registers.a);
@@ -270,7 +270,7 @@ fn sbc_test() {
     let mut cpu = setup();
     cpu.registers.a = 3;
     cpu.registers.b = 2;
-    cpu.registers.f.carry = true;
+    cpu.registers.set_flags_nz(false, false, true);
     cpu.execute(Instruction::SBC(ArithmeticTarget::B));
     assert_eq!(0, cpu.registers.a);
     assert_flags_znhc(cpu.registers, true, true, false, false);
@@ -281,7 +281,7 @@ fn sbc_test_overflow() {
     let mut cpu = setup();
     cpu.registers.a = 2;
     cpu.registers.b = 2;
-    cpu.registers.f.carry = true;
+    cpu.registers.set_flags_nz(false, false, true);
     cpu.execute(Instruction::SBC(ArithmeticTarget::B));
     assert_eq!(255, cpu.registers.a);
     assert_flags_znhc(cpu.registers, false, true, true, true);
@@ -716,4 +716,18 @@ fn test_ld8a() {
     cpu.bus.write_byte(0xFF11, 0x10);
     cpu.execute(Instruction::LDHA8);
     assert_eq!(cpu.registers.a, 0x10);
+}
+
+#[test]
+fn test_disable_interrupts() {
+    let mut cpu = setup();
+    cpu.execute(Instruction::DI);
+    assert_eq!(cpu.ime, false);
+}
+
+#[test]
+fn test_enable_interrupts() {
+    let mut cpu = setup();
+    cpu.execute(Instruction::EI);
+    assert_eq!(cpu.ime, true);
 }

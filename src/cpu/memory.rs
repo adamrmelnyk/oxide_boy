@@ -1,11 +1,11 @@
 pub struct MemoryBus {
-    memory: [u8; 0xFFFF],
+    memory: [u8; 0xFFFF + 1],
 }
 
 impl Default for MemoryBus {
     fn default() -> Self {
         MemoryBus {
-            memory: [0; 0xFFFF],
+            memory: [0; 0xFFFF + 1],
         }
     }
 }
@@ -30,6 +30,14 @@ impl MemoryBus {
         let l_byte = value as u8;
         self.write_byte(address, l_byte);
         self.write_byte(address + 1, h_byte);
+    }
+
+    pub fn interrupt_enable(&self) -> u8 {
+        self.memory[0xFFFF]
+    }
+
+    pub fn interrupt_flags(&self) -> u8 {
+        self.memory[0xFF0F]
     }
 }
 

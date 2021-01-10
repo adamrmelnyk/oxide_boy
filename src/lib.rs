@@ -760,6 +760,7 @@ impl CPU {
         }
     }
 
+    // TODO: I don't think this is correct
     fn ret(&mut self, should_jump: bool) -> u16 {
         if should_jump {
             self.pop()
@@ -768,11 +769,9 @@ impl CPU {
         }
     }
 
-    fn reti(&mut self) -> u16 {
-        self.pop();
-        unimplemented!();
-        // TODO: Jump to that location
-        // TODO: disable interrupts
+    fn reti(&mut self) {
+        self.ime = false;
+        self.pc = self.pop();
     }
 
     fn rst(&mut self, addr: RestartAddr) {

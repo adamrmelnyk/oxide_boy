@@ -731,3 +731,15 @@ fn test_enable_interrupts() {
     cpu.execute(Instruction::EI);
     assert_eq!(cpu.ime, true);
 }
+
+#[test]
+fn test_reti() {
+    let mut cpu = setup();
+    cpu.pc = 0x3000;
+    cpu.sp = 0xA000;
+    cpu.bus.write_word(0xA000, 0x0101);
+    cpu.execute(Instruction::RETI);
+    assert_eq!(cpu.pc, 0x0101);
+}
+
+// TODO: Tests for pop, jump, ret, call etc

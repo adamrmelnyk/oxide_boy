@@ -1,6 +1,6 @@
 use gb_emulator::{
-    ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
-    LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU, JumpCond,
+    ArithmeticTarget, Instruction, JumpCond, LoadByteSource, LoadByteTarget, LoadType,
+    LoadWordSource, LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU,
 };
 
 pub fn setup() -> CPU {
@@ -17,11 +17,13 @@ pub fn assert_flags_znhc(
 ) {
     assert_eq!(registers.zero(), zero, "Zero flag does not match");
     assert_eq!(
-        registers.negative(), negative,
+        registers.negative(),
+        negative,
         "Negative flag does not match"
     );
     assert_eq!(
-        registers.half_carry(), half_carry,
+        registers.half_carry(),
+        half_carry,
         "Half Carry flag does not match"
     );
     assert_eq!(registers.carry(), carry, "Carry flag does not match");

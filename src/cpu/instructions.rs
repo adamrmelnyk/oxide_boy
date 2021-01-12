@@ -229,10 +229,7 @@ impl std::convert::From<u8> for JumpCond {
             0x28 => JumpCond::Zero,
             0x30 => JumpCond::NotCarry,
             0x38 => JumpCond::Carry,
-            _ => panic!(
-                "u8 {:?} cannot be converted into an JumpCond",
-                byte
-            ),
+            _ => panic!("u8 {:?} cannot be converted into an JumpCond", byte),
         }
     }
 }

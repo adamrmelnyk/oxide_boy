@@ -7,9 +7,11 @@ use cpu::memory::MemoryBus;
 use cpu::registers::FlagsRegister;
 
 pub use cpu::instructions::{
-    ArithmeticTarget, Instruction, RestartAddr, SixteenBitArithmeticTarget, JumpCond
+    ArithmeticTarget, Instruction, JumpCond, RestartAddr, SixteenBitArithmeticTarget,
 };
-pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget, Interrupt};
+pub use cpu::memory::{
+    Interrupt, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget,
+};
 pub use cpu::registers::Registers;
 
 const V_BLANK_ISR: u16 = 0x40;
@@ -93,8 +95,8 @@ impl CPU {
                 Interrupt::LcdStat => self.execute_interrupt(LCD_ISR),
                 Interrupt::TimerOverflow => self.execute_interrupt(TIMER_ISR),
                 Interrupt::SerialLink => self.execute_interrupt(SERIAL_ISR),
-                Interrupt::JoypadPress =>  self.execute_interrupt(JOYPAD_ISR),
-                Interrupt::NONE => {/* Do nothing */}
+                Interrupt::JoypadPress => self.execute_interrupt(JOYPAD_ISR),
+                Interrupt::NONE => { /* Do nothing */ }
             }
         }
     }
@@ -218,7 +220,9 @@ impl CPU {
                 Instruction::RET(condition) => {
                     self.ret(self.should_jump(condition));
                 }
-                Instruction::RETI => { self.reti(); },
+                Instruction::RETI => {
+                    self.reti();
+                }
                 Instruction::RST(addr) => self.rst(addr),
                 Instruction::EI => self.enable_interupts(),
                 Instruction::DI => self.disable_interupts(),
@@ -373,7 +377,8 @@ impl CPU {
     // * 0 0 0
     fn or(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a | value;
-        self.registers.set_flags(new_value == 0, false, false, false);
+        self.registers
+            .set_flags(new_value == 0, false, false, false);
         new_value
     }
 
@@ -381,7 +386,8 @@ impl CPU {
     // * 0 0 0
     fn xor(&mut self, value: u8) -> u8 {
         let new_value = self.registers.a ^ value;
-        self.registers.set_flags(new_value == 0, false, false, false);
+        self.registers
+            .set_flags(new_value == 0, false, false, false);
         new_value
     }
 
@@ -391,7 +397,8 @@ impl CPU {
         let (zero, did_overflow) = self.registers.a.overflowing_sub(value);
         let zero = zero == 0;
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
-        self.registers.set_flags(zero, true, half_carry, did_overflow);
+        self.registers
+            .set_flags(zero, true, half_carry, did_overflow);
     }
 
     // s = s + 1
@@ -399,7 +406,8 @@ impl CPU {
     fn inc(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_add(1);
         let half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
-        self.registers.set_flags(new_value == 0, false, half_carry, self.registers.carry());
+        self.registers
+            .set_flags(new_value == 0, false, half_carry, self.registers.carry());
         new_value
     }
 
@@ -408,7 +416,8 @@ impl CPU {
     fn dec(&mut self, value: u8) -> u8 {
         let new_value = value.wrapping_sub(1);
         let half_carry = (value & 0xF) < 1; // TODO; Double check this
-        self.registers.set_flags(new_value == 0, true, half_carry, self.registers.carry());
+        self.registers
+            .set_flags(new_value == 0, true, half_carry, self.registers.carry());
         new_value
     }
 
@@ -455,7 +464,6 @@ impl CPU {
     }
 
     fn daa(&self) {
-
         unimplemented!();
     }
 
@@ -545,7 +553,8 @@ impl CPU {
     fn sra(&mut self, value: u8) -> u8 {
         let new_value = value >> 1;
         let carry = (value & 0x01) == 1;
-        self.registers.set_flags(new_value == 0, false, false, carry);
+        self.registers
+            .set_flags(new_value == 0, false, false, carry);
         new_value
     }
 
@@ -567,7 +576,7 @@ impl CPU {
         self.registers.set_zero(swapped == 0);
     }
 
-    // - - - - 
+    // - - - -
     fn jump(&mut self, should_jump: bool) -> u16 {
         if should_jump {
             let least_sig = self.bus.read_byte(self.pc.wrapping_add(1)) as u16;

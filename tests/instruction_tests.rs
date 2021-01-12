@@ -1,6 +1,6 @@
 use gb_emulator::{
-    ArithmeticTarget, Instruction, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource,
-    LoadWordTarget, JumpCond,
+    ArithmeticTarget, Instruction, JumpCond, LoadByteSource, LoadByteTarget, LoadType,
+    LoadWordSource, LoadWordTarget,
 };
 
 #[test]

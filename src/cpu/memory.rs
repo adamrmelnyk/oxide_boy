@@ -52,7 +52,7 @@ impl MemoryBus {
     // TODO: Another fn to check if ANY are flagged?
 
     pub fn interrupt_flag_off(&mut self) {
-        self.write_byte(0xFF0F, self.interrupt_flags() & 0); 
+        self.write_byte(0xFF0F, self.interrupt_flags() & 0);
     }
 
     pub fn return_interrupt(&self) -> Interrupt {

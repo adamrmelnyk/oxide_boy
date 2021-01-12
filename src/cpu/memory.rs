@@ -32,12 +32,38 @@ impl MemoryBus {
         self.write_byte(address + 1, h_byte);
     }
 
-    pub fn interrupt_enable(&self) -> u8 {
+    fn interrupt_enable(&self) -> u8 {
         self.memory[0xFFFF]
     }
 
-    pub fn interrupt_flags(&self) -> u8 {
+    fn interrupt_flags(&self) -> u8 {
         self.memory[0xFF0F]
+    }
+
+    // TODO: Another fn to check if ANY are flagged?
+
+    pub fn interrupt_flag_off(&mut self) {
+        self.write_byte(0xFF0F, self.interrupt_flags() & 0); 
+    }
+
+    pub fn v_blank(&self) -> bool {
+        (self.interrupt_enable() & 0x01) & (self.interrupt_flags() & 0x01) == 1
+    }
+
+    pub fn lcd_stat(&self) -> bool {
+        (self.interrupt_enable() & 0x02) & (self.interrupt_flags() & 0x02) == 1
+    }
+
+    pub fn timer_overflow(&self) -> bool {
+        (self.interrupt_enable() & 0x03) & (self.interrupt_flags() & 0x03) == 1
+    }
+
+    pub fn serial_link(&self) -> bool {
+        (self.interrupt_enable() & 0x04) & (self.interrupt_flags() & 0x04) == 1
+    }
+
+    pub fn joypad_press(&self) -> bool {
+        (self.interrupt_enable() & 0x05) & (self.interrupt_flags() & 0x05) == 1
     }
 }
 

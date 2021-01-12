@@ -12,6 +12,12 @@ pub use cpu::instructions::{
 pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget};
 pub use cpu::registers::Registers;
 
+const V_BLANK_ISR: u16 = 0x40;
+const LCD_ISR: u16 = 0x48;
+const TIMER_ISR: u16 = 0x50;
+const SERIAL_ISR: u16 = 0x58;
+const JOYPAD_ISR: u16 = 0x60;
+
 pub struct CPU {
     pub registers: Registers,
     pub pc: u16,
@@ -76,8 +82,42 @@ impl CPU {
             );
             panic!("Unkown instruction found for: {}", description)
         };
-
         self.pc = next_pc;
+        self.handle_interrupts();
+    }
+
+    fn handle_interrupts(&mut self) {
+        if self.ime {
+            if self.bus.v_blank() {
+                self.push(self.pc);
+                self.pc = V_BLANK_ISR;
+                self.bus.interrupt_flag_off();
+            }
+
+            if self.bus.lcd_stat() {
+                self.push(self.pc);
+                self.pc = LCD_ISR;
+                self.bus.interrupt_flag_off();
+            }
+
+            if self.bus.timer_overflow() {
+                self.push(self.pc);
+                self.pc = TIMER_ISR;
+                self.bus.interrupt_flag_off();
+            }
+
+            if self.bus.serial_link() {
+                self.push(self.pc);
+                self.pc = SERIAL_ISR;
+                self.bus.interrupt_flag_off();
+            }
+
+            if self.bus.joypad_press() {
+                self.push(self.pc);
+                self.pc = JOYPAD_ISR;
+                self.bus.interrupt_flag_off();
+            }
+        }
     }
 
     pub fn execute(&mut self, instruction: Instruction) -> u16 {

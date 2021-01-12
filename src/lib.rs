@@ -9,7 +9,7 @@ use cpu::registers::FlagsRegister;
 pub use cpu::instructions::{
     ArithmeticTarget, Instruction, RestartAddr, SixteenBitArithmeticTarget, JumpCond
 };
-pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget};
+pub use cpu::memory::{LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget, Interrupt};
 pub use cpu::registers::Registers;
 
 const V_BLANK_ISR: u16 = 0x40;
@@ -88,36 +88,21 @@ impl CPU {
 
     fn handle_interrupts(&mut self) {
         if self.ime {
-            if self.bus.v_blank() {
-                self.push(self.pc);
-                self.pc = V_BLANK_ISR;
-                self.bus.interrupt_flag_off();
-            }
-
-            if self.bus.lcd_stat() {
-                self.push(self.pc);
-                self.pc = LCD_ISR;
-                self.bus.interrupt_flag_off();
-            }
-
-            if self.bus.timer_overflow() {
-                self.push(self.pc);
-                self.pc = TIMER_ISR;
-                self.bus.interrupt_flag_off();
-            }
-
-            if self.bus.serial_link() {
-                self.push(self.pc);
-                self.pc = SERIAL_ISR;
-                self.bus.interrupt_flag_off();
-            }
-
-            if self.bus.joypad_press() {
-                self.push(self.pc);
-                self.pc = JOYPAD_ISR;
-                self.bus.interrupt_flag_off();
+            match self.bus.return_interrupt() {
+                Interrupt::VBlank => self.execute_interrupt(V_BLANK_ISR),
+                Interrupt::LcdStat => self.execute_interrupt(LCD_ISR),
+                Interrupt::TimerOverflow => self.execute_interrupt(TIMER_ISR),
+                Interrupt::SerialLink => self.execute_interrupt(SERIAL_ISR),
+                Interrupt::JoypadPress =>  self.execute_interrupt(JOYPAD_ISR),
+                Interrupt::NONE => {/* Do nothing */}
             }
         }
+    }
+
+    fn execute_interrupt(&mut self, isr: u16) {
+        self.push(self.pc);
+        self.pc = isr;
+        self.bus.interrupt_flag_off();
     }
 
     pub fn execute(&mut self, instruction: Instruction) -> u16 {

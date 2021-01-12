@@ -1,3 +1,12 @@
+pub enum Interrupt {
+    VBlank,
+    LcdStat,
+    TimerOverflow,
+    SerialLink,
+    JoypadPress,
+    NONE,
+}
+
 pub struct MemoryBus {
     memory: [u8; 0xFFFF + 1],
 }
@@ -46,24 +55,20 @@ impl MemoryBus {
         self.write_byte(0xFF0F, self.interrupt_flags() & 0); 
     }
 
-    pub fn v_blank(&self) -> bool {
-        (self.interrupt_enable() & 0x01) & (self.interrupt_flags() & 0x01) == 1
-    }
-
-    pub fn lcd_stat(&self) -> bool {
-        (self.interrupt_enable() & 0x02) & (self.interrupt_flags() & 0x02) == 1
-    }
-
-    pub fn timer_overflow(&self) -> bool {
-        (self.interrupt_enable() & 0x03) & (self.interrupt_flags() & 0x03) == 1
-    }
-
-    pub fn serial_link(&self) -> bool {
-        (self.interrupt_enable() & 0x04) & (self.interrupt_flags() & 0x04) == 1
-    }
-
-    pub fn joypad_press(&self) -> bool {
-        (self.interrupt_enable() & 0x05) & (self.interrupt_flags() & 0x05) == 1
+    pub fn return_interrupt(&self) -> Interrupt {
+        if (self.interrupt_enable() & 0x01) & (self.interrupt_flags() & 0x01) == 1 {
+            Interrupt::VBlank
+        } else if (self.interrupt_enable() & 0x02) & (self.interrupt_flags() & 0x02) == 1 {
+            Interrupt::LcdStat
+        } else if (self.interrupt_enable() & 0x03) & (self.interrupt_flags() & 0x03) == 1 {
+            Interrupt::TimerOverflow
+        } else if (self.interrupt_enable() & 0x04) & (self.interrupt_flags() & 0x04) == 1 {
+            Interrupt::SerialLink
+        } else if (self.interrupt_enable() & 0x05) & (self.interrupt_flags() & 0x05) == 1 {
+            Interrupt::JoypadPress
+        } else {
+            Interrupt::NONE
+        }
     }
 }
 

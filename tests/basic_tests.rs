@@ -30,6 +30,13 @@ pub fn assert_flags_znhc(
 }
 
 #[test]
+fn test_boot_rom() {
+    let cpu = setup();
+    assert_eq!(cpu.bus.read_byte(0), 0x31);
+    assert_eq!(cpu.bus.read_byte(0xFF), 0x50);
+}
+
+#[test]
 fn inc_16_test() {
     let mut cpu = setup();
     let before = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::BC);

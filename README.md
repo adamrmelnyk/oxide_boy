@@ -20,8 +20,7 @@ cargo run
 
 ## TODO
 
-* make registers private
-* Implement the rest of the operations
+* Timers
 * GUI
 * I/O
 

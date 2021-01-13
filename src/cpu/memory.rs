@@ -1,3 +1,8 @@
+use std::fs::File;
+use std::io::Read;
+
+const BootRom: &str = "src/cpu/rom/DMG_ROM.bin";
+
 pub enum Interrupt {
     VBlank,
     LcdStat,
@@ -13,9 +18,11 @@ pub struct MemoryBus {
 
 impl Default for MemoryBus {
     fn default() -> Self {
-        MemoryBus {
+        let mut mem_bus = MemoryBus {
             memory: [0; 0xFFFF + 1],
-        }
+        };
+        mem_bus.load_boot_rom();
+        mem_bus
     }
 }
 
@@ -49,8 +56,6 @@ impl MemoryBus {
         self.memory[0xFF0F]
     }
 
-    // TODO: Another fn to check if ANY are flagged?
-
     pub fn interrupt_flag_off(&mut self) {
         self.write_byte(0xFF0F, self.interrupt_flags() & 0);
     }
@@ -68,6 +73,20 @@ impl MemoryBus {
             Interrupt::JoypadPress
         } else {
             Interrupt::NONE
+        }
+    }
+
+    // Loads the boot rom from 0-0x100
+    fn load_boot_rom(&mut self) {
+        let mut buffer = [0u8; 0x100];
+        match File::open(BootRom) {
+            Ok(mut file) => match file.read(&mut buffer[..]) {
+                Ok(_bytes) => {
+                    self.memory[0x0..0x100].copy_from_slice(&buffer);
+                },
+                Err(err) => eprintln!("Error reading file: {}", err),
+            },
+            Err(err) => eprintln!("Error opening file: {}", err),
         }
     }
 }

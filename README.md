@@ -1,4 +1,4 @@
-# GB Emulator
+# Oxide Boy
 
 A gameboy emulator
 

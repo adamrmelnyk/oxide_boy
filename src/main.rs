@@ -1,8 +1,8 @@
 mod cpu;
 
-use gb_emulator::ArithmeticTarget;
-use gb_emulator::Instruction;
-use gb_emulator::CPU;
+use oxide_boy::ArithmeticTarget;
+use oxide_boy::Instruction;
+use oxide_boy::CPU;
 
 fn main() {
     println!("Hello, world!");

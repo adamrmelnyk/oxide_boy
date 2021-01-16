@@ -1,4 +1,4 @@
-use gb_emulator::{
+use oxide_boy::{
     ArithmeticTarget, Instruction, JumpCond, LoadByteSource, LoadByteTarget, LoadType,
     LoadWordSource, LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU,
 };

@@ -23,6 +23,7 @@ cargo run
 * Timers
 * GUI
 * I/O
+* Hard code the boot rom so we don't need a file for it?
 
 ### Current issues
 

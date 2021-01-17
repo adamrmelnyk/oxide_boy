@@ -194,7 +194,7 @@ fn addhl_half_overflow_test() {
 fn addsp_test() {
     let mut cpu = setup();
     cpu.sp = 0x0001;
-    cpu.bus.write_byte(0x1000, 0x01);
+    cpu.bus.write_byte(0x1001, 0x01);
     cpu.pc = 0x1000;
     cpu.execute(Instruction::ADDSP);
     assert_eq!(0x0002, cpu.sp);
@@ -205,7 +205,7 @@ fn addsp_test() {
 fn addsp_overflow_test() {
     let mut cpu = setup();
     cpu.sp = 0xFFFF;
-    cpu.bus.write_byte(0x1000, 0x01);
+    cpu.bus.write_byte(0x1001, 0x01);
     cpu.pc = 0x1000;
     cpu.execute(Instruction::ADDSP);
     assert_eq!(0x0000, cpu.sp);
@@ -216,7 +216,7 @@ fn addsp_overflow_test() {
 fn addsp_half_overflow_test() {
     let mut cpu = setup();
     cpu.sp = 0x00FF;
-    cpu.bus.write_byte(0x1000, 0x01);
+    cpu.bus.write_byte(0x1001, 0x01);
     cpu.pc = 0x1000;
     cpu.execute(Instruction::ADDSP);
     assert_eq!(0x0100, cpu.sp);
@@ -684,19 +684,19 @@ fn test_rst() {
 #[test]
 fn test_jump_relative() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1000, 0b0000_0001);
+    cpu.bus.write_byte(0x1001, 0b0000_0101);
     cpu.pc = 0x1000;
     cpu.execute(Instruction::JR(JumpCond::Always));
-    assert_eq!(cpu.pc, 0x1001);
+    assert_eq!(cpu.pc, 0x1006, "Should jump five spaces");
 }
 
 #[test]
 fn test_jump_relative_negative() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1000, 0b1111_1111);
+    cpu.bus.write_byte(0x1001, 0xFB);
     cpu.pc = 0x1000;
     cpu.execute(Instruction::JR(JumpCond::Always));
-    assert_eq!(cpu.pc, 0x0FFF);
+    assert_eq!(cpu.pc, 0x0FFC, "Should jump back 5 spaces");
 }
 
 #[test]
@@ -710,7 +710,7 @@ fn test_jump_to_hl() {
 #[test]
 fn test_ldha() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0xAAAA, 0x11);
+    cpu.bus.write_byte(0xAAAB, 0x11);
     cpu.pc = 0xAAAA;
     cpu.registers.a = 0x12;
     cpu.execute(Instruction::LDHA);
@@ -721,7 +721,7 @@ fn test_ldha() {
 fn test_ld8a() {
     let mut cpu = setup();
     cpu.pc = 0x0011;
-    cpu.bus.write_byte(0x0011, 0x11);
+    cpu.bus.write_byte(0x0012, 0x11);
     cpu.bus.write_byte(0xFF11, 0x10);
     cpu.execute(Instruction::LDHA8);
     assert_eq!(cpu.registers.a, 0x10);
@@ -752,3 +752,5 @@ fn test_reti() {
 }
 
 // TODO: Tests for pop, jump, ret, call etc
+
+// TODO: Tests for prefix byte making the pc inc two places. test should be for step 

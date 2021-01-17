@@ -5,15 +5,19 @@ use oxide_boy::Instruction;
 use oxide_boy::CPU;
 
 fn main() {
-    println!("Hello, world!");
+    println!("Starting emulator!");
     let mut cpu = CPU::default();
-    cpu.execute(Instruction::ADD(ArithmeticTarget::C));
-    cpu.execute(Instruction::SUB(ArithmeticTarget::C));
-    cpu.execute(Instruction::ADC(ArithmeticTarget::C));
-    cpu.execute(Instruction::AND(ArithmeticTarget::C));
-    cpu.execute(Instruction::OR(ArithmeticTarget::C));
-    cpu.execute(Instruction::XOR(ArithmeticTarget::C));
-    cpu.execute(Instruction::INC(ArithmeticTarget::A));
-    cpu.execute(Instruction::DEC(ArithmeticTarget::A));
-    cpu.execute(Instruction::SWAP(ArithmeticTarget::A));
+    loop {
+        cpu.step();
+    }
 }
+
+    // cpu.execute(Instruction::ADD(ArithmeticTarget::C));
+    // cpu.execute(Instruction::SUB(ArithmeticTarget::C));
+    // cpu.execute(Instruction::ADC(ArithmeticTarget::C));
+    // cpu.execute(Instruction::AND(ArithmeticTarget::C));
+    // cpu.execute(Instruction::OR(ArithmeticTarget::C));
+    // cpu.execute(Instruction::XOR(ArithmeticTarget::C));
+    // cpu.execute(Instruction::INC(ArithmeticTarget::A));
+    // cpu.execute(Instruction::DEC(ArithmeticTarget::A));
+    // cpu.execute(Instruction::SWAP(ArithmeticTarget::A));

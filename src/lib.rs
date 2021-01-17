@@ -66,11 +66,13 @@ impl CPU {
         }
     }
 
-    fn step(&mut self) {
+    pub fn step(&mut self) {
         let mut instruction_byte = self.bus.read_byte(self.pc);
         let prefixed = instruction_byte == 0xCB;
+        println!("{:#02x}", instruction_byte);
         if instruction_byte == 0xCB {
             instruction_byte = self.bus.read_byte(self.pc + 1);
+            println!("Prefix: {:#02x}", instruction_byte);
         }
 
         let next_pc = if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed)
@@ -84,7 +86,8 @@ impl CPU {
             );
             panic!("Unkown instruction found for: {}", description)
         };
-        self.pc = next_pc;
+        let prefix = if prefixed {1} else {0};
+        self.pc = next_pc + prefix;
         self.handle_interrupts();
     }
 
@@ -108,6 +111,7 @@ impl CPU {
     }
 
     pub fn execute(&mut self, instruction: Instruction) -> u16 {
+        let mut dont_inc_pc = false;
         if !self.is_halted {
             match instruction {
                 Instruction::ADD(target) => {
@@ -204,14 +208,14 @@ impl CPU {
                 }
                 Instruction::JPHL => self.jump_to_address_hl(),
                 Instruction::JR(condition) => {
-                    self.jump_relative(self.should_jump(condition));
+                    dont_inc_pc = self.jump_relative(self.should_jump(condition));
                 }
                 Instruction::LD(load_type) => self.load(load_type),
                 Instruction::LDAC => self.ldac(),
                 Instruction::LDCA => self.ldca(),
                 Instruction::HALT => self.halt(),
                 Instruction::NOP => { /* NO OP, simply advances the pc */ }
-                Instruction::STOP => unimplemented!(),
+                Instruction::STOP => self.stop(),
                 Instruction::PUSH(target) => self.push_from_target(target),
                 Instruction::POP(target) => self.pop_and_store(target),
                 Instruction::CALL(condition) => {
@@ -233,7 +237,7 @@ impl CPU {
                 Instruction::LDHLSP => self.ldhlsp(),
             }
         }
-        self.pc.wrapping_add(1) // After each operation we increment the pc and return the value
+        if dont_inc_pc { self.pc } else { self.pc.wrapping_add(1) } // After each operation we increment the pc and return the value
     }
 
     /// Helper method for returning the value of an 8bit register
@@ -588,18 +592,21 @@ impl CPU {
     }
 
     // - - - -
-    fn jump_relative(&mut self, should_jump: bool) {
+    fn jump_relative(&mut self, should_jump: bool) -> bool {
+        let next_byte = self.read_next_byte() as i8;
         if should_jump {
-            let next_byte = self.read_next_byte() as i8;
-            // read_next_byte increases the pc, so we sub an extra one below
             if next_byte > 0 {
                 let jump_addr = next_byte as u16;
-                self.pc = self.pc.wrapping_add(jump_addr - 1);
+                println!("next byte is inc {:#02x}", next_byte);
+                println!("jump add is {:#02x}", jump_addr);
+                self.pc = self.pc.wrapping_add(jump_addr); // TODO: Does this still need -1
             } else {
                 let jump_addr = next_byte.abs() as u16;
-                self.pc = self.pc.wrapping_sub(jump_addr + 1);
+                println!("next byte is dec {:#02x}", next_byte);
+                self.pc = self.pc.wrapping_sub(jump_addr); // TODO: Does this still need + 1
             }
         }
+        false
     }
 
     // - - - -
@@ -840,9 +847,14 @@ impl CPU {
         self.registers.a = self.bus.read_byte(0xFF00 + n as u16);
     }
 
+    fn stop(&mut self) {
+        // TODO: We'll need to impl this op to continue
+        unimplemented!();
+    }
+
     fn read_next_byte(&mut self) -> u8 {
-        let byte = self.bus.read_byte(self.pc);
         self.pc = self.pc.wrapping_add(1);
+        let byte = self.bus.read_byte(self.pc);
         byte
     }
 

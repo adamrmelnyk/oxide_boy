@@ -1,6 +1,6 @@
 use oxide_boy::{
     ArithmeticTarget, Instruction, JumpCond, LoadByteSource, LoadByteTarget, LoadType,
-    LoadWordSource, LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU,
+    LoadWordSource, LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU, StackTarget,
 };
 
 pub fn setup() -> CPU {
@@ -751,6 +751,28 @@ fn test_reti() {
     assert_eq!(cpu.pc, 0x0101);
 }
 
-// TODO: Tests for pop, jump, ret, call etc
+#[test]
+fn test_push() {
+    let mut cpu = setup();
+    cpu.registers.set_bc(0xAFAF);
+    assert_eq!(cpu.sp, 0xFFFE);
+    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    assert_eq!(cpu.sp, 0xFFFC, "Two bytes are written so the stack moves back two spots");
+    assert_eq!(cpu.registers.get_bc(), 0xAFAF);
+}
+
+#[test]
+fn test_pop() {
+    let mut cpu = setup();
+    cpu.registers.set_bc(0xAFAF);
+    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.registers.set_bc(0xFAFA); // Change the register value
+    cpu.execute(Instruction::POP(StackTarget::BC));
+    assert_eq!(cpu.registers.get_bc(), 0xAFAF, "The register should be back to it's originally set value");
+    assert_eq!(cpu.sp, 0xFFFE, "The stack is empty and should be back at the default value: 0xFFFE");
+}
+
+// TODO: Tests for jump, ret, call etc
+
 
 // TODO: Tests for prefix byte making the pc inc two places. test should be for step 

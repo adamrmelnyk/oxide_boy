@@ -2,12 +2,11 @@
 
 mod cpu;
 
-use cpu::instructions::StackTarget;
 use cpu::memory::MemoryBus;
 use cpu::registers::FlagsRegister;
 
 pub use cpu::instructions::{
-    ArithmeticTarget, Instruction, JumpCond, RestartAddr, SixteenBitArithmeticTarget,
+    ArithmeticTarget, Instruction, JumpCond, RestartAddr, SixteenBitArithmeticTarget, StackTarget,
 };
 pub use cpu::memory::{
     Interrupt, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget,
@@ -748,6 +747,8 @@ impl CPU {
         self.is_halted = true;
     }
 
+    // (SP-1) = ssh, (SP-2) = ssl, SP = SP-2
+    // - - - -
     fn push_from_target(&mut self, target: StackTarget) {
         let value = match target {
             StackTarget::AF => self.registers.get_af(),
@@ -755,17 +756,14 @@ impl CPU {
             StackTarget::DE => self.registers.get_de(),
             StackTarget::HL => self.registers.get_hl(),
         };
-        self.sp = self.sp.wrapping_add(1);
-        self.bus.write_byte(self.sp, ((value & 0xFF00) >> 8) as u8);
-        self.sp = self.sp.wrapping_add(1);
-        self.bus.write_byte(self.sp, ((value & 0xFF) >> 8) as u8);
+        self.push(value);
     }
 
     // (SP-1) = ssh, (SP-2) = ssl, SP = SP-2
+    // - - - -
     fn push(&mut self, value: u16) {
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, ((value & 0xFF00) >> 8) as u8);
-
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, (value & 0xFF) as u8);
     }

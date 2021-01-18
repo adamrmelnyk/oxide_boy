@@ -35,12 +35,16 @@ impl MemoryBus {
         self.memory[address as usize] = value;
     }
 
+    /// Reads the word from the address
+    /// Note that we are using little-endian
     pub fn read_word(&self, address: u16) -> u16 {
         let l_byte = self.memory[address as usize];
         let h_byte = self.memory[(address + 1) as usize];
         ((h_byte as u16) << 8) | l_byte as u16
     }
 
+    /// Writes the word from the address
+    /// This uses little endian
     pub fn write_word(&mut self, address: u16, value: u16) {
         let h_byte = (value >> 8) as u8;
         let l_byte = value as u8;
@@ -213,4 +217,20 @@ impl std::convert::From<u8> for LoadType {
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }
     }
+}
+
+#[test]
+fn read_word() {
+    let mut bus = MemoryBus::default();
+    bus.write_byte(0x1111, 0xAA);
+    bus.write_byte(0x1112, 0xFF);
+    assert_eq!(bus.read_word(0x1111), 0xFFAA, "We expect this to be read as little endian");
+}
+
+#[test]
+fn write_word() {
+    let mut bus = MemoryBus::default();
+    bus.write_word(0x1111, 0xFFAA);
+    assert_eq!(bus.read_byte(0x1111), 0xAA);
+    assert_eq!(bus.read_byte(0x1112), 0xFF);
 }

@@ -486,11 +486,43 @@ fn load_c_plus_0xff00_from_a() {
 }
 
 #[test]
-fn load_word_from_sp() {
+fn load_word_into_bc() {
     let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xAA);
+    cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.bus.write_word(0x1000, 0xA1A1);
+    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::BC, LoadWordSource::D16)));
+    assert_eq!(cpu.registers.get_bc(), 0xFFAA, "BC should be loaded with the next word we wrote in front of the pc");
+    assert_eq!(cpu.pc, 0x1002, "LD reads two words so the pc should be incremented by two");
+}
+
+#[test]
+fn load_word_into_de() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xAA);
+    cpu.bus.write_byte(0x1002, 0xFF);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::DE, LoadWordSource::D16)));
+    assert_eq!(cpu.registers.get_de(), 0xFFAA);
+}
+
+
+#[test]
+fn load_next_word_into_sp() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xAA);
+    cpu.bus.write_byte(0x1002, 0xFF);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16)));
+    assert_eq!(cpu.sp, 0xFFAA);
+}
+
+#[test]
+fn load_sp_at_address_n() {
+    let mut cpu = setup();
+    cpu.bus.write_word(0x1001, 0xA1A1);
     cpu.sp = 0xAAAA;
+    cpu.pc = 0x1000;
     cpu.execute(Instruction::LD(LoadType::Word(
         LoadWordTarget::D16,
         LoadWordSource::SP,
@@ -512,9 +544,9 @@ fn load_hl_into_sp() {
 #[test]
 fn load_byte_at_next_address_into_a_test() {
     let mut cpu = setup();
+    cpu.bus.write_word(0x1001, 0xAAFF);
+    cpu.bus.write_byte(0xAAFF, 0xAA);
     cpu.pc = 0x1000;
-    cpu.bus.write_word(0x1000, 0xA1A1);
-    cpu.bus.write_byte(0xA1A1, 0xAA);
     cpu.execute(Instruction::LDA);
     assert_eq!(cpu.registers.a, 0xAA);
 }
@@ -682,6 +714,48 @@ fn test_rst() {
 }
 
 #[test]
+fn test_jump() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xAA);
+    cpu.bus.write_byte(0x1002, 0xFF);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::JP(JumpCond::Always));
+    assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+}
+
+#[test]
+fn test_jump_zero() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xAA);
+    cpu.bus.write_byte(0x1002, 0xFF);
+    cpu.pc = 0x1000;
+    cpu.registers.set_flags(true, false, false, false);
+    cpu.execute(Instruction::JP(JumpCond::Zero));
+    assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+}
+
+#[test]
+fn test_jump_carry() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xAA);
+    cpu.bus.write_byte(0x1002, 0xFF);
+    cpu.pc = 0x1000;
+    cpu.registers.set_flags(false, false, false, true);
+    cpu.execute(Instruction::JP(JumpCond::Carry));
+    assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+}
+
+#[test]
+fn test_no_jump_carry() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xAA);
+    cpu.bus.write_byte(0x1002, 0xFF);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::JP(JumpCond::Carry));
+    assert_eq!(cpu.pc, 0x1003, "Shouldn't jump but we should still move forward to the next spot");
+}
+
+#[test]
 fn test_jump_relative() {
     let mut cpu = setup();
     cpu.bus.write_byte(0x1001, 0b0000_0101);
@@ -696,6 +770,16 @@ fn test_jump_relative_negative() {
     cpu.bus.write_byte(0x1001, 0xFB);
     cpu.pc = 0x1000;
     cpu.execute(Instruction::JR(JumpCond::Always));
+    assert_eq!(cpu.pc, 0x0FFC, "Should jump back 5 spaces");
+}
+
+#[test]
+fn test_jump_relative_zero() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x1001, 0xFB);
+    cpu.pc = 0x1000;
+    cpu.registers.set_flags(true, false, false, false);
+    cpu.execute(Instruction::JR(JumpCond::Zero));
     assert_eq!(cpu.pc, 0x0FFC, "Should jump back 5 spaces");
 }
 
@@ -773,6 +857,5 @@ fn test_pop() {
 }
 
 // TODO: Tests for jump, ret, call etc
-
 
 // TODO: Tests for prefix byte making the pc inc two places. test should be for step 

@@ -203,8 +203,8 @@ impl CPU {
                 }
                 Instruction::SWAP(target) => self.swap(target),
                 Instruction::JP(condition) => {
-                    self.jump(self.should_jump(condition));
-                }
+                    dont_inc_pc = self.jump(self.should_jump(condition))
+                },
                 Instruction::JPHL => self.jump_to_address_hl(),
                 Instruction::JR(condition) => {
                     dont_inc_pc = self.jump_relative(self.should_jump(condition));
@@ -579,15 +579,17 @@ impl CPU {
         self.registers.set_zero(swapped == 0);
     }
 
+    /// Jump to the address specified by the next word 
     // - - - -
-    fn jump(&mut self, should_jump: bool) -> u16 {
+    fn jump(&mut self, should_jump: bool) -> bool {
         if should_jump {
             let least_sig = self.bus.read_byte(self.pc.wrapping_add(1)) as u16;
             let most_sig = self.bus.read_byte(self.pc.wrapping_add(2)) as u16;
-            (most_sig << 8) | least_sig
+            self.pc = (most_sig << 8) | least_sig;
         } else {
-            self.pc.wrapping_add(3)
+            self.pc = self.pc.wrapping_add(3);
         }
+        false
     }
 
     // - - - -
@@ -643,6 +645,7 @@ impl CPU {
         }
         match source {
             // If we read from the D8, we should move the pc up one extra spot
+            // May be able to remove this condition
             LoadByteSource::D8 => {
                 self.pc.wrapping_add(1);
             }
@@ -685,14 +688,8 @@ impl CPU {
             LoadWordTarget::SP => self.sp = source_value,
             LoadWordTarget::D16 => {
                 let addr = self.read_next_word();
-                self.bus.write_word(addr, self.sp)
+                self.bus.write_word(addr, self.sp);
             }
-        }
-        match source {
-            LoadWordSource::D16 => {
-                self.pc.wrapping_add(2);
-            }
-            _ => {}
         }
     }
 
@@ -857,8 +854,9 @@ impl CPU {
     }
 
     fn read_next_word(&mut self) -> u16 {
+        self.pc = self.pc.wrapping_add(1);
         let word = self.bus.read_word(self.pc);
-        self.pc = self.pc.wrapping_add(2);
+        self.pc = self.pc.wrapping_add(1); // We read two bytes so we need to increment one more;
         word
     }
 }

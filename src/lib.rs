@@ -68,7 +68,7 @@ impl CPU {
     pub fn step(&mut self) {
         let mut instruction_byte = self.bus.read_byte(self.pc);
         let prefixed = instruction_byte == 0xCB;
-        println!("{:#02x}", instruction_byte);
+        println!("Instruction {:#02x}", instruction_byte);
         if instruction_byte == 0xCB {
             instruction_byte = self.bus.read_byte(self.pc + 1);
             println!("Prefix: {:#02x}", instruction_byte);

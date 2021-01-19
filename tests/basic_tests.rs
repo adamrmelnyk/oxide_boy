@@ -719,8 +719,9 @@ fn test_jump() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::JP(JumpCond::Always));
+    let res = cpu.execute(Instruction::JP(JumpCond::Always));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+    assert_eq!(res, cpu.pc);
 }
 
 #[test]
@@ -730,8 +731,9 @@ fn test_jump_zero() {
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
-    cpu.execute(Instruction::JP(JumpCond::Zero));
+    let res = cpu.execute(Instruction::JP(JumpCond::Zero));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+    assert_eq!(res, cpu.pc);
 }
 
 #[test]
@@ -741,8 +743,9 @@ fn test_jump_carry() {
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, true);
-    cpu.execute(Instruction::JP(JumpCond::Carry));
+    let res = cpu.execute(Instruction::JP(JumpCond::Carry));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+    assert_eq!(res, cpu.pc);
 }
 
 #[test]
@@ -751,8 +754,9 @@ fn test_no_jump_carry() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::JP(JumpCond::Carry));
+    let res = cpu.execute(Instruction::JP(JumpCond::Carry));
     assert_eq!(cpu.pc, 0x1003, "Shouldn't jump but we should still move forward to the next spot");
+    assert_eq!(res, cpu.pc, "The result should be the same as the pc");
 }
 
 #[test]
@@ -760,27 +764,30 @@ fn test_jump_relative() {
     let mut cpu = setup();
     cpu.bus.write_byte(0x1001, 0b0000_0101);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::JR(JumpCond::Always));
-    assert_eq!(cpu.pc, 0x1006, "Should jump five spaces");
+    let res = cpu.execute(Instruction::JR(JumpCond::Always));
+    assert_eq!(cpu.pc, 0x1007, "Should jump five spaces");
+    assert_eq!(res, cpu.pc);
 }
 
 #[test]
 fn test_jump_relative_negative() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xFB);
-    cpu.pc = 0x1000;
-    cpu.execute(Instruction::JR(JumpCond::Always));
-    assert_eq!(cpu.pc, 0x0FFC, "Should jump back 5 spaces");
+    cpu.bus.write_byte(0x020A, 0xFB);
+    cpu.pc = 0x209;
+    let res = cpu.execute(Instruction::JR(JumpCond::Always));
+    assert_eq!(cpu.pc, 0x0206, "Should jump back 5 spaces + the instruction length of two");
+    assert_eq!(cpu.pc, res);
 }
 
 #[test]
 fn test_jump_relative_zero() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xFB);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0x020A, 0xFB);
+    cpu.pc = 0x0209;
     cpu.registers.set_flags(true, false, false, false);
-    cpu.execute(Instruction::JR(JumpCond::Zero));
-    assert_eq!(cpu.pc, 0x0FFC, "Should jump back 5 spaces");
+    let res = cpu.execute(Instruction::JR(JumpCond::Zero));
+    assert_eq!(cpu.pc, 0x0206, "Should jump back 5 spaces");
+    assert_eq!(res, cpu.pc);
 }
 
 #[test]
@@ -856,6 +863,51 @@ fn test_pop() {
     assert_eq!(cpu.sp, 0xFFFE, "The stack is empty and should be back at the default value: 0xFFFE");
 }
 
-// TODO: Tests for jump, ret, call etc
+#[test]
+fn test_call_no_jump() {
+    let mut cpu = setup();
+    cpu.bus.write_word(0x1001, 0xAABB);
+    cpu.pc = 0x1000;
+    let res = cpu.execute(Instruction::CALL(JumpCond::Carry));
+    assert_eq!(res, 0x1003, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(cpu.pc, 0x1003);
+    assert_eq!(cpu.sp, 0xFFFE, "The Stack pointer should be at 0xFFFE because the stack is empty");
+}
+
+#[test]
+fn test_call_always_jump() {
+    let mut cpu = setup();
+    cpu.bus.write_word(0x1001, 0xAABB);
+    cpu.pc = 0x1000;
+    let res = cpu.execute(Instruction::CALL(JumpCond::Always));
+    assert_eq!(res, 0xAABB, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(cpu.pc, 0xAABB);
+    assert_eq!(cpu.sp, 0xFFFC, "The Stack pointer should be at 0xFFFC because the stack has one word on it");
+}
+
+#[test]
+fn test_call_zero_jump() {
+    let mut cpu = setup();
+    cpu.bus.write_word(0x1001, 0xAABB);
+    cpu.pc = 0x1000;
+    cpu.registers.set_flags(true, false, false, false);
+    let res = cpu.execute(Instruction::CALL(JumpCond::Zero));
+    assert_eq!(res, 0xAABB, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(cpu.pc, 0xAABB);
+    assert_eq!(cpu.sp, 0xFFFC, "The Stack pointer should be at 0xFFFC because the stack has one word on it");
+}
+
+#[test]
+fn test_call_carry_jump() {
+    let mut cpu = setup();
+    cpu.bus.write_word(0x1001, 0xAABB);
+    cpu.pc = 0x1000;
+    cpu.registers.set_flags(false, false, false, true);
+    let res = cpu.execute(Instruction::CALL(JumpCond::Carry));
+    assert_eq!(res, 0xAABB, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(cpu.pc, 0xAABB);
+    assert_eq!(cpu.sp, 0xFFFC, "The Stack pointer should be at 0xFFFC because the stack has one word on it");
+}
+// TODO: Tests for jump, ret, etc
 
 // TODO: Tests for prefix byte making the pc inc two places. test should be for step 

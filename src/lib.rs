@@ -217,9 +217,7 @@ impl CPU {
                 Instruction::STOP => self.stop(),
                 Instruction::PUSH(target) => self.push_from_target(target),
                 Instruction::POP(target) => self.pop_and_store(target),
-                Instruction::CALL(condition) => {
-                    self.call(self.should_jump(condition));
-                }
+                Instruction::CALL(condition) => dont_inc_pc = self.call(self.should_jump(condition)),
                 Instruction::RET(condition) => {
                     self.ret(self.should_jump(condition));
                 }
@@ -589,10 +587,12 @@ impl CPU {
         } else {
             self.pc = self.pc.wrapping_add(3);
         }
-        false
+        true
     }
 
+    /// Add the immediate signed byte to the pc and jump to itAddr_0098
     // - - - -
+    // TODO: Double check to see if this is correct
     fn jump_relative(&mut self, should_jump: bool) -> bool {
         let next_byte = self.read_next_byte() as i8;
         if should_jump {
@@ -600,14 +600,15 @@ impl CPU {
                 let jump_addr = next_byte as u16;
                 println!("next byte is inc {:#02x}", next_byte);
                 println!("jump add is {:#02x}", jump_addr);
-                self.pc = self.pc.wrapping_add(jump_addr); // TODO: Does this still need -1
+                self.pc = self.pc.wrapping_add(jump_addr + 1);
             } else {
                 let jump_addr = next_byte.abs() as u16;
                 println!("next byte is dec {:#02x}", next_byte);
-                self.pc = self.pc.wrapping_sub(jump_addr); // TODO: Does this still need + 1
+                self.pc = self.pc.wrapping_sub(jump_addr - 1);
+                println!("jumping to {:#02x}", self.pc);
             }
         }
-        false
+        true
     }
 
     // - - - -
@@ -786,14 +787,17 @@ impl CPU {
         (msb << 8) | lsb
     }
 
-    fn call(&mut self, should_jump: bool) -> u16 {
+    /// Pushes the address of the next instruction onto the stack
+    /// - - - -
+    fn call(&mut self, should_jump: bool) -> bool {
         let next_pc = self.pc.wrapping_add(3);
         if should_jump {
             self.push(next_pc);
-            self.read_next_word()
+            self.pc = self.bus.read_word(self.pc.wrapping_add(1));
         } else {
-            next_pc
+            self.pc = next_pc;
         }
+        true
     }
 
     // TODO: I don't think this is correct

@@ -24,6 +24,7 @@ cargo run
 * GUI
 * I/O
 * Be able to run through the whole boot rom
+  * Fix looping where we're jumping to 0x64 forever
 * Hard code the boot rom so we don't need a file for it?
 
 ### Current issues

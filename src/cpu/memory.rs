@@ -133,7 +133,7 @@ impl std::convert::From<u8> for LoadByteTarget {
 
 impl std::convert::From<u8> for LoadByteSource {
     fn from(byte: u8) -> LoadByteSource {
-        // TODO: Add the other bytes
+        // TODO: Add the other bytes (There shouldn't be any left to add)
         match byte {
             0x06 | 0x16 | 0x26 | 0x36 | 0x0E | 0x1E | 0x2E | 0x3E => LoadByteSource::D8,
             0x02 | 0x12 | 0x22 | 0x32 => LoadByteSource::A,

@@ -791,6 +791,17 @@ fn test_jump_relative_zero() {
 }
 
 #[test]
+fn test_jump_relative_zero_dont_jump() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0x020A, 0xFB);
+    cpu.pc = 0x0209;
+    cpu.registers.set_flags(false, false, false, false);
+    let res = cpu.execute(Instruction::JR(JumpCond::Zero));
+    assert_eq!(cpu.pc, 0x020B, "Should jump forward 2 spots (the instruction length)");
+    assert_eq!(res, cpu.pc);
+}
+
+#[test]
 fn test_jump_to_hl() {
     let mut cpu = setup();
     cpu.registers.set_hl(0x1000);
@@ -908,6 +919,49 @@ fn test_call_carry_jump() {
     assert_eq!(cpu.pc, 0xAABB);
     assert_eq!(cpu.sp, 0xFFFC, "The Stack pointer should be at 0xFFFC because the stack has one word on it");
 }
-// TODO: Tests for jump, ret, etc
+
+#[test]
+fn test_ret() {
+    let mut cpu = setup();
+    cpu.registers.set_bc(0xAAFF);
+    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.pc = 0x1000;
+    let new_pc = cpu.execute(Instruction::RET(JumpCond::Always));
+    assert_eq!(new_pc, 0xAAFF);
+}
+
+#[test]
+fn test_ret_zero() {
+    let mut cpu = setup();
+    cpu.registers.set_bc(0xAAFF);
+    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.pc = 0x1000;
+    cpu.registers.set_flags(true, false, false, false);
+    let new_pc = cpu.execute(Instruction::RET(JumpCond::Zero));
+    assert_eq!(new_pc, 0xAAFF);
+}
+
+
+#[test]
+fn test_ret_zero_dont_ret() {
+    let mut cpu = setup();
+    cpu.registers.set_bc(0xAAFF);
+    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.pc = 0x1000;
+    cpu.registers.set_flags(false, false, false, false);
+    let new_pc = cpu.execute(Instruction::RET(JumpCond::Zero));
+    assert_eq!(new_pc, 0x1001);
+}
+
+#[test]
+fn test_ldaby() {
+    let mut cpu = setup();
+    cpu.pc = 0x1000;
+    cpu.bus.write_word(0x1001, 0xAABB);
+    cpu.registers.a = 0xEE;
+    let next_pc = cpu.execute(Instruction::LDABY);
+    assert_eq!(next_pc, 0x1003);
+    assert_eq!(cpu.bus.read_word(0xAABB), 0xEE);
+}
 
 // TODO: Tests for prefix byte making the pc inc two places. test should be for step 

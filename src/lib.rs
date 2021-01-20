@@ -219,7 +219,7 @@ impl CPU {
                 Instruction::POP(target) => self.pop_and_store(target),
                 Instruction::CALL(condition) => dont_inc_pc = self.call(self.should_jump(condition)),
                 Instruction::RET(condition) => {
-                    self.ret(self.should_jump(condition));
+                    dont_inc_pc = self.ret(self.should_jump(condition));
                 }
                 Instruction::RETI => {
                     self.reti();
@@ -599,14 +599,17 @@ impl CPU {
             if next_byte > 0 {
                 let jump_addr = next_byte as u16;
                 println!("next byte is inc {:#02x}", next_byte);
-                println!("jump add is {:#02x}", jump_addr);
                 self.pc = self.pc.wrapping_add(jump_addr + 1);
+                println!("jumping to {:#02x}", self.pc);
             } else {
                 let jump_addr = next_byte.abs() as u16;
                 println!("next byte is dec {:#02x}", next_byte);
                 self.pc = self.pc.wrapping_sub(jump_addr - 1);
                 println!("jumping to {:#02x}", self.pc);
             }
+        } else {
+            self.pc = self.pc.wrapping_add(1);
+            println!("We didn't jump, skipping: {:#02x}", next_byte);
         }
         true
     }
@@ -704,10 +707,13 @@ impl CPU {
         }
     }
 
-    // mem.next() = A
+    // Load A into the address given by the next word
+    // mem[mem.next()] = A
     // - - - -
+    // TODO: Maybe rename this something better
     fn load_a_into_next_byte(&mut self) {
-        self.bus.write_byte(self.pc, self.registers.a);
+        let addr = self.read_next_word();
+        self.bus.write_byte(addr, self.registers.a);
     }
 
     // A = mem[nn]; n = next_word()
@@ -797,15 +803,19 @@ impl CPU {
         } else {
             self.pc = next_pc;
         }
+        println!("Calling {:#02x}", self.pc);
         true
     }
 
-    // TODO: I don't think this is correct
-    fn ret(&mut self, should_jump: bool) -> u16 {
+    /// Pops the stack and jumps to that address
+    /// - - - -
+    fn ret(&mut self, should_jump: bool) -> bool {
         if should_jump {
-            self.pop()
+            self.pc = self.pop();
+            println!("RET to {:#02x}", self.pc);
+            true
         } else {
-            self.pc.wrapping_add(1)
+            false
         }
     }
 

@@ -984,4 +984,6 @@ fn test_ldaby() {
     assert_eq!(cpu.bus.read_word(0xAABB), 0xEE);
 }
 
+// TODO: tests for SRA SLA RRC RLC etc.
+
 // TODO: Tests for prefix byte making the pc inc two places. test should be for step 

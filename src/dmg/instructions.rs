@@ -1,4 +1,4 @@
-use crate::cpu::memory::LoadType;
+use crate::dmg::memory::LoadType;
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {

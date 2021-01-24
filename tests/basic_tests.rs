@@ -335,6 +335,26 @@ fn cp_test() {
 }
 
 #[test]
+fn cp_test_next_byte() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x0000;
+    cpu.bus.write_byte(0x1001, 0x90);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::CP(ArithmeticTarget::D8));
+    assert_flags_znhc(cpu.registers, false, true, false, true);
+}
+
+#[test]
+fn cp_test_zero() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x0090;
+    cpu.bus.write_byte(0x1001, 0x90);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::CP(ArithmeticTarget::D8));
+    assert_flags_znhc(cpu.registers, true, true, false, false);
+}
+
+#[test]
 fn halt_test() {
     let mut cpu = setup();
     cpu.execute(Instruction::HALT);

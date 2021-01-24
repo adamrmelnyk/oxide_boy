@@ -1,4 +1,4 @@
-mod cpu;
+mod dmg;
 
 use oxide_boy::ArithmeticTarget;
 use oxide_boy::Instruction;

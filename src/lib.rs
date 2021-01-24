@@ -1,17 +1,17 @@
 #![feature(destructuring_assignment)]
 
-mod cpu;
+mod dmg;
 
-use cpu::memory::MemoryBus;
-use cpu::registers::FlagsRegister;
+use dmg::memory::MemoryBus;
+use dmg::registers::FlagsRegister;
 
-pub use cpu::instructions::{
+pub use dmg::instructions::{
     ArithmeticTarget, Instruction, JumpCond, RestartAddr, SixteenBitArithmeticTarget, StackTarget,
 };
-pub use cpu::memory::{
+pub use dmg::memory::{
     Interrupt, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget,
 };
-pub use cpu::registers::Registers;
+pub use dmg::registers::Registers;
 
 const V_BLANK_ISR: u16 = 0x40;
 const LCD_ISR: u16 = 0x48;
@@ -63,6 +63,9 @@ impl CPU {
             ArithmeticTarget::HLI => self.bus.write_byte(self.registers.get_hl(), value),
             _ => panic!("target: {:?}, not allowed", target),
         }
+        if self.registers.b == 1 && &ArithmeticTarget::B == target {
+            println!("Setting b to 1");
+        }
     }
 
     pub fn step(&mut self) {
@@ -113,15 +116,8 @@ impl CPU {
         let mut dont_inc_pc = false;
         if !self.is_halted {
             match instruction {
-                Instruction::ADD(target) => {
-                    let value = self.register_value(&target);
-                    self.registers.a = self.add(value);
-                }
-                Instruction::ADDHL(target) => {
-                    let value = self.sixteen_bit_register_value(&target);
-                    let new_value = self.addhl(value);
-                    self.registers.set_hl(new_value);
-                }
+                Instruction::ADD(target) => self.add(target),
+                Instruction::ADDHL(target) => self.addhl(target),
                 Instruction::ADDSP => {
                     let value = self.read_next_byte();
                     let new_value = self.addsp(value);
@@ -129,30 +125,12 @@ impl CPU {
                 }
                 Instruction::INC16(target) => self.inc_16(target),
                 Instruction::DEC16(target) => self.dec_16(target),
-                Instruction::SUB(target) => {
-                    let value = self.register_value(&target);
-                    self.registers.a = self.sub(value);
-                }
-                Instruction::ADC(target) => {
-                    let value = self.register_value(&target);
-                    self.registers.a = self.adc(value);
-                }
-                Instruction::SBC(target) => {
-                    let value = self.register_value(&target);
-                    self.registers.a = self.sbc(value);
-                }
-                Instruction::AND(target) => {
-                    let value = self.register_value(&target);
-                    self.registers.a = self.and(value);
-                }
-                Instruction::OR(target) => {
-                    let value = self.register_value(&target);
-                    self.registers.a = self.or(value);
-                }
-                Instruction::XOR(target) => {
-                    let value = self.register_value(&target);
-                    self.registers.a = self.xor(value);
-                }
+                Instruction::SUB(target) => self.sub(target),
+                Instruction::ADC(target) => self.adc(target),
+                Instruction::SBC(target) => self.sbc(target),
+                Instruction::AND(target) => self.and(target),
+                Instruction::OR(target) => self.or(target),
+                Instruction::XOR(target) => self.xor(target),
                 Instruction::CP(target) => {
                     let value = self.register_value(&target);
                     self.cp(value);
@@ -275,21 +253,23 @@ impl CPU {
 
     // A = A + s
     // * 0 * * *
-    fn add(&mut self, value: u8) -> u8 {
+    fn add(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
         self.registers
             .set_flags(new_value == 0, false, half_carry, did_overflow);
-        new_value
+        self.registers.a = new_value;
     }
 
     // HL = HL + ss; BC,DE,HL,SP
     // - 0 * *
-    fn addhl(&mut self, value: u16) -> u16 {
+    fn addhl(&mut self, target: SixteenBitArithmeticTarget) {
+        let value = self.sixteen_bit_register_value(&target);
         let (new_value, did_overflow) = self.registers.get_hl().overflowing_add(value);
         let half_carry = (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF;
         self.registers.set_flags_nz(false, half_carry, did_overflow);
-        new_value
+        self.registers.set_hl(new_value);
     }
 
     // SP = SP + e
@@ -330,7 +310,8 @@ impl CPU {
 
     // A = A + s + CY
     // * 0 * *
-    fn adc(&mut self, value: u8) -> u8 {
+    fn adc(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
         let carry = if self.registers.carry() { 1 } else { 0 };
         if self.registers.carry() {
@@ -339,22 +320,24 @@ impl CPU {
         let half_carry = (self.registers.a & 0xF) + (value & 0xF) + (carry & 0xF) > 0xF;
         self.registers
             .set_flags(new_value == 0, false, half_carry, did_overflow);
-        new_value
+        self.registers.a = new_value;
     }
 
     // A = A - s
     // * 1 * *
-    fn sub(&mut self, value: u8) -> u8 {
+    fn sub(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = self.registers.a.wrapping_sub(value);
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
         self.registers
             .set_flags(new_value == 0, true, half_carry, self.registers.a < value);
-        new_value
+        self.registers.a = new_value;
     }
 
     // A = A - s -CY
     // * 1 * *
-    fn sbc(&mut self, value: u8) -> u8 {
+    fn sbc(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_sub(value);
         let carry = if self.registers.carry() { 1 } else { 0 };
         if self.registers.carry() {
@@ -363,40 +346,43 @@ impl CPU {
         let half_carry = (self.registers.a & 0xF) < (value & 0xF) + (carry & 0xF);
         self.registers
             .set_flags(new_value == 0, true, half_carry, did_overflow);
-        new_value
+        self.registers.a = new_value;
     }
 
     // A = A & s
     // * 0 1 0
-    fn and(&mut self, value: u8) -> u8 {
+    fn and(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = self.registers.a & value;
         self.registers.set_flags(new_value == 0, false, true, false);
-        new_value
+        self.registers.a = new_value;
     }
 
     // A = A | s
     // * 0 0 0
-    fn or(&mut self, value: u8) -> u8 {
+    fn or(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = self.registers.a | value;
         self.registers
             .set_flags(new_value == 0, false, false, false);
-        new_value
+        self.registers.a = new_value;
     }
 
     // A = A ^ s
     // * 0 0 0
-    fn xor(&mut self, value: u8) -> u8 {
+    fn xor(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = self.registers.a ^ value;
         self.registers
             .set_flags(new_value == 0, false, false, false);
-        new_value
+        self.registers.a = new_value;
     }
 
     // A - s
     // * 1 * *
     fn cp(&mut self, value: u8) {
-        let (zero, did_overflow) = self.registers.a.overflowing_sub(value);
-        let zero = zero == 0;
+        let zero: bool = value == self.registers.a;
+        let (_, did_overflow) = self.registers.a.overflowing_sub(value);
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
         self.registers
             .set_flags(zero, true, half_carry, did_overflow);
@@ -592,20 +578,20 @@ impl CPU {
 
     /// Add the immediate signed byte to the pc and jump to itAddr_0098
     // - - - -
-    // TODO: Double check to see if this is correct
     fn jump_relative(&mut self, should_jump: bool) -> bool {
+        let old_pc = self.pc;
         let next_byte = self.read_next_byte() as i8;
         if should_jump {
             if next_byte > 0 {
                 let jump_addr = next_byte as u16;
                 println!("next byte is inc {:#02x}", next_byte);
                 self.pc = self.pc.wrapping_add(jump_addr + 1);
-                println!("jumping to {:#02x}", self.pc);
+                println!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
             } else {
                 let jump_addr = next_byte.abs() as u16;
                 println!("next byte is dec {:#02x}", next_byte);
                 self.pc = self.pc.wrapping_sub(jump_addr - 1);
-                println!("jumping to {:#02x}", self.pc);
+                println!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
             }
         } else {
             self.pc = self.pc.wrapping_add(1);
@@ -649,7 +635,7 @@ impl CPU {
         }
         match source {
             // If we read from the D8, we should move the pc up one extra spot
-            // May be able to remove this condition
+            // TODO: May be able to remove this condition
             LoadByteSource::D8 => {
                 self.pc.wrapping_add(1);
             }
@@ -842,7 +828,7 @@ impl CPU {
         self.ime = false;
     }
 
-    // mem[FF00 + n] = A, n = mem.next
+    // put A into memory address $FF00+n
     // - - - -
     fn ldha(&mut self) {
         let n = self.read_next_byte();
@@ -854,6 +840,7 @@ impl CPU {
     fn ldha8(&mut self) {
         let n = self.read_next_byte();
         self.registers.a = self.bus.read_byte(0xFF00 + n as u16);
+        println!("A is now {:#02x}", self.registers.a);
     }
 
     fn stop(&mut self) {

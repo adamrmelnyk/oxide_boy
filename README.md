@@ -22,6 +22,7 @@ cargo run
 
 * Timers
 * GUI
+  * Gaphics need to be implented to get past operation 0x68. The LY register (mem location 0xff44) will need to be incremented as we preform cpu cycles.
 * I/O
 * Be able to run through the whole boot rom
   * Fix looping where we're jumping to 0x64 forever

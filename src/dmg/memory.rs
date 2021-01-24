@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-const BootRom: &str = "src/cpu/rom/DMG_ROM.bin";
+const BootRom: &str = "src/dmg/rom/DMG_ROM.bin";
 
 pub enum Interrupt {
     VBlank,

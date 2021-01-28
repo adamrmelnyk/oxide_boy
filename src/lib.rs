@@ -2,7 +2,7 @@
 
 mod dmg;
 
-use dmg::memory::MemoryBus;
+use dmg::bus::Bus;
 use dmg::registers::FlagsRegister;
 
 pub use dmg::instructions::{
@@ -13,6 +13,7 @@ pub use dmg::memory::{
 };
 pub use dmg::registers::Registers;
 
+// Interrupt starting addresses
 const V_BLANK_ISR: u16 = 0x40;
 const LCD_ISR: u16 = 0x48;
 const TIMER_ISR: u16 = 0x50;
@@ -23,7 +24,7 @@ pub struct CPU {
     pub registers: Registers,
     pub pc: u16,
     pub sp: u16,
-    pub bus: MemoryBus,
+    pub bus: Bus,
     pub is_halted: bool,
     pub ime: bool, // Interrupt Master Enable
 }
@@ -41,7 +42,7 @@ impl Default for CPU {
                 h: 0,
                 l: 0,
             },
-            bus: MemoryBus::default(),
+            bus: Bus::default(),
             pc: 0,
             sp: 0xFFFE,
             is_halted: false,

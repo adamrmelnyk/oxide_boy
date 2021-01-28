@@ -12,21 +12,21 @@ pub enum Interrupt {
     NONE,
 }
 
-pub struct MemoryBus {
+pub struct Memory {
     memory: [u8; 0xFFFF + 1],
 }
 
-impl Default for MemoryBus {
+impl Default for Memory {
     fn default() -> Self {
-        let mut mem_bus = MemoryBus {
+        let mut mem = Memory {
             memory: [0; 0xFFFF + 1],
         };
-        mem_bus.load_boot_rom();
-        mem_bus
+        mem.load_boot_rom();
+        mem
     }
 }
 
-impl MemoryBus {
+impl Memory {
     pub fn read_byte(&self, address: u16) -> u8 {
         self.memory[address as usize]
     }
@@ -221,7 +221,7 @@ impl std::convert::From<u8> for LoadType {
 
 #[test]
 fn read_word() {
-    let mut bus = MemoryBus::default();
+    let mut bus = Memory::default();
     bus.write_byte(0x1111, 0xAA);
     bus.write_byte(0x1112, 0xFF);
     assert_eq!(bus.read_word(0x1111), 0xFFAA, "We expect this to be read as little endian");
@@ -229,7 +229,7 @@ fn read_word() {
 
 #[test]
 fn write_word() {
-    let mut bus = MemoryBus::default();
+    let mut bus = Memory::default();
     bus.write_word(0x1111, 0xFFAA);
     assert_eq!(bus.read_byte(0x1111), 0xAA);
     assert_eq!(bus.read_byte(0x1112), 0xFF);

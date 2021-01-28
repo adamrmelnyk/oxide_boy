@@ -986,4 +986,20 @@ fn test_ldaby() {
 
 // TODO: tests for SRA SLA RRC RLC etc.
 
-// TODO: Tests for prefix byte making the pc inc two places. test should be for step 
+// TODO: Tests for prefix byte making the pc inc two places. test should be for step
+
+#[test]
+fn writing_to_ly() {
+    let mut cpu = setup();
+    assert_eq!(cpu.bus.read_byte(0xFF44), 0);
+    cpu.bus.write_byte(0xFF44, 0x40);
+    assert_eq!(cpu.bus.read_byte(0xFF44), 0x40);
+}
+
+#[test]
+fn writing_to_div() {
+    let mut cpu = setup();
+    assert_eq!(cpu.bus.read_byte(0xFF04), 0);
+    cpu.bus.write_byte(0xFF04, 0x40);
+    assert_eq!(cpu.bus.read_byte(0xFF04), 0x0, "Writing anything to the div should always reset div to zero");
+}

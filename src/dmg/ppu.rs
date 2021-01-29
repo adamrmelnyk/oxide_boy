@@ -34,8 +34,8 @@ impl Default for PPU {
 }
 
 impl PPU {
-    pub fn step() {
-        // TODO: Will need a step function to increment the ly etc.
+    pub fn step(&mut self) {
+        self.ly = self.ly.wrapping_add(1); // Temporary so we can get past the boot sequence
     }
 
     pub fn read(&self, address: u16) -> u8 {

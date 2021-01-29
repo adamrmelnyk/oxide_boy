@@ -91,6 +91,7 @@ impl CPU {
         };
         let prefix = if prefixed {1} else {0};
         self.pc = next_pc + prefix;
+        self.bus.step(); // TODO: Not sure if this is the correct spot
         self.handle_interrupts();
     }
 

@@ -63,7 +63,9 @@ impl Bus {
         self.memory.return_interrupt()
     }
 
-    // TODO: May also need a step function
+    pub fn step(&mut self) {
+        self.ppu.step();
+    }
 }
 
 #[cfg(test)]

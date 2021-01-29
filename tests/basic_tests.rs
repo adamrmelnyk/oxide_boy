@@ -997,6 +997,17 @@ fn writing_to_ly() {
 }
 
 #[test]
+fn reading_from_ly() {
+    let mut cpu = setup();
+    assert_eq!(cpu.registers.a, 0);
+    cpu.bus.write_byte(0xFF44, 0x40);
+    cpu.bus.write_byte(0x1001, 0x44);
+    cpu.pc = 0x1000;
+    cpu.execute(Instruction::LDHA8);
+    assert_eq!(cpu.registers.a, 0x40);
+}
+
+#[test]
 fn writing_to_div() {
     let mut cpu = setup();
     assert_eq!(cpu.bus.read_byte(0xFF04), 0);

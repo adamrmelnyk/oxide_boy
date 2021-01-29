@@ -5,3 +5,4 @@ pub mod ppu;
 pub mod timer;
 pub mod bus;
 pub mod apu;
+pub mod cpu;

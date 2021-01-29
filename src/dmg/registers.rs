@@ -57,6 +57,21 @@ pub struct Registers {
     pub l: u8,
 }
 
+impl Default for Registers {
+    fn default() -> Registers {
+        Registers {
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
+            f: FlagsRegister::default(),
+            h: 0,
+            l: 0,
+        }
+    }
+}
+
 impl Registers {
     pub fn get_bc(&self) -> u16 {
         (self.b as u16) << 8 | self.c as u16

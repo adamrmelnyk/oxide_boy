@@ -26,16 +26,7 @@ pub struct CPU {
 impl Default for CPU {
     fn default() -> Self {
         CPU {
-            registers: Registers {
-                a: 0,
-                b: 0,
-                c: 0,
-                d: 0,
-                e: 0,
-                f: FlagsRegister::default(),
-                h: 0,
-                l: 0,
-            },
+            registers: Registers::default(),
             bus: Bus::default(),
             pc: 0,
             sp: 0xFFFE,

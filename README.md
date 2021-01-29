@@ -21,16 +21,14 @@ cargo run
 ## TODO
 
 * Timers
+  * We'll also need to go back through the CPU functions and return how many cycles they complete.
 * GUI
-  * Gaphics need to be implented to get past operation 0x68. The LY register (mem location 0xff44) will need to be incremented as we preform cpu cycles.
+  * LY is the only ppu register being inc'd, the rest of the step function in the ppu needs to be implemented.
+* Add the cartrige to the device
+  * Currently we stop at the anti-piracy step when the boot rom checks to see if the nintendo logo in the cartrige is correct.
+* Sound
 * I/O
-* Be able to run through the whole boot rom
-  * Fix looping where we're jumping to 0x64 forever
 * Hard code the boot rom so we don't need a file for it?
-
-### Current issues
-
-* currently execute should be returning a u16 as are all the other fuctions. Right now there is some sort of inconsitency happening where I decided some of them would return and some wouldn't.
 
 ### Resources
 

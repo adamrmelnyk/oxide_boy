@@ -1,3 +1,4 @@
+/// The Pixel Processing Unit
 pub struct PPU {
     lcdc: u8, // 0xFF40
     stat: u8, // 0xFF41
@@ -5,6 +6,13 @@ pub struct PPU {
     scx: u8, // 0xFF43
     ly: u8, // 0xFF44
     lyc: u8, // 0xFF45
+
+    bgp: u8, // 0xFF47
+    obp0: u8, // 0xFF48
+    obp1: u8, // 0xFF49
+
+    wy: u8, //0xFF4A
+    wx: u8, //0xFF4B
 }
 
 impl Default for PPU {
@@ -16,6 +24,11 @@ impl Default for PPU {
             scx: 0,
             ly: 0,
             lyc: 0,
+            bgp: 0,
+            obp0: 0,
+            obp1: 0,
+            wy: 0,
+            wx: 0,
         }
     }
 }
@@ -33,6 +46,11 @@ impl PPU {
             0xFF43 => self.scx,
             0xFF44 => self.ly,
             0xFF45 => self.lyc,
+            0xFF47 => self.bgp,
+            0xFF48 => self.obp0,
+            0xFF49 => self.obp1,
+            0xFF4A => self.wy,
+            0xFF4B => self.wx,
             _ => panic!("This should never happen"),
         }
     }
@@ -45,6 +63,11 @@ impl PPU {
             0xFF43 => self.scx = value,
             0xFF44 => self.ly = value,
             0xFF45 => self.lyc = value,
+            0xFF47 => self.bgp = value,
+            0xFF48 => self.obp0 = value,
+            0xFF49 => self.obp1 = value,
+            0xFF4A => self.wy = value,
+            0xFF4B => self.wx = value,
             _ => panic!("This should never happen"),
         }
     }

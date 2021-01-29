@@ -1,4 +1,3 @@
-
 pub struct Timer {
     div: u8, // 0xFF04
     tima: u8, // 0xFF05

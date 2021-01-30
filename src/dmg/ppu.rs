@@ -2,12 +2,12 @@
 pub struct PPU {
     lcdc: u8, // 0xFF40
     stat: u8, // 0xFF41
-    scy: u8, // 0xFF42
-    scx: u8, // 0xFF43
-    ly: u8, // 0xFF44
-    lyc: u8, // 0xFF45
+    scy: u8,  // 0xFF42
+    scx: u8,  // 0xFF43
+    ly: u8,   // 0xFF44
+    lyc: u8,  // 0xFF45
 
-    bgp: u8, // 0xFF47
+    bgp: u8,  // 0xFF47
     obp0: u8, // 0xFF48
     obp1: u8, // 0xFF49
 

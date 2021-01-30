@@ -33,24 +33,23 @@ impl Joypad {
             self.select_direction_keys = (value & 0x10) == 0x10;
             self.down_or_start = (value & 0x8) == 0x08;
             self.up_or_select = (value & 0x04) == 0x04;
-            self.left_or_button_b = (value & 0x02) == 0x20;
+            self.left_or_button_b = (value & 0x02) == 0x02;
             self.right_or_button_a = (value & 0x01) == 0x01;
         } else {
             panic!("The Address: {:#02x}, is not use by the Joypad", address)
         }
     }
 
-    // TODO: Fix this function
     pub fn read(&self, address: u16) -> u8 {
         if address == 0xFF00 {
-            (if self.unused_bit_7 { 1 } else { 0 }) << 7 |
-            (if self.unused_bit_6 { 1 } else { 0 }) << 6 |
-            (if self.select_button_keys { 1 } else { 0 }) << 5 |
-            (if self.select_direction_keys { 1 } else { 0 }) << 4 |
-            (if self.down_or_start { 1 } else { 0 }) << 3 |
-            (if self.up_or_select { 1 } else { 0 }) << 2 |
-            (if self.left_or_button_b { 1 } else { 0 }) << 1 |
-            (if self.right_or_button_a { 1 } else { 0 })
+            (if self.unused_bit_7 { 1 } else { 0 }) << 7
+                | (if self.unused_bit_6 { 1 } else { 0 }) << 6
+                | (if self.select_button_keys { 1 } else { 0 }) << 5
+                | (if self.select_direction_keys { 1 } else { 0 }) << 4
+                | (if self.down_or_start { 1 } else { 0 }) << 3
+                | (if self.up_or_select { 1 } else { 0 }) << 2
+                | (if self.left_or_button_b { 1 } else { 0 }) << 1
+                | (if self.right_or_button_a { 1 } else { 0 })
         } else {
             panic!("The Address: {:#02x}, is not use by the Joypad", address)
         }

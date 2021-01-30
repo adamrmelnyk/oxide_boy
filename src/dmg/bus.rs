@@ -1,8 +1,8 @@
-use crate::dmg::memory::{Memory, Interrupt};
-use crate::dmg::timer::Timer;
-use crate::dmg::ppu::PPU;
 use crate::dmg::apu::Apu;
 use crate::dmg::joypad::Joypad;
+use crate::dmg::memory::{Interrupt, Memory};
+use crate::dmg::ppu::PPU;
+use crate::dmg::timer::Timer;
 
 /// Struct for representing the bus which serves as the interface
 /// through which the cpu can communicate with other devices
@@ -32,10 +32,9 @@ impl Bus {
         match address {
             0xFF00 => self.joypad.read(address),
             0xFF04..=0xFF07 => self.timer.read(address),
-            0xFF10..=0xFF14 |
-            0xFF16..=0xFF1E |
-            0xFF20..=0xFF26 |
-            0xFF30..=0xFF3F => self.apu.read(address),
+            0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
+                self.apu.read(address)
+            }
             0xFF40..=0xFF45 => self.ppu.read(address),
             _ => self.memory.read_byte(address),
         }
@@ -46,12 +45,10 @@ impl Bus {
         match address {
             0xFF00 => self.joypad.write(address, value),
             0xFF04..=0xFF07 => self.timer.write(address, value),
-            0xFF10..=0xFF14 |
-            0xFF16..=0xFF1E |
-            0xFF20..=0xFF26 |
-            0xFF30..=0xFF3F => self.apu.write(address, value),
-            0xFF40..=0xFF45 |
-            0xFF47..=0xFF4B => self.ppu.write(address, value),
+            0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
+                self.apu.write(address, value)
+            }
+            0xFF40..=0xFF45 | 0xFF47..=0xFF4B => self.ppu.write(address, value),
             _ => self.memory.write_byte(address, value),
         };
     }
@@ -62,7 +59,7 @@ impl Bus {
     }
 
     pub fn write_word(&mut self, address: u16, value: u16) {
-        // TODO: It's possible that one of the bytes could be in one or even two, of our devices so we might have to 
+        // TODO: It's possible that one of the bytes could be in one or even two, of our devices so we might have to
         // change this to use the write_byte method which takes that into account.
         self.memory.write_word(address, value);
     }
@@ -105,7 +102,6 @@ fn write_to_timer_div() {
     bus.write_byte(0xFF04, 0xAA);
     assert_eq!(bus.timer.div(), 0, "Writing to div should reset it to zero");
 }
-
 
 #[test]
 fn write_to_timer_tima() {

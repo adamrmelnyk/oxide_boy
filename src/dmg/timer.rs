@@ -1,8 +1,8 @@
 pub struct Timer {
-    div: u8, // 0xFF04
+    div: u8,  // 0xFF04
     tima: u8, // 0xFF05
-    tma: u8, // 0xFF06
-    tac: u8, // 0xFF07
+    tma: u8,  // 0xFF06
+    tac: u8,  // 0xFF07
 }
 
 impl Default for Timer {
@@ -11,13 +11,13 @@ impl Default for Timer {
             div: 0,
             tima: 0,
             tma: 0,
-            tac: 0
+            tac: 0,
         }
     }
 }
 
 impl Timer {
-    fn step(){
+    fn step() {
         // TODO: Will need a step function that may
         // need to take cyles
         unimplemented!();
@@ -38,7 +38,7 @@ impl Timer {
             0xFF04 => self.div = 0,
             0xFF05 => self.tima = value,
             0xFF06 => self.tma = value,
-            0xFF07 => self.tac= value,
+            0xFF07 => self.tac = value,
             _ => panic!("This should never happen"),
         }
     }

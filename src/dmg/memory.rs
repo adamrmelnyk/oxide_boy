@@ -61,7 +61,7 @@ impl Memory {
     }
 
     pub fn interrupt_flag_off(&mut self) {
-        self.write_byte(0xFF0F, self.interrupt_flags() & 0);
+        self.write_byte(0xFF0F, 0);
     }
 
     pub fn return_interrupt(&self) -> Interrupt {
@@ -87,7 +87,7 @@ impl Memory {
             Ok(mut file) => match file.read(&mut buffer[..]) {
                 Ok(_bytes) => {
                     self.memory[0x0..0x100].copy_from_slice(&buffer);
-                },
+                }
                 Err(err) => eprintln!("Error reading file: {}", err),
             },
             Err(err) => eprintln!("Error opening file: {}", err),
@@ -224,7 +224,11 @@ fn read_word() {
     let mut bus = Memory::default();
     bus.write_byte(0x1111, 0xAA);
     bus.write_byte(0x1112, 0xFF);
-    assert_eq!(bus.read_word(0x1111), 0xFFAA, "We expect this to be read as little endian");
+    assert_eq!(
+        bus.read_word(0x1111),
+        0xFFAA,
+        "We expect this to be read as little endian"
+    );
 }
 
 #[test]

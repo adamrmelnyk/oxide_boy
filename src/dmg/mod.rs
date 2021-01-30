@@ -1,9 +1,9 @@
-pub mod instructions;
-pub mod memory;
-pub mod registers;
-pub mod ppu;
-pub mod timer;
-pub mod bus;
 pub mod apu;
+pub mod bus;
 pub mod cpu;
+pub mod instructions;
 pub mod joypad;
+pub mod memory;
+pub mod ppu;
+pub mod registers;
+pub mod timer;

@@ -5,7 +5,7 @@ use crate::dmg::instructions::{
 use crate::dmg::memory::{
     Interrupt, LoadByteSource, LoadByteTarget, LoadType, LoadWordSource, LoadWordTarget,
 };
-use crate::dmg::registers::{Registers,FlagsRegister};
+use crate::dmg::registers::Registers;
 
 // Interrupt starting addresses
 const V_BLANK_ISR: u16 = 0x40;
@@ -74,7 +74,7 @@ impl CPU {
             );
             panic!("Unkown instruction found for: {}", description)
         };
-        let prefix = if prefixed {1} else {0};
+        let prefix = if prefixed { 1 } else { 0 };
         self.pc = next_pc + prefix;
         self.bus.step(); // TODO: Not sure if this is the correct spot
         self.handle_interrupts();
@@ -167,9 +167,7 @@ impl CPU {
                     self.set_register_by_target(&target, new_value);
                 }
                 Instruction::SWAP(target) => self.swap(target),
-                Instruction::JP(condition) => {
-                    dont_inc_pc = self.jump(self.should_jump(condition))
-                },
+                Instruction::JP(condition) => dont_inc_pc = self.jump(self.should_jump(condition)),
                 Instruction::JPHL => self.jump_to_address_hl(),
                 Instruction::JR(condition) => {
                     dont_inc_pc = self.jump_relative(self.should_jump(condition));
@@ -182,7 +180,9 @@ impl CPU {
                 Instruction::STOP => self.stop(),
                 Instruction::PUSH(target) => self.push_from_target(target),
                 Instruction::POP(target) => self.pop_and_store(target),
-                Instruction::CALL(condition) => dont_inc_pc = self.call(self.should_jump(condition)),
+                Instruction::CALL(condition) => {
+                    dont_inc_pc = self.call(self.should_jump(condition))
+                }
                 Instruction::RET(condition) => {
                     dont_inc_pc = self.ret(self.should_jump(condition));
                 }
@@ -199,7 +199,11 @@ impl CPU {
                 Instruction::LDHLSP => self.ldhlsp(),
             }
         }
-        if dont_inc_pc { self.pc } else { self.pc.wrapping_add(1) } // After each operation we increment the pc and return the value
+        if dont_inc_pc {
+            self.pc
+        } else {
+            self.pc.wrapping_add(1)
+        } // After each operation we increment the pc and return the value
     }
 
     /// Helper method for returning the value of an 8bit register
@@ -550,7 +554,7 @@ impl CPU {
         self.registers.set_zero(swapped == 0);
     }
 
-    /// Jump to the address specified by the next word 
+    /// Jump to the address specified by the next word
     // - - - -
     fn jump(&mut self, should_jump: bool) -> bool {
         if should_jump {
@@ -837,8 +841,7 @@ impl CPU {
 
     fn read_next_byte(&mut self) -> u8 {
         self.pc = self.pc.wrapping_add(1);
-        let byte = self.bus.read_byte(self.pc);
-        byte
+        self.bus.read_byte(self.pc)
     }
 
     fn read_next_word(&mut self) -> u16 {

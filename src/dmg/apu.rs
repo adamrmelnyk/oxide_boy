@@ -2,35 +2,35 @@
 pub struct Apu {
     // Sound Mode 1 Registers
     // TODO: Consider making SoundMode1 into it's own object
-    sweep_register: u8, // 0xFF10
+    sweep_register: u8,           // 0xFF10
     length_wave_pattern_duty: u8, // 0xFF11
-    envelope: u8, // 0xFF12
-    frequency_lo: u8,// 0xFF13
-    frequency_hi: u8, // 0xFF14
+    envelope: u8,                 // 0xFF12
+    frequency_lo: u8,             // 0xFF13
+    frequency_hi: u8,             // 0xFF14
 
     // Sound Mode 2 Registers
     sm2_length_wave_pattern_duty: u8, // 0xFF16
-    sm2_envelope: u8, //0xFF17
-    sm2_frequency_lo: u8, // 0xFF18
-    sm2_frequency_hi: u8, // 0xFF19
+    sm2_envelope: u8,                 //0xFF17
+    sm2_frequency_lo: u8,             // 0xFF18
+    sm2_frequency_hi: u8,             // 0xFF19
 
     // Sound Mode 3 Registers
-    sm3_sound_toggle: u8, // 0xFF1A
-    sm3_sound_length: u8, // 0xFF1B
-    sm3_select_output_level: u8, // 0xFF1C
-    sm3_frequency_lower_data: u8, //0xFF1D
+    sm3_sound_toggle: u8,          // 0xFF1A
+    sm3_sound_length: u8,          // 0xFF1B
+    sm3_select_output_level: u8,   // 0xFF1C
+    sm3_frequency_lower_data: u8,  //0xFF1D
     sm3_frequency_higher_data: u8, //0xFF1E
 
     // Sound Mode 4 Registers
-    sm4_sound_length: u8, // 0xFF20
-    sm4_initial_volume: u8, // 0xFF21
-    sm4_polynomial_counter: u8, //0xFF22
+    sm4_sound_length: u8,        // 0xFF20
+    sm4_initial_volume: u8,      // 0xFF21
+    sm4_polynomial_counter: u8,  //0xFF22
     sm4_counter_consecutive: u8, //0xFF23
 
-    channel_control: u8, //0xFF24
-    sound_output_terminal: u8, //0xFF25
-    sound_on_off: u8, // 0xFF26
-    wave_pattern_ram: WavePatternRam,// 0xFF30 - 0xFF3F // arbitrary sound data storage
+    channel_control: u8,              //0xFF24
+    sound_output_terminal: u8,        //0xFF25
+    sound_on_off: u8,                 // 0xFF26
+    wave_pattern_ram: WavePatternRam, // 0xFF30 - 0xFF3F // arbitrary sound data storage
 }
 
 impl Default for Apu {
@@ -146,14 +146,14 @@ impl WavePatternRam {
     fn read(&self, address: u16) -> u8 {
         match address {
             0xFF30..=0xFF3F => self.ram[(address - 0xFF30) as usize],
-            _ => panic!("This address does not belong to the WavePatternRam")
+            _ => panic!("This address: {:#02x} does not belong to the WavePatternRam", address),
         }
     }
 
     fn write(&mut self, address: u16, value: u8) {
         match address {
             0xFF30..=0xFF3F => self.ram[(address - 0xFF30) as usize] = value,
-            _ => panic!("This address does not belong to the WavePatternRam"),
+            _ => panic!("This address: {:#02x} does not belong to the WavePatternRam", address),
         }
     }
 

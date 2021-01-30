@@ -1,6 +1,7 @@
 use oxide_boy::{
     ArithmeticTarget, Instruction, JumpCond, LoadByteSource, LoadByteTarget, LoadType,
-    LoadWordSource, LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget, CPU, StackTarget,
+    LoadWordSource, LoadWordTarget, Registers, RestartAddr, SixteenBitArithmeticTarget,
+    StackTarget, CPU,
 };
 
 pub fn setup() -> CPU {
@@ -511,9 +512,19 @@ fn load_word_into_bc() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::BC, LoadWordSource::D16)));
-    assert_eq!(cpu.registers.get_bc(), 0xFFAA, "BC should be loaded with the next word we wrote in front of the pc");
-    assert_eq!(cpu.pc, 0x1002, "LD reads two words so the pc should be incremented by two");
+    cpu.execute(Instruction::LD(LoadType::Word(
+        LoadWordTarget::BC,
+        LoadWordSource::D16,
+    )));
+    assert_eq!(
+        cpu.registers.get_bc(),
+        0xFFAA,
+        "BC should be loaded with the next word we wrote in front of the pc"
+    );
+    assert_eq!(
+        cpu.pc, 0x1002,
+        "LD reads two words so the pc should be incremented by two"
+    );
 }
 
 #[test]
@@ -522,10 +533,12 @@ fn load_word_into_de() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::DE, LoadWordSource::D16)));
+    cpu.execute(Instruction::LD(LoadType::Word(
+        LoadWordTarget::DE,
+        LoadWordSource::D16,
+    )));
     assert_eq!(cpu.registers.get_de(), 0xFFAA);
 }
-
 
 #[test]
 fn load_next_word_into_sp() {
@@ -533,7 +546,10 @@ fn load_next_word_into_sp() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LD(LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16)));
+    cpu.execute(Instruction::LD(LoadType::Word(
+        LoadWordTarget::SP,
+        LoadWordSource::D16,
+    )));
     assert_eq!(cpu.sp, 0xFFAA);
 }
 
@@ -775,7 +791,10 @@ fn test_no_jump_carry() {
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
     let res = cpu.execute(Instruction::JP(JumpCond::Carry));
-    assert_eq!(cpu.pc, 0x1003, "Shouldn't jump but we should still move forward to the next spot");
+    assert_eq!(
+        cpu.pc, 0x1003,
+        "Shouldn't jump but we should still move forward to the next spot"
+    );
     assert_eq!(res, cpu.pc, "The result should be the same as the pc");
 }
 
@@ -795,7 +814,10 @@ fn test_jump_relative_negative() {
     cpu.bus.write_byte(0x020A, 0xFB);
     cpu.pc = 0x209;
     let res = cpu.execute(Instruction::JR(JumpCond::Always));
-    assert_eq!(cpu.pc, 0x0206, "Should jump back 5 spaces + the instruction length of two");
+    assert_eq!(
+        cpu.pc, 0x0206,
+        "Should jump back 5 spaces + the instruction length of two"
+    );
     assert_eq!(cpu.pc, res);
 }
 
@@ -817,7 +839,10 @@ fn test_jump_relative_zero_dont_jump() {
     cpu.pc = 0x0209;
     cpu.registers.set_flags(false, false, false, false);
     let res = cpu.execute(Instruction::JR(JumpCond::Zero));
-    assert_eq!(cpu.pc, 0x020B, "Should jump forward 2 spots (the instruction length)");
+    assert_eq!(
+        cpu.pc, 0x020B,
+        "Should jump forward 2 spots (the instruction length)"
+    );
     assert_eq!(res, cpu.pc);
 }
 
@@ -879,7 +904,10 @@ fn test_push() {
     cpu.registers.set_bc(0xAFAF);
     assert_eq!(cpu.sp, 0xFFFE);
     cpu.execute(Instruction::PUSH(StackTarget::BC));
-    assert_eq!(cpu.sp, 0xFFFC, "Two bytes are written so the stack moves back two spots");
+    assert_eq!(
+        cpu.sp, 0xFFFC,
+        "Two bytes are written so the stack moves back two spots"
+    );
     assert_eq!(cpu.registers.get_bc(), 0xAFAF);
 }
 
@@ -890,8 +918,15 @@ fn test_pop() {
     cpu.execute(Instruction::PUSH(StackTarget::BC));
     cpu.registers.set_bc(0xFAFA); // Change the register value
     cpu.execute(Instruction::POP(StackTarget::BC));
-    assert_eq!(cpu.registers.get_bc(), 0xAFAF, "The register should be back to it's originally set value");
-    assert_eq!(cpu.sp, 0xFFFE, "The stack is empty and should be back at the default value: 0xFFFE");
+    assert_eq!(
+        cpu.registers.get_bc(),
+        0xAFAF,
+        "The register should be back to it's originally set value"
+    );
+    assert_eq!(
+        cpu.sp, 0xFFFE,
+        "The stack is empty and should be back at the default value: 0xFFFE"
+    );
 }
 
 #[test]
@@ -900,9 +935,15 @@ fn test_call_no_jump() {
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
     let res = cpu.execute(Instruction::CALL(JumpCond::Carry));
-    assert_eq!(res, 0x1003, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(
+        res, 0x1003,
+        "We should not be adding to the stack pointer since call already did that"
+    );
     assert_eq!(cpu.pc, 0x1003);
-    assert_eq!(cpu.sp, 0xFFFE, "The Stack pointer should be at 0xFFFE because the stack is empty");
+    assert_eq!(
+        cpu.sp, 0xFFFE,
+        "The Stack pointer should be at 0xFFFE because the stack is empty"
+    );
 }
 
 #[test]
@@ -911,9 +952,15 @@ fn test_call_always_jump() {
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
     let res = cpu.execute(Instruction::CALL(JumpCond::Always));
-    assert_eq!(res, 0xAABB, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(
+        res, 0xAABB,
+        "We should not be adding to the stack pointer since call already did that"
+    );
     assert_eq!(cpu.pc, 0xAABB);
-    assert_eq!(cpu.sp, 0xFFFC, "The Stack pointer should be at 0xFFFC because the stack has one word on it");
+    assert_eq!(
+        cpu.sp, 0xFFFC,
+        "The Stack pointer should be at 0xFFFC because the stack has one word on it"
+    );
 }
 
 #[test]
@@ -923,9 +970,15 @@ fn test_call_zero_jump() {
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
     let res = cpu.execute(Instruction::CALL(JumpCond::Zero));
-    assert_eq!(res, 0xAABB, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(
+        res, 0xAABB,
+        "We should not be adding to the stack pointer since call already did that"
+    );
     assert_eq!(cpu.pc, 0xAABB);
-    assert_eq!(cpu.sp, 0xFFFC, "The Stack pointer should be at 0xFFFC because the stack has one word on it");
+    assert_eq!(
+        cpu.sp, 0xFFFC,
+        "The Stack pointer should be at 0xFFFC because the stack has one word on it"
+    );
 }
 
 #[test]
@@ -935,9 +988,15 @@ fn test_call_carry_jump() {
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, true);
     let res = cpu.execute(Instruction::CALL(JumpCond::Carry));
-    assert_eq!(res, 0xAABB, "We should not be adding to the stack pointer since call already did that");
+    assert_eq!(
+        res, 0xAABB,
+        "We should not be adding to the stack pointer since call already did that"
+    );
     assert_eq!(cpu.pc, 0xAABB);
-    assert_eq!(cpu.sp, 0xFFFC, "The Stack pointer should be at 0xFFFC because the stack has one word on it");
+    assert_eq!(
+        cpu.sp, 0xFFFC,
+        "The Stack pointer should be at 0xFFFC because the stack has one word on it"
+    );
 }
 
 #[test]
@@ -960,7 +1019,6 @@ fn test_ret_zero() {
     let new_pc = cpu.execute(Instruction::RET(JumpCond::Zero));
     assert_eq!(new_pc, 0xAAFF);
 }
-
 
 #[test]
 fn test_ret_zero_dont_ret() {
@@ -1012,12 +1070,16 @@ fn writing_to_div() {
     let mut cpu = setup();
     assert_eq!(cpu.bus.read_byte(0xFF04), 0);
     cpu.bus.write_byte(0xFF04, 0x40);
-    assert_eq!(cpu.bus.read_byte(0xFF04), 0x0, "Writing anything to the div should always reset div to zero");
+    assert_eq!(
+        cpu.bus.read_byte(0xFF04),
+        0x0,
+        "Writing anything to the div should always reset div to zero"
+    );
 }
 
 #[test]
 fn writing_to_wave_pattern_ram() {
-    let mut cpu =setup();
+    let mut cpu = setup();
     cpu.bus.write_byte(0xFF30, 0x40);
     assert_eq!(cpu.bus.read_byte(0xFF30), 0x40);
 }

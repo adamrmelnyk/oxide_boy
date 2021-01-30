@@ -28,7 +28,10 @@ impl Bus {
         // TODO: Add the rest pointing to other devices
         match address {
             0xFF04..=0xFF07 => self.timer.read(address),
-            0xFF10..=0xFF14 => self.apu.read(address),
+            0xFF10..=0xFF14 |
+            0xFF16..=0xFF1E |
+            0xFF20..=0xFF26 |
+            0xFF30..=0xFF3F => self.apu.read(address),
             0xFF40..=0xFF45 => self.ppu.read(address),
             _ => self.memory.read_byte(address),
         }
@@ -38,7 +41,10 @@ impl Bus {
         // TODO: Add the rest pointing to other devices
         match address {
             0xFF04..=0xFF07 => self.timer.write(address, value),
-            0xFF10..=0xFF14 => self.apu.write(address, value),
+            0xFF10..=0xFF14 |
+            0xFF16..=0xFF1E |
+            0xFF20..=0xFF26 |
+            0xFF30..=0xFF3F => self.apu.write(address, value),
             0xFF40..=0xFF45 => self.ppu.write(address, value),
             _ => self.memory.write_byte(address, value),
         };
@@ -107,4 +113,13 @@ fn write_to_apu_sweep_register() {
     let mut bus = setup();
     bus.write_byte(0xFF10, 0xAA);
     assert_eq!(bus.apu.sweep_register(), 0xAA);
+}
+
+#[test]
+fn write_to_apu_wave_pattern_ram() {
+    let mut bus = setup();
+    bus.write_byte(0xFF30, 0x10);
+    bus.write_byte(0xFF3F, 0xAA);
+    assert_eq!(bus.apu.wave_pattern_ram()[0], 0x10);
+    assert_eq!(bus.apu.wave_pattern_ram()[0xF], 0xAA);
 }

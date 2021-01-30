@@ -1014,3 +1014,10 @@ fn writing_to_div() {
     cpu.bus.write_byte(0xFF04, 0x40);
     assert_eq!(cpu.bus.read_byte(0xFF04), 0x0, "Writing anything to the div should always reset div to zero");
 }
+
+#[test]
+fn writing_to_wave_pattern_ram() {
+    let mut cpu =setup();
+    cpu.bus.write_byte(0xFF30, 0x40);
+    assert_eq!(cpu.bus.read_byte(0xFF30), 0x40);
+}

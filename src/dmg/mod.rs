@@ -6,3 +6,4 @@ pub mod timer;
 pub mod bus;
 pub mod apu;
 pub mod cpu;
+pub mod joypad;

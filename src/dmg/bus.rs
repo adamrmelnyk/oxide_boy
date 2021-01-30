@@ -45,7 +45,8 @@ impl Bus {
             0xFF16..=0xFF1E |
             0xFF20..=0xFF26 |
             0xFF30..=0xFF3F => self.apu.write(address, value),
-            0xFF40..=0xFF45 => self.ppu.write(address, value),
+            0xFF40..=0xFF45 |
+            0xFF47..=0xFF4B => self.ppu.write(address, value),
             _ => self.memory.write_byte(address, value),
         };
     }

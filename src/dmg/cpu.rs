@@ -105,11 +105,7 @@ impl CPU {
             match instruction {
                 Instruction::ADD(target) => self.add(target),
                 Instruction::ADDHL(target) => self.addhl(target),
-                Instruction::ADDSP => {
-                    let value = self.read_next_byte();
-                    let new_value = self.addsp(value);
-                    self.sp = new_value;
-                }
+                Instruction::ADDSP => self.addsp(),
                 Instruction::INC16(target) => self.inc_16(target),
                 Instruction::DEC16(target) => self.dec_16(target),
                 Instruction::SUB(target) => self.sub(target),
@@ -118,20 +114,9 @@ impl CPU {
                 Instruction::AND(target) => self.and(target),
                 Instruction::OR(target) => self.or(target),
                 Instruction::XOR(target) => self.xor(target),
-                Instruction::CP(target) => {
-                    let value = self.register_value(&target);
-                    self.cp(value);
-                }
-                Instruction::INC(target) => {
-                    let value = self.register_value(&target);
-                    let new_value = self.inc(value);
-                    self.set_register_by_target(&target, new_value);
-                }
-                Instruction::DEC(target) => {
-                    let value = self.register_value(&target);
-                    let new_value = self.dec(value);
-                    self.set_register_by_target(&target, new_value);
-                }
+                Instruction::CP(target) => self.cp(target),
+                Instruction::INC(target) => self.inc(target),
+                Instruction::DEC(target) => self.dec(target),
                 Instruction::CCF => self.ccf(),
                 Instruction::SCF => self.scf(),
                 Instruction::RRA => self.rra(),
@@ -146,26 +131,10 @@ impl CPU {
                 Instruction::SRL(target) => self.srl(target),
                 Instruction::RL(target) => self.rl(target),
                 Instruction::RR(target) => self.rr(target),
-                Instruction::RRC(target) => {
-                    let value = self.register_value(&target);
-                    let new_value = self.rrc(value);
-                    self.set_register_by_target(&target, new_value);
-                }
-                Instruction::RLC(target) => {
-                    let value = self.register_value(&target);
-                    let new_value = self.rlc(value);
-                    self.set_register_by_target(&target, new_value);
-                }
-                Instruction::SRA(target) => {
-                    let value = self.register_value(&target);
-                    let new_value = self.sra(value);
-                    self.set_register_by_target(&target, new_value);
-                }
-                Instruction::SLA(target) => {
-                    let value = self.register_value(&target);
-                    let new_value = self.sla(value);
-                    self.set_register_by_target(&target, new_value);
-                }
+                Instruction::RRC(target) => self.rrc(target),
+                Instruction::RLC(target) => self.rlc(target),
+                Instruction::SRA(target) => self.sra(target),
+                Instruction::SLA(target) => self.sla(target),
                 Instruction::SWAP(target) => self.swap(target),
                 Instruction::JP(condition) => dont_inc_pc = self.jump(self.should_jump(condition)),
                 Instruction::JPHL => self.jump_to_address_hl(),
@@ -186,18 +155,17 @@ impl CPU {
                 Instruction::RET(condition) => {
                     dont_inc_pc = self.ret(self.should_jump(condition));
                 }
-                Instruction::RETI => {
-                    self.reti();
-                }
+                Instruction::RETI => self.reti(),
                 Instruction::RST(addr) => self.rst(addr),
                 Instruction::EI => self.enable_interupts(),
                 Instruction::DI => self.disable_interupts(),
                 Instruction::LDHA => self.ldha(),
-                Instruction::LDHA8 => self.ldha8(),
+                Instruction::LDHA8 => self.ldha8(),    // SP = SP + e
+                // 0 0 * *
                 Instruction::LDABY => self.load_a_into_next_byte(),
                 Instruction::LDA => self.load_byte_at_next_address_into_a(),
                 Instruction::LDHLSP => self.ldhlsp(),
-            }
+            };
         }
         if dont_inc_pc {
             self.pc
@@ -265,7 +233,13 @@ impl CPU {
 
     // SP = SP + e
     // 0 0 * *
-    fn addsp(&mut self, value: u8) -> u16 {
+    fn addsp(&mut self) {
+        let value = self.read_next_byte();
+        let new_value = self.add_value_to_sp(value);
+        self.sp = new_value;
+    }
+
+    fn add_value_to_sp(&mut self, value: u8) -> u16 {
         let signed_val = i16::from(value as i8) as u16;
         let half_carry = (self.sp & 0xFF) + (signed_val & 0xFF) > 0xFF;
         let (new_value, did_overflow) = self.sp.overflowing_add(signed_val);
@@ -371,7 +345,8 @@ impl CPU {
 
     // A - s
     // * 1 * *
-    fn cp(&mut self, value: u8) {
+    fn cp(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let zero: bool = value == self.registers.a;
         let (_, did_overflow) = self.registers.a.overflowing_sub(value);
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
@@ -381,22 +356,24 @@ impl CPU {
 
     // s = s + 1
     // * 0 * -
-    fn inc(&mut self, value: u8) -> u8 {
+    fn inc(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = value.wrapping_add(1);
         let half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
         self.registers
             .set_flags(new_value == 0, false, half_carry, self.registers.carry());
-        new_value
+        self.set_register_by_target(&target, new_value);
     }
 
     // s = s - 1
     // * 1 * -
-    fn dec(&mut self, value: u8) -> u8 {
+    fn dec(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = value.wrapping_sub(1);
         let half_carry = (value & 0xF) < 1; // TODO; Double check this
         self.registers
             .set_flags(new_value == 0, true, half_carry, self.registers.carry());
-        new_value
+        self.set_register_by_target(&target, new_value);
     }
 
     /// Complement the carry flag
@@ -509,40 +486,44 @@ impl CPU {
 
     // Rotate right and carry
     // * 0 0 *
-    fn rrc(&mut self, value: u8) -> u8 {
+    fn rrc(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let carry = (value & 0x1) == 1;
         let new_value = value.rotate_right(1);
         self.registers
             .set_flags(new_value == 0, false, false, carry);
-        new_value
+        self.set_register_by_target(&target, new_value);
     }
 
     // Rotate left and carry
     // * 0 0 *
-    fn rlc(&mut self, value: u8) -> u8 {
+    fn rlc(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let carry = (value & 0x80) == 0x80;
         let new_value = value.rotate_left(1);
         self.registers
             .set_flags(new_value == 0, false, false, carry);
-        new_value
+        self.set_register_by_target(&target, new_value);
     }
 
     // * 0 0 *
-    fn sra(&mut self, value: u8) -> u8 {
+    fn sra(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = value >> 1;
         let carry = (value & 0x01) == 1;
         self.registers
             .set_flags(new_value == 0, false, false, carry);
-        new_value
+        self.set_register_by_target(&target, new_value);
     }
 
     // * 0 0 *
-    fn sla(&mut self, value: u8) -> u8 {
+    fn sla(&mut self, target: ArithmeticTarget) {
+        let value = self.register_value(&target);
         let new_value = value << 1;
         let carry = (value & 0x80) == 0x80;
         self.registers
             .set_flags(new_value == 0, false, false, carry);
-        new_value
+        self.set_register_by_target(&target, new_value);
     }
 
     // Swap upper and lower nibbles of a register
@@ -718,7 +699,7 @@ impl CPU {
     // 0 0 H C
     fn ldhlsp(&mut self) {
         let byte = self.read_next_byte();
-        let new_value = self.addsp(byte);
+        let new_value = self.add_value_to_sp(byte);
         self.registers.set_hl(new_value);
     }
 

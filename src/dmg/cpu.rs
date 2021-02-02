@@ -99,7 +99,6 @@ impl CPU {
         self.bus.interrupt_flag_off();
     }
 
-    // TODO: Use all the cond cycles in their respective functions
     pub fn execute(&mut self, instruction: Instruction) -> (u16, u8) {
         let mut inc_pc = true;
         let mut cycles = 0;

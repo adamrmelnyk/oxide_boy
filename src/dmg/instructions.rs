@@ -19,9 +19,9 @@ const PREFIXED_OPERATION_CYCLES: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 16, 8
 ];
 
-// TODO: Some of these operations include conditionals where there are two numbers
-// One where a conditional is taken and one where it is not, we will need both numbers
-// eventually
+// Note: Some of these operations include conditionals where there are two numbers
+// One where a conditional is taken and one where it is not, the conditional_cycle function
+// is used for these cases
 const OPERATION_CYCLES: [u8; 256] = [
     4, 12, 8, 8, 4, 4, 8, 4, 20, 8, 8, 8, 4, 4, 8, 4,
     4, 12, 8, 8, 4, 4, 8, 4, 12, 8, 8, 8, 4, 4, 8, 4,

@@ -21,7 +21,8 @@ cargo run
 ## TODO
 
 * Timers
-  * We'll also need to go back through the CPU functions and return how many cycles they complete.
+  * Timer step function
+  * Jump, ret, call, jump_relative etc. functions need to use the conditional cycle amounts
 * GUI
   * LY is the only ppu register being inc'd, the rest of the step function in the ppu needs to be implemented.
 * Add the cartrige to the device

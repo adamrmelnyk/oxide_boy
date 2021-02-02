@@ -41,7 +41,7 @@ fn test_boot_rom() {
 fn inc_16_test() {
     let mut cpu = setup();
     let before = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::BC);
-    cpu.execute(Instruction::INC16(SixteenBitArithmeticTarget::BC));
+    cpu.execute(Instruction::INC16(SixteenBitArithmeticTarget::BC, 8));
     let after = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::BC);
     assert_eq!(before + 1, after);
     assert_flags_znhc(cpu.registers, false, false, false, false);
@@ -51,7 +51,7 @@ fn inc_16_test() {
 fn dec_16_test() {
     let mut cpu = setup();
     let before = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::BC);
-    cpu.execute(Instruction::DEC16(SixteenBitArithmeticTarget::BC));
+    cpu.execute(Instruction::DEC16(SixteenBitArithmeticTarget::BC, 8));
     let after = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::BC);
     assert_eq!(before.wrapping_sub(1), after);
     assert_flags_znhc(cpu.registers, false, false, false, false);
@@ -61,7 +61,7 @@ fn dec_16_test() {
 fn inc_test() {
     let mut cpu = setup();
     let before = cpu.register_value(&ArithmeticTarget::B);
-    cpu.execute(Instruction::INC(ArithmeticTarget::B));
+    cpu.execute(Instruction::INC(ArithmeticTarget::B, 4));
     let after = cpu.register_value(&ArithmeticTarget::B);
     assert_eq!(before + 1, after);
     assert_flags_znhc(cpu.registers, false, false, false, false);
@@ -71,7 +71,7 @@ fn inc_test() {
 fn inc_test_overflow() {
     let mut cpu = setup();
     cpu.registers.a = 255;
-    cpu.execute(Instruction::INC(ArithmeticTarget::A));
+    cpu.execute(Instruction::INC(ArithmeticTarget::A, 4));
     let after = cpu.register_value(&ArithmeticTarget::A);
     assert_eq!(0, after);
     assert_flags_znhc(cpu.registers, true, false, true, false);
@@ -82,7 +82,7 @@ fn inc_test_hli() {
     let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x01);
-    cpu.execute(Instruction::INC(ArithmeticTarget::HLI));
+    cpu.execute(Instruction::INC(ArithmeticTarget::HLI, 12));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x02);
 }
 
@@ -91,7 +91,7 @@ fn dec_test_hli() {
     let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x01);
-    cpu.execute(Instruction::DEC(ArithmeticTarget::HLI));
+    cpu.execute(Instruction::DEC(ArithmeticTarget::HLI, 12));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x00);
 }
 
@@ -99,7 +99,7 @@ fn dec_test_hli() {
 fn dec_test() {
     let mut cpu = setup();
     cpu.registers.b = 1;
-    cpu.execute(Instruction::DEC(ArithmeticTarget::B));
+    cpu.execute(Instruction::DEC(ArithmeticTarget::B, 4));
     let after = cpu.register_value(&ArithmeticTarget::B);
     assert_eq!(0, after);
     assert_flags_znhc(cpu.registers, true, true, false, false)
@@ -108,7 +108,7 @@ fn dec_test() {
 #[test]
 fn dec_test_underflow() {
     let mut cpu = setup();
-    cpu.execute(Instruction::DEC(ArithmeticTarget::B));
+    cpu.execute(Instruction::DEC(ArithmeticTarget::B, 4));
     let after = cpu.register_value(&ArithmeticTarget::B);
     assert_eq!(255, after);
     assert_flags_znhc(cpu.registers, false, true, true, false);
@@ -117,7 +117,7 @@ fn dec_test_underflow() {
 #[test]
 fn noop_test() {
     let mut cpu = setup();
-    let pc = cpu.execute(Instruction::NOP);
+    let (pc, _) = cpu.execute(Instruction::NOP(4));
     assert_eq!(1, pc); // Should do nothing but inc the pc
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
@@ -127,7 +127,7 @@ fn add_test() {
     let mut cpu = setup();
     cpu.registers.a = 10;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::ADD(ArithmeticTarget::B));
+    cpu.execute(Instruction::ADD(ArithmeticTarget::B, 4));
     assert_eq!(11, cpu.register_value(&ArithmeticTarget::A));
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
@@ -137,7 +137,7 @@ fn add_overflow_test() {
     let mut cpu = setup();
     cpu.registers.a = 255;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::ADD(ArithmeticTarget::B));
+    cpu.execute(Instruction::ADD(ArithmeticTarget::B, 4));
     assert_eq!(0, cpu.register_value(&ArithmeticTarget::A));
     assert_flags_znhc(cpu.registers, true, false, true, true);
 }
@@ -147,7 +147,7 @@ fn add_half_overflow_test() {
     let mut cpu = setup();
     cpu.registers.a = 15;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::ADD(ArithmeticTarget::B));
+    cpu.execute(Instruction::ADD(ArithmeticTarget::B, 4));
     assert_eq!(16, cpu.register_value(&ArithmeticTarget::A));
     assert_flags_znhc(cpu.registers, false, false, true, false);
 }
@@ -157,7 +157,7 @@ fn addhl_test() {
     let mut cpu = setup();
     cpu.registers.set_hl(1);
     cpu.registers.set_bc(10);
-    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
+    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC, 8));
     assert_eq!(
         11,
         cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL)
@@ -170,7 +170,7 @@ fn addhl_overflow_test() {
     let mut cpu = setup();
     cpu.registers.set_hl(1);
     cpu.registers.set_bc(65535);
-    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
+    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC, 8));
     assert_eq!(
         0,
         cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL)
@@ -183,7 +183,7 @@ fn addhl_half_overflow_test() {
     let mut cpu = setup();
     cpu.registers.set_hl(1);
     cpu.registers.set_bc(255);
-    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC));
+    cpu.execute(Instruction::ADDHL(SixteenBitArithmeticTarget::BC, 8));
     assert_eq!(
         256,
         cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::HL)
@@ -197,7 +197,7 @@ fn addsp_test() {
     cpu.sp = 0x0001;
     cpu.bus.write_byte(0x1001, 0x01);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::ADDSP);
+    cpu.execute(Instruction::ADDSP(16));
     assert_eq!(0x0002, cpu.sp);
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
@@ -208,7 +208,7 @@ fn addsp_overflow_test() {
     cpu.sp = 0xFFFF;
     cpu.bus.write_byte(0x1001, 0x01);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::ADDSP);
+    cpu.execute(Instruction::ADDSP(16));
     assert_eq!(0x0000, cpu.sp);
     assert_flags_znhc(cpu.registers, false, false, true, true);
 }
@@ -219,7 +219,7 @@ fn addsp_half_overflow_test() {
     cpu.sp = 0x00FF;
     cpu.bus.write_byte(0x1001, 0x01);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::ADDSP);
+    cpu.execute(Instruction::ADDSP(16));
     assert_eq!(0x0100, cpu.sp);
     assert_flags_znhc(cpu.registers, false, false, true, false);
 }
@@ -229,7 +229,7 @@ fn sub_test() {
     let mut cpu = setup();
     cpu.registers.a = 255;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::SUB(ArithmeticTarget::B));
+    cpu.execute(Instruction::SUB(ArithmeticTarget::B, 4));
     assert_eq!(254, cpu.register_value(&ArithmeticTarget::A));
     assert_flags_znhc(cpu.registers, false, true, false, false);
 }
@@ -238,7 +238,7 @@ fn sub_test() {
 fn sub_underflow_test() {
     let mut cpu = setup();
     cpu.registers.b = 1;
-    cpu.execute(Instruction::SUB(ArithmeticTarget::B));
+    cpu.execute(Instruction::SUB(ArithmeticTarget::B, 4));
     assert_eq!(255, cpu.register_value(&ArithmeticTarget::A));
     assert_flags_znhc(cpu.registers, false, true, true, true);
 }
@@ -249,7 +249,7 @@ fn adc_test() {
     cpu.registers.set_flags_nz(false, false, true);
     cpu.registers.a = 1;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::ADC(ArithmeticTarget::B));
+    cpu.execute(Instruction::ADC(ArithmeticTarget::B, 4));
     assert_eq!(3, cpu.registers.a);
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
@@ -260,7 +260,7 @@ fn adc_test_overflow() {
     cpu.registers.set_flags_nz(false, false, true);
     cpu.registers.a = 254;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::ADC(ArithmeticTarget::B));
+    cpu.execute(Instruction::ADC(ArithmeticTarget::B, 4));
     assert_eq!(0, cpu.registers.a);
     assert_flags_znhc(cpu.registers, true, false, true, true);
 }
@@ -270,7 +270,7 @@ fn adc_test_half_overflow() {
     let mut cpu = setup();
     cpu.registers.set_flags_nz(false, false, true);
     cpu.registers.a = 15;
-    cpu.execute(Instruction::ADC(ArithmeticTarget::B));
+    cpu.execute(Instruction::ADC(ArithmeticTarget::B, 4));
     assert_eq!(16, cpu.registers.a);
     assert_flags_znhc(cpu.registers, false, false, true, false);
 }
@@ -281,7 +281,7 @@ fn sbc_test() {
     cpu.registers.a = 3;
     cpu.registers.b = 2;
     cpu.registers.set_flags_nz(false, false, true);
-    cpu.execute(Instruction::SBC(ArithmeticTarget::B));
+    cpu.execute(Instruction::SBC(ArithmeticTarget::B, 4));
     assert_eq!(0, cpu.registers.a);
     assert_flags_znhc(cpu.registers, true, true, false, false);
 }
@@ -292,7 +292,7 @@ fn sbc_test_overflow() {
     cpu.registers.a = 2;
     cpu.registers.b = 2;
     cpu.registers.set_flags_nz(false, false, true);
-    cpu.execute(Instruction::SBC(ArithmeticTarget::B));
+    cpu.execute(Instruction::SBC(ArithmeticTarget::B, 4));
     assert_eq!(255, cpu.registers.a);
     assert_flags_znhc(cpu.registers, false, true, true, true);
 }
@@ -302,7 +302,7 @@ fn and_test() {
     let mut cpu = setup();
     cpu.registers.a = 0xFF;
     cpu.registers.b = 10;
-    cpu.execute(Instruction::AND(ArithmeticTarget::B));
+    cpu.execute(Instruction::AND(ArithmeticTarget::B, 4));
     assert_eq!(10, cpu.registers.a);
     assert_flags_znhc(cpu.registers, false, false, true, false);
 }
@@ -312,7 +312,7 @@ fn or_test() {
     let mut cpu = setup();
     cpu.registers.a = 0xF0;
     cpu.registers.b = 0x0F;
-    cpu.execute(Instruction::OR(ArithmeticTarget::B));
+    cpu.execute(Instruction::OR(ArithmeticTarget::B, 4));
     assert_eq!(0xFF, cpu.registers.a);
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
@@ -322,7 +322,7 @@ fn xor_test() {
     let mut cpu = setup();
     cpu.registers.a = 0xFF;
     cpu.registers.b = 0x0F;
-    cpu.execute(Instruction::XOR(ArithmeticTarget::B));
+    cpu.execute(Instruction::XOR(ArithmeticTarget::B, 4));
     assert_eq!(0xF0, cpu.registers.a);
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
@@ -331,7 +331,7 @@ fn xor_test() {
 fn cp_test() {
     let mut cpu = setup();
     cpu.registers.b = 1;
-    cpu.execute(Instruction::CP(ArithmeticTarget::B));
+    cpu.execute(Instruction::CP(ArithmeticTarget::B, 4));
     assert_flags_znhc(cpu.registers, false, true, true, true);
 }
 
@@ -341,7 +341,7 @@ fn cp_test_next_byte() {
     cpu.registers.a = 0x0000;
     cpu.bus.write_byte(0x1001, 0x90);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::CP(ArithmeticTarget::D8));
+    cpu.execute(Instruction::CP(ArithmeticTarget::D8, 8));
     assert_flags_znhc(cpu.registers, false, true, false, true);
 }
 
@@ -351,14 +351,14 @@ fn cp_test_zero() {
     cpu.registers.a = 0x0090;
     cpu.bus.write_byte(0x1001, 0x90);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::CP(ArithmeticTarget::D8));
+    cpu.execute(Instruction::CP(ArithmeticTarget::D8, 8));
     assert_flags_znhc(cpu.registers, true, true, false, false);
 }
 
 #[test]
 fn halt_test() {
     let mut cpu = setup();
-    cpu.execute(Instruction::HALT);
+    cpu.execute(Instruction::HALT(4));
     assert_eq!(true, cpu.is_halted);
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
@@ -366,14 +366,14 @@ fn halt_test() {
 #[test]
 fn ccf_test() {
     let mut cpu = setup();
-    cpu.execute(Instruction::CCF);
+    cpu.execute(Instruction::CCF(4));
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
 
 #[test]
 fn scf_test() {
     let mut cpu = setup();
-    cpu.execute(Instruction::SCF);
+    cpu.execute(Instruction::SCF(4));
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
 
@@ -385,7 +385,7 @@ fn load_test_bci() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::BCI,
         LoadByteSource::A,
-    )));
+    ), 8));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
 }
 
@@ -397,7 +397,7 @@ fn load_test_dei() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::DEI,
         LoadByteSource::A,
-    )));
+    ), 8));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
 }
 
@@ -409,7 +409,7 @@ fn load_test_hlinc() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::HLINC,
         LoadByteSource::A,
-    )));
+    ), 8));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
     assert_eq!(cpu.registers.get_hl() - 1, 0xA1A1);
 }
@@ -422,7 +422,7 @@ fn load_test_hldec() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::HLDEC,
         LoadByteSource::A,
-    )));
+    ), 8));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
     assert_eq!(cpu.registers.get_hl() + 1, 0xA1A1);
 }
@@ -434,7 +434,7 @@ fn load_tests() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::B,
         LoadByteSource::A,
-    )));
+    ), 8));
     assert_eq!(cpu.registers.b, 0x10);
 }
 
@@ -446,7 +446,7 @@ fn load_test_a_from_bci() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::A,
         LoadByteSource::BCI,
-    )));
+    ), 8));
     assert_eq!(cpu.registers.a, 0x10);
 }
 
@@ -458,7 +458,7 @@ fn load_test_a_from_dei() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::A,
         LoadByteSource::DEI,
-    )));
+    ), 8));
     assert_eq!(cpu.registers.a, 0x10);
 }
 
@@ -470,7 +470,7 @@ fn load_test_a_from_hlinc() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::A,
         LoadByteSource::HLINC,
-    )));
+    ), 8));
     assert_eq!(cpu.registers.a, 0x10);
     assert_eq!(cpu.registers.get_hl(), 0xA1A2);
 }
@@ -483,7 +483,7 @@ fn load_test_a_from_hldec() {
     cpu.execute(Instruction::LD(LoadType::Byte(
         LoadByteTarget::A,
         LoadByteSource::HLDEC,
-    )));
+    ), 8));
     assert_eq!(cpu.registers.a, 0x10);
     assert_eq!(cpu.registers.get_hl(), 0xA1A0);
 }
@@ -493,7 +493,7 @@ fn load_a_from_c_plus_0xff00() {
     let mut cpu = setup();
     cpu.bus.write_byte(0xff11, 0x10);
     cpu.registers.c = 0x11;
-    cpu.execute(Instruction::LDAC);
+    cpu.execute(Instruction::LDAC(8));
     assert_eq!(cpu.registers.a, 0x10);
 }
 
@@ -502,7 +502,7 @@ fn load_c_plus_0xff00_from_a() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;
     cpu.registers.c = 0x11;
-    cpu.execute(Instruction::LDCA);
+    cpu.execute(Instruction::LDCA(8));
     assert_eq!(cpu.bus.read_byte(0xFF11), 0x10);
 }
 
@@ -515,7 +515,7 @@ fn load_word_into_bc() {
     cpu.execute(Instruction::LD(LoadType::Word(
         LoadWordTarget::BC,
         LoadWordSource::D16,
-    )));
+    ), 8));
     assert_eq!(
         cpu.registers.get_bc(),
         0xFFAA,
@@ -536,7 +536,7 @@ fn load_word_into_de() {
     cpu.execute(Instruction::LD(LoadType::Word(
         LoadWordTarget::DE,
         LoadWordSource::D16,
-    )));
+    ), 8));
     assert_eq!(cpu.registers.get_de(), 0xFFAA);
 }
 
@@ -549,7 +549,7 @@ fn load_next_word_into_sp() {
     cpu.execute(Instruction::LD(LoadType::Word(
         LoadWordTarget::SP,
         LoadWordSource::D16,
-    )));
+    ), 8));
     assert_eq!(cpu.sp, 0xFFAA);
 }
 
@@ -562,7 +562,7 @@ fn load_sp_at_address_n() {
     cpu.execute(Instruction::LD(LoadType::Word(
         LoadWordTarget::D16,
         LoadWordSource::SP,
-    )));
+    ), 8));
     assert_eq!(cpu.bus.read_word(0xA1A1), 0xAAAA);
 }
 
@@ -573,7 +573,7 @@ fn load_hl_into_sp() {
     cpu.execute(Instruction::LD(LoadType::Word(
         LoadWordTarget::SP,
         LoadWordSource::HL,
-    )));
+    ), 8));
     assert_eq!(cpu.sp, 0xA1A1);
 }
 
@@ -583,7 +583,7 @@ fn load_byte_at_next_address_into_a_test() {
     cpu.bus.write_word(0x1001, 0xAAFF);
     cpu.bus.write_byte(0xAAFF, 0xAA);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LDA);
+    cpu.execute(Instruction::LDA(8));
     assert_eq!(cpu.registers.a, 0xAA);
 }
 
@@ -591,7 +591,7 @@ fn load_byte_at_next_address_into_a_test() {
 fn cpl_test() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;
-    cpu.execute(Instruction::CPL);
+    cpu.execute(Instruction::CPL(4));
     assert_eq!(cpu.registers.a, 0xEF);
 }
 
@@ -599,7 +599,7 @@ fn cpl_test() {
 fn bit_test() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0000;
-    cpu.execute(Instruction::BIT(7, ArithmeticTarget::A));
+    cpu.execute(Instruction::BIT(7, ArithmeticTarget::A, 8));
     assert_eq!(cpu.registers.zero(), false);
 }
 
@@ -607,7 +607,7 @@ fn bit_test() {
 fn res_test() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0000;
-    cpu.execute(Instruction::RESET(7, ArithmeticTarget::A));
+    cpu.execute(Instruction::RESET(7, ArithmeticTarget::A, 8));
     assert_eq!(cpu.registers.a, 0b0000_0000);
 }
 
@@ -615,7 +615,7 @@ fn res_test() {
 fn set_test() {
     let mut cpu = setup();
     cpu.registers.a = 0b0000_0000;
-    cpu.execute(Instruction::SET(0, ArithmeticTarget::A));
+    cpu.execute(Instruction::SET(0, ArithmeticTarget::A, 8));
     assert_eq!(cpu.registers.a, 0b0000_0001);
 }
 
@@ -623,7 +623,7 @@ fn set_test() {
 fn swap_test() {
     let mut cpu = setup();
     cpu.registers.a = 0b1111_0000;
-    cpu.execute(Instruction::SWAP(ArithmeticTarget::A));
+    cpu.execute(Instruction::SWAP(ArithmeticTarget::A, 8));
     assert_eq!(cpu.registers.a, 0b0000_1111);
 }
 
@@ -631,7 +631,7 @@ fn swap_test() {
 fn test_rra() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0001;
-    cpu.execute(Instruction::RRA);
+    cpu.execute(Instruction::RRA(4));
     assert_eq!(cpu.registers.a, 0b0100_0000);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -641,7 +641,7 @@ fn test_rra_carry() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0001;
     cpu.registers.set_flags_nz(false, false, true);
-    cpu.execute(Instruction::RRA);
+    cpu.execute(Instruction::RRA(4));
     assert_eq!(cpu.registers.a, 0b1100_0000);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -650,7 +650,7 @@ fn test_rra_carry() {
 fn test_rla() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0000;
-    cpu.execute(Instruction::RLA);
+    cpu.execute(Instruction::RLA(4));
     assert_eq!(cpu.registers.a, 0);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -660,7 +660,7 @@ fn test_rla_carry() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0000;
     cpu.registers.set_flags_nz(false, false, true);
-    cpu.execute(Instruction::RLA);
+    cpu.execute(Instruction::RLA(4));
     assert_eq!(cpu.registers.a, 1);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -669,7 +669,7 @@ fn test_rla_carry() {
 fn test_rrca() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0001;
-    cpu.execute(Instruction::RRCA);
+    cpu.execute(Instruction::RRCA(4));
     assert_eq!(cpu.registers.a, 0b1100_0000);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -678,7 +678,7 @@ fn test_rrca() {
 fn test_rlca() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0000;
-    cpu.execute(Instruction::RLCA);
+    cpu.execute(Instruction::RLCA(4));
     assert_eq!(cpu.registers.a, 1);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -687,7 +687,7 @@ fn test_rlca() {
 fn test_srl() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0000;
-    cpu.execute(Instruction::SRL(ArithmeticTarget::A));
+    cpu.execute(Instruction::SRL(ArithmeticTarget::A, 8));
     assert_eq!(cpu.registers.a, 0b0100_0000);
     assert_eq!(0x80 & cpu.registers.a, 0); // MSB is zero
     assert_flags_znhc(cpu.registers, false, false, false, false);
@@ -697,7 +697,7 @@ fn test_srl() {
 fn test_srl_overflow() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0001;
-    cpu.execute(Instruction::SRL(ArithmeticTarget::A));
+    cpu.execute(Instruction::SRL(ArithmeticTarget::A, 8));
     assert_eq!(cpu.registers.a, 0b0100_0000);
     assert_eq!(0x80 & cpu.registers.a, 0); // MSB is zero
     assert_flags_znhc(cpu.registers, false, false, false, true);
@@ -707,7 +707,7 @@ fn test_srl_overflow() {
 fn test_rr() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0001;
-    cpu.execute(Instruction::RR(ArithmeticTarget::A));
+    cpu.execute(Instruction::RR(ArithmeticTarget::A, 4));
     assert_eq!(cpu.registers.a, 0b0100_0000);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -717,7 +717,7 @@ fn test_rr_carry() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0001;
     cpu.registers.set_flags_nz(false, false, true);
-    cpu.execute(Instruction::RR(ArithmeticTarget::A));
+    cpu.execute(Instruction::RR(ArithmeticTarget::A, 4));
     assert_eq!(cpu.registers.a, 0b1100_0000);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -726,7 +726,7 @@ fn test_rr_carry() {
 fn test_rl() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0001;
-    cpu.execute(Instruction::RL(ArithmeticTarget::A));
+    cpu.execute(Instruction::RL(ArithmeticTarget::A, 4));
     assert_eq!(cpu.registers.a, 0b0000_0010);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -736,7 +736,7 @@ fn test_rl_carry() {
     let mut cpu = setup();
     cpu.registers.a = 0b1000_0011;
     cpu.registers.set_flags_nz(false, false, true);
-    cpu.execute(Instruction::RL(ArithmeticTarget::A));
+    cpu.execute(Instruction::RL(ArithmeticTarget::A, 4));
     assert_eq!(cpu.registers.a, 0b0000_0111);
     assert_flags_znhc(cpu.registers, false, false, false, true);
 }
@@ -745,7 +745,7 @@ fn test_rl_carry() {
 fn test_rst() {
     let mut cpu = setup();
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::RST(RestartAddr::H28));
+    cpu.execute(Instruction::RST(RestartAddr::H28, 16));
     assert_eq!(cpu.pc, 0x0028);
 }
 
@@ -755,7 +755,7 @@ fn test_jump() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    let res = cpu.execute(Instruction::JP(JumpCond::Always));
+    let (res, _) = cpu.execute(Instruction::JP(JumpCond::Always, 16, 16));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
     assert_eq!(res, cpu.pc);
 }
@@ -767,7 +767,7 @@ fn test_jump_zero() {
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
-    let res = cpu.execute(Instruction::JP(JumpCond::Zero));
+    let (res, _) = cpu.execute(Instruction::JP(JumpCond::Zero, 12, 16));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
     assert_eq!(res, cpu.pc);
 }
@@ -779,7 +779,7 @@ fn test_jump_carry() {
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, true);
-    let res = cpu.execute(Instruction::JP(JumpCond::Carry));
+    let (res, _) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
     assert_eq!(res, cpu.pc);
 }
@@ -790,12 +790,11 @@ fn test_no_jump_carry() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    let res = cpu.execute(Instruction::JP(JumpCond::Carry));
+    let (new_pc, _) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
     assert_eq!(
-        cpu.pc, 0x1003,
+        new_pc, 0x1003,
         "Shouldn't jump but we should still move forward to the next spot"
     );
-    assert_eq!(res, cpu.pc, "The result should be the same as the pc");
 }
 
 #[test]
@@ -803,7 +802,7 @@ fn test_jump_relative() {
     let mut cpu = setup();
     cpu.bus.write_byte(0x1001, 0b0000_0101);
     cpu.pc = 0x1000;
-    let res = cpu.execute(Instruction::JR(JumpCond::Always));
+    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Always, 12, 12));
     assert_eq!(cpu.pc, 0x1007, "Should jump five spaces");
     assert_eq!(res, cpu.pc);
 }
@@ -813,7 +812,7 @@ fn test_jump_relative_negative() {
     let mut cpu = setup();
     cpu.bus.write_byte(0x020A, 0xFB);
     cpu.pc = 0x209;
-    let res = cpu.execute(Instruction::JR(JumpCond::Always));
+    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Always, 8, 12));
     assert_eq!(
         cpu.pc, 0x0206,
         "Should jump back 5 spaces + the instruction length of two"
@@ -827,7 +826,7 @@ fn test_jump_relative_zero() {
     cpu.bus.write_byte(0x020A, 0xFB);
     cpu.pc = 0x0209;
     cpu.registers.set_flags(true, false, false, false);
-    let res = cpu.execute(Instruction::JR(JumpCond::Zero));
+    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
     assert_eq!(cpu.pc, 0x0206, "Should jump back 5 spaces");
     assert_eq!(res, cpu.pc);
 }
@@ -838,7 +837,7 @@ fn test_jump_relative_zero_dont_jump() {
     cpu.bus.write_byte(0x020A, 0xFB);
     cpu.pc = 0x0209;
     cpu.registers.set_flags(false, false, false, false);
-    let res = cpu.execute(Instruction::JR(JumpCond::Zero));
+    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
     assert_eq!(
         cpu.pc, 0x020B,
         "Should jump forward 2 spots (the instruction length)"
@@ -850,7 +849,7 @@ fn test_jump_relative_zero_dont_jump() {
 fn test_jump_to_hl() {
     let mut cpu = setup();
     cpu.registers.set_hl(0x1000);
-    cpu.execute(Instruction::JPHL);
+    cpu.execute(Instruction::JPHL(4));
     assert_eq!(cpu.pc, 0x1000);
 }
 
@@ -860,7 +859,7 @@ fn test_ldha() {
     cpu.bus.write_byte(0xAAAB, 0x11);
     cpu.pc = 0xAAAA;
     cpu.registers.a = 0x12;
-    cpu.execute(Instruction::LDHA);
+    cpu.execute(Instruction::LDHA(12));
     assert_eq!(cpu.bus.read_byte(0xFF11), cpu.registers.a);
 }
 
@@ -870,21 +869,21 @@ fn test_ld8a() {
     cpu.pc = 0x0011;
     cpu.bus.write_byte(0x0012, 0x11);
     cpu.bus.write_byte(0xFF11, 0x10);
-    cpu.execute(Instruction::LDHA8);
+    cpu.execute(Instruction::LDHA8(12));
     assert_eq!(cpu.registers.a, 0x10);
 }
 
 #[test]
 fn test_disable_interrupts() {
     let mut cpu = setup();
-    cpu.execute(Instruction::DI);
+    cpu.execute(Instruction::DI(4));
     assert_eq!(cpu.ime, false);
 }
 
 #[test]
 fn test_enable_interrupts() {
     let mut cpu = setup();
-    cpu.execute(Instruction::EI);
+    cpu.execute(Instruction::EI(4));
     assert_eq!(cpu.ime, true);
 }
 
@@ -894,7 +893,7 @@ fn test_reti() {
     cpu.pc = 0x3000;
     cpu.sp = 0xA000;
     cpu.bus.write_word(0xA000, 0x0101);
-    cpu.execute(Instruction::RETI);
+    cpu.execute(Instruction::RETI(16));
     assert_eq!(cpu.pc, 0x0101);
 }
 
@@ -903,7 +902,7 @@ fn test_push() {
     let mut cpu = setup();
     cpu.registers.set_bc(0xAFAF);
     assert_eq!(cpu.sp, 0xFFFE);
-    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     assert_eq!(
         cpu.sp, 0xFFFC,
         "Two bytes are written so the stack moves back two spots"
@@ -915,9 +914,9 @@ fn test_push() {
 fn test_pop() {
     let mut cpu = setup();
     cpu.registers.set_bc(0xAFAF);
-    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     cpu.registers.set_bc(0xFAFA); // Change the register value
-    cpu.execute(Instruction::POP(StackTarget::BC));
+    cpu.execute(Instruction::POP(StackTarget::BC, 12));
     assert_eq!(
         cpu.registers.get_bc(),
         0xAFAF,
@@ -934,7 +933,7 @@ fn test_call_no_jump() {
     let mut cpu = setup();
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
-    let res = cpu.execute(Instruction::CALL(JumpCond::Carry));
+    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
     assert_eq!(
         res, 0x1003,
         "We should not be adding to the stack pointer since call already did that"
@@ -951,7 +950,7 @@ fn test_call_always_jump() {
     let mut cpu = setup();
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
-    let res = cpu.execute(Instruction::CALL(JumpCond::Always));
+    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Always, 12, 24));
     assert_eq!(
         res, 0xAABB,
         "We should not be adding to the stack pointer since call already did that"
@@ -969,7 +968,7 @@ fn test_call_zero_jump() {
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
-    let res = cpu.execute(Instruction::CALL(JumpCond::Zero));
+    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Zero, 12, 24));
     assert_eq!(
         res, 0xAABB,
         "We should not be adding to the stack pointer since call already did that"
@@ -987,7 +986,7 @@ fn test_call_carry_jump() {
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, true);
-    let res = cpu.execute(Instruction::CALL(JumpCond::Carry));
+    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
     assert_eq!(
         res, 0xAABB,
         "We should not be adding to the stack pointer since call already did that"
@@ -1003,9 +1002,9 @@ fn test_call_carry_jump() {
 fn test_ret() {
     let mut cpu = setup();
     cpu.registers.set_bc(0xAAFF);
-    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     cpu.pc = 0x1000;
-    let new_pc = cpu.execute(Instruction::RET(JumpCond::Always));
+    let (new_pc, _) = cpu.execute(Instruction::RET(JumpCond::Always, 8, 20));
     assert_eq!(new_pc, 0xAAFF);
 }
 
@@ -1013,10 +1012,10 @@ fn test_ret() {
 fn test_ret_zero() {
     let mut cpu = setup();
     cpu.registers.set_bc(0xAAFF);
-    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
-    let new_pc = cpu.execute(Instruction::RET(JumpCond::Zero));
+    let (new_pc, _) = cpu.execute(Instruction::RET(JumpCond::Zero, 8, 20));
     assert_eq!(new_pc, 0xAAFF);
 }
 
@@ -1024,10 +1023,10 @@ fn test_ret_zero() {
 fn test_ret_zero_dont_ret() {
     let mut cpu = setup();
     cpu.registers.set_bc(0xAAFF);
-    cpu.execute(Instruction::PUSH(StackTarget::BC));
+    cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, false);
-    let new_pc = cpu.execute(Instruction::RET(JumpCond::Zero));
+    let (new_pc, _) = cpu.execute(Instruction::RET(JumpCond::Zero, 8, 20));
     assert_eq!(new_pc, 0x1001);
 }
 
@@ -1037,7 +1036,7 @@ fn test_ldaby() {
     cpu.pc = 0x1000;
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.registers.a = 0xEE;
-    let next_pc = cpu.execute(Instruction::LDABY);
+    let (next_pc, _) = cpu.execute(Instruction::LDABY(12));
     assert_eq!(next_pc, 0x1003);
     assert_eq!(cpu.bus.read_word(0xAABB), 0xEE);
 }
@@ -1061,7 +1060,7 @@ fn reading_from_ly() {
     cpu.bus.write_byte(0xFF44, 0x40);
     cpu.bus.write_byte(0x1001, 0x44);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LDHA8);
+    cpu.execute(Instruction::LDHA8(12));
     assert_eq!(cpu.registers.a, 0x40);
 }
 

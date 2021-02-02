@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-const BootRom: &str = "src/dmg/rom/DMG_ROM.bin";
+const BOOT_ROM: &str = "src/dmg/rom/DMG_ROM.bin";
 
 pub enum Interrupt {
     VBlank,
@@ -83,7 +83,7 @@ impl Memory {
     // Loads the boot rom from 0-0x100
     fn load_boot_rom(&mut self) {
         let mut buffer = [0u8; 0x100];
-        match File::open(BootRom) {
+        match File::open(BOOT_ROM) {
             Ok(mut file) => match file.read(&mut buffer[..]) {
                 Ok(_bytes) => {
                     self.memory[0x0..0x100].copy_from_slice(&buffer);

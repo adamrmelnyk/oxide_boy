@@ -63,7 +63,7 @@ impl CPU {
             println!("Prefix: {:#02x}", instruction_byte);
         }
 
-        let next_pc = if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed)
+        let (next_pc, cycles) = if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed)
         {
             self.execute(instruction)
         } else {
@@ -76,7 +76,7 @@ impl CPU {
         };
         let prefix = if prefixed { 1 } else { 0 };
         self.pc = next_pc + prefix;
-        self.bus.step(); // TODO: Not sure if this is the correct spot
+        self.bus.step(cycles); // TODO: Not sure if this is the correct spot
         self.handle_interrupts();
     }
 
@@ -99,79 +99,73 @@ impl CPU {
         self.bus.interrupt_flag_off();
     }
 
-    pub fn execute(&mut self, instruction: Instruction) -> u16 {
-        let mut dont_inc_pc = false;
+    pub fn execute(&mut self, instruction: Instruction) -> (u16, u8) {
+        let mut inc_pc = true;
+        let mut cycles = 0;
         if !self.is_halted {
-            match instruction {
-                Instruction::ADD(target) => self.add(target),
-                Instruction::ADDHL(target) => self.addhl(target),
-                Instruction::ADDSP => self.addsp(),
-                Instruction::INC16(target) => self.inc_16(target),
-                Instruction::DEC16(target) => self.dec_16(target),
-                Instruction::SUB(target) => self.sub(target),
-                Instruction::ADC(target) => self.adc(target),
-                Instruction::SBC(target) => self.sbc(target),
-                Instruction::AND(target) => self.and(target),
-                Instruction::OR(target) => self.or(target),
-                Instruction::XOR(target) => self.xor(target),
-                Instruction::CP(target) => self.cp(target),
-                Instruction::INC(target) => self.inc(target),
-                Instruction::DEC(target) => self.dec(target),
-                Instruction::CCF => self.ccf(),
-                Instruction::SCF => self.scf(),
-                Instruction::RRA => self.rra(),
-                Instruction::RLA => self.rla(),
-                Instruction::RRCA => self.rrca(),
-                Instruction::RLCA => self.rlca(),
-                Instruction::DAA => self.daa(),
-                Instruction::CPL => self.cpl(),
-                Instruction::BIT(index, target) => self.bit(index, target),
-                Instruction::RESET(index, target) => self.reset(index, target),
-                Instruction::SET(index, target) => self.set(index, target),
-                Instruction::SRL(target) => self.srl(target),
-                Instruction::RL(target) => self.rl(target),
-                Instruction::RR(target) => self.rr(target),
-                Instruction::RRC(target) => self.rrc(target),
-                Instruction::RLC(target) => self.rlc(target),
-                Instruction::SRA(target) => self.sra(target),
-                Instruction::SLA(target) => self.sla(target),
-                Instruction::SWAP(target) => self.swap(target),
-                Instruction::JP(condition) => dont_inc_pc = self.jump(self.should_jump(condition)),
-                Instruction::JPHL => self.jump_to_address_hl(),
-                Instruction::JR(condition) => {
-                    dont_inc_pc = self.jump_relative(self.should_jump(condition));
-                }
-                Instruction::LD(load_type) => self.load(load_type),
-                Instruction::LDAC => self.ldac(),
-                Instruction::LDCA => self.ldca(),
-                Instruction::HALT => self.halt(),
-                Instruction::NOP => { /* NO OP, simply advances the pc */ }
-                Instruction::STOP => self.stop(),
-                Instruction::PUSH(target) => self.push_from_target(target),
-                Instruction::POP(target) => self.pop_and_store(target),
-                Instruction::CALL(condition) => {
-                    dont_inc_pc = self.call(self.should_jump(condition))
-                }
-                Instruction::RET(condition) => {
-                    dont_inc_pc = self.ret(self.should_jump(condition));
-                }
-                Instruction::RETI => self.reti(),
-                Instruction::RST(addr) => self.rst(addr),
-                Instruction::EI => self.enable_interupts(),
-                Instruction::DI => self.disable_interupts(),
-                Instruction::LDHA => self.ldha(),
-                Instruction::LDHA8 => self.ldha8(),    // SP = SP + e
-                // 0 0 * *
-                Instruction::LDABY => self.load_a_into_next_byte(),
-                Instruction::LDA => self.load_byte_at_next_address_into_a(),
-                Instruction::LDHLSP => self.ldhlsp(),
+            (inc_pc, cycles) = match instruction {
+                Instruction::ADD(target, cycles) => (self.add(target), cycles),
+                Instruction::ADDHL(target, cycles) => (self.addhl(target), cycles),
+                Instruction::ADDSP(cycles) => (self.addsp(), cycles),
+                Instruction::INC16(target, cycles) => (self.inc_16(target), cycles),
+                Instruction::DEC16(target, cycles) => (self.dec_16(target), cycles),
+                Instruction::SUB(target, cycles) => (self.sub(target), cycles),
+                Instruction::ADC(target, cycles) => (self.adc(target), cycles),
+                Instruction::SBC(target, cycles) => (self.sbc(target), cycles),
+                Instruction::AND(target, cycles) => (self.and(target), cycles),
+                Instruction::OR(target, cycles) => (self.or(target), cycles),
+                Instruction::XOR(target, cycles) => (self.xor(target), cycles),
+                Instruction::CP(target, cycles) => (self.cp(target), cycles),
+                Instruction::INC(target, cycles) => (self.inc(target), cycles),
+                Instruction::DEC(target, cycles) => (self.dec(target), cycles),
+                Instruction::CCF(cycles)=> (self.ccf(), cycles),
+                Instruction::SCF(cycles)=> (self.scf(), cycles),
+                Instruction::RRA(cycles)=> (self.rra(), cycles),
+                Instruction::RLA(cycles)=> (self.rla(), cycles),
+                Instruction::RRCA(cycles)=> (self.rrca(), cycles),
+                Instruction::RLCA(cycles)=> (self.rlca(), cycles),
+                Instruction::DAA(cycles)=> (self.daa(), cycles),
+                Instruction::CPL(cycles)=> (self.cpl(), cycles),
+                Instruction::BIT(index, target, cycles) => (self.bit(index, target), cycles),
+                Instruction::RESET(index, target, cycles) => (self.reset(index, target), cycles),
+                Instruction::SET(index, target, cycles) => (self.set(index, target), cycles),
+                Instruction::SRL(target, cycles) => (self.srl(target), cycles),
+                Instruction::RL(target, cycles) => (self.rl(target), cycles),
+                Instruction::RR(target, cycles) => (self.rr(target), cycles),
+                Instruction::RRC(target, cycles) => (self.rrc(target), cycles),
+                Instruction::RLC(target, cycles) => (self.rlc(target), cycles),
+                Instruction::SRA(target, cycles) => (self.sra(target), cycles),
+                Instruction::SLA(target, cycles) => (self.sla(target), cycles),
+                Instruction::SWAP(target, cycles) => (self.swap(target), cycles),
+                Instruction::JP(condition, cycles, cond_cycle) => (self.jump(self.should_jump(condition)), cycles),
+                Instruction::JPHL(cycles) => (self.jump_to_address_hl(), cycles),
+                Instruction::JR(condition, cycles, cond_cycle) => (self.jump_relative(self.should_jump(condition)), cycles),
+                Instruction::LD(load_type, cycles) => (self.load(load_type), cycles),
+                Instruction::LDAC(cycles) => (self.ldac(), cycles),
+                Instruction::LDCA(cycles) => (self.ldca(), cycles),
+                Instruction::HALT(cycles) => (self.halt(), cycles),
+                Instruction::NOP(cycles) => (true, cycles),
+                Instruction::STOP(cycles) => (self.stop(), cycles),
+                Instruction::PUSH(target, cycles) => (self.push_from_target(target), cycles),
+                Instruction::POP(target, cycles) => (self.pop_and_store(target), cycles),
+                Instruction::CALL(condition, cycles, cond_cycle) => (self.call(self.should_jump(condition)), cycles),
+                Instruction::RET(condition, cycles, cond_cycle) => (self.ret(self.should_jump(condition)), cycles),
+                Instruction::RETI(cycles) => (self.reti(), cycles),
+                Instruction::RST(addr, cycles) => (self.rst(addr), cycles),
+                Instruction::EI(cycles) => (self.enable_interupts(), cycles),
+                Instruction::DI(cycles) => (self.disable_interupts(), cycles),
+                Instruction::LDHA(cycles) => (self.ldha(), cycles),
+                Instruction::LDHA8(cycles) => (self.ldha8(), cycles),
+                Instruction::LDABY(cycles) => (self.load_a_into_next_byte(), cycles),
+                Instruction::LDA(cycles) => (self.load_byte_at_next_address_into_a(), cycles),
+                Instruction::LDHLSP(cycles) => (self.ldhlsp(), cycles),
             };
         }
-        if dont_inc_pc {
-            self.pc
-        } else {
-            self.pc.wrapping_add(1)
-        } // After each operation we increment the pc and return the value
+        let mut new_pc = self.pc;
+        if inc_pc {
+            new_pc = self.pc.wrapping_add(1);
+        }
+        (new_pc, cycles)
     }
 
     /// Helper method for returning the value of an 8bit register
@@ -212,31 +206,34 @@ impl CPU {
 
     // A = A + s
     // * 0 * * *
-    fn add(&mut self, target: ArithmeticTarget) {
+    fn add(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         let (new_value, did_overflow) = self.registers.a.overflowing_add(value);
         self.registers
             .set_flags(new_value == 0, false, half_carry, did_overflow);
         self.registers.a = new_value;
+        true
     }
 
     // HL = HL + ss; BC,DE,HL,SP
     // - 0 * *
-    fn addhl(&mut self, target: SixteenBitArithmeticTarget) {
+    fn addhl(&mut self, target: SixteenBitArithmeticTarget) -> bool {
         let value = self.sixteen_bit_register_value(&target);
         let (new_value, did_overflow) = self.registers.get_hl().overflowing_add(value);
         let half_carry = (self.registers.get_hl() & 0xFF) + (value & 0xFF) > 0xFF;
         self.registers.set_flags_nz(false, half_carry, did_overflow);
         self.registers.set_hl(new_value);
+        true
     }
 
     // SP = SP + e
     // 0 0 * *
-    fn addsp(&mut self) {
+    fn addsp(&mut self) -> bool {
         let value = self.read_next_byte();
         let new_value = self.add_value_to_sp(value);
         self.sp = new_value;
+        true
     }
 
     fn add_value_to_sp(&mut self, value: u8) -> u16 {
@@ -250,16 +247,18 @@ impl CPU {
 
     // ss = ss + 1
     // - - - -
-    fn inc_16(&mut self, target: SixteenBitArithmeticTarget) {
+    fn inc_16(&mut self, target: SixteenBitArithmeticTarget) -> bool {
         let value = self.sixteen_bit_register_value(&target).wrapping_add(1);
         self.set_16b_register_by_target(value, target);
+        true
     }
 
     // ss = ss - 1
     // - - - -
-    fn dec_16(&mut self, target: SixteenBitArithmeticTarget) {
+    fn dec_16(&mut self, target: SixteenBitArithmeticTarget) -> bool {
         let value = self.sixteen_bit_register_value(&target).wrapping_sub(1);
         self.set_16b_register_by_target(value, target);
+        true
     }
 
     // Helper function for 16 bit registers
@@ -275,7 +274,7 @@ impl CPU {
 
     // A = A + s + CY
     // * 0 * *
-    fn adc(&mut self, target: ArithmeticTarget) {
+    fn adc(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_add(value);
         let carry = if self.registers.carry() { 1 } else { 0 };
@@ -286,22 +285,24 @@ impl CPU {
         self.registers
             .set_flags(new_value == 0, false, half_carry, did_overflow);
         self.registers.a = new_value;
+        true
     }
 
     // A = A - s
     // * 1 * *
-    fn sub(&mut self, target: ArithmeticTarget) {
+    fn sub(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = self.registers.a.wrapping_sub(value);
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
         self.registers
             .set_flags(new_value == 0, true, half_carry, self.registers.a < value);
         self.registers.a = new_value;
+        true
     }
 
     // A = A - s -CY
     // * 1 * *
-    fn sbc(&mut self, target: ArithmeticTarget) {
+    fn sbc(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let (mut new_value, mut did_overflow) = self.registers.a.overflowing_sub(value);
         let carry = if self.registers.carry() { 1 } else { 0 };
@@ -312,158 +313,177 @@ impl CPU {
         self.registers
             .set_flags(new_value == 0, true, half_carry, did_overflow);
         self.registers.a = new_value;
+        true
     }
 
     // A = A & s
     // * 0 1 0
-    fn and(&mut self, target: ArithmeticTarget) {
+    fn and(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = self.registers.a & value;
         self.registers.set_flags(new_value == 0, false, true, false);
         self.registers.a = new_value;
+        true
     }
 
     // A = A | s
     // * 0 0 0
-    fn or(&mut self, target: ArithmeticTarget) {
+    fn or(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = self.registers.a | value;
         self.registers
             .set_flags(new_value == 0, false, false, false);
         self.registers.a = new_value;
+        true
     }
 
     // A = A ^ s
     // * 0 0 0
-    fn xor(&mut self, target: ArithmeticTarget) {
+    fn xor(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = self.registers.a ^ value;
         self.registers
             .set_flags(new_value == 0, false, false, false);
         self.registers.a = new_value;
+        true
     }
 
     // A - s
     // * 1 * *
-    fn cp(&mut self, target: ArithmeticTarget) {
+    fn cp(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let zero: bool = value == self.registers.a;
         let (_, did_overflow) = self.registers.a.overflowing_sub(value);
         let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
         self.registers
             .set_flags(zero, true, half_carry, did_overflow);
+        true
     }
 
     // s = s + 1
     // * 0 * -
-    fn inc(&mut self, target: ArithmeticTarget) {
+    fn inc(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = value.wrapping_add(1);
         let half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
         self.registers
             .set_flags(new_value == 0, false, half_carry, self.registers.carry());
         self.set_register_by_target(&target, new_value);
+        true
     }
 
     // s = s - 1
     // * 1 * -
-    fn dec(&mut self, target: ArithmeticTarget) {
+    fn dec(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = value.wrapping_sub(1);
         let half_carry = (value & 0xF) < 1; // TODO; Double check this
         self.registers
             .set_flags(new_value == 0, true, half_carry, self.registers.carry());
         self.set_register_by_target(&target, new_value);
+        true
     }
 
     /// Complement the carry flag
     /// - 0 0 *
-    fn ccf(&mut self) {
+    fn ccf(&mut self) -> bool {
         self.registers
             .set_flags_nz(false, false, !self.registers.carry());
+        true
     }
 
     /// Set the carry flag
     /// - 0 0 1
-    fn scf(&mut self) {
+    fn scf(&mut self) -> bool {
         self.registers.set_flags_nz(false, false, true);
+        true
     }
 
     // 0 0 0 *
-    fn rra(&mut self) {
+    fn rra(&mut self) -> bool {
         let curr_carry = if self.registers.carry() { 128 } else { 0 };
         let will_carry = (self.registers.a & 0x1) == 1;
         self.registers.a = curr_carry | (self.registers.a >> 1);
         self.registers.set_flags(false, false, false, will_carry);
+        true
     }
 
     // 0 0 0 *
-    fn rla(&mut self) {
+    fn rla(&mut self) -> bool {
         let curr_carry = if self.registers.carry() { 1 } else { 0 };
         let will_carry = (self.registers.a & 0x80) == 0x80;
         self.registers.a = curr_carry | (self.registers.a << 1);
         self.registers.set_flags(false, false, false, will_carry);
+        true
     }
 
     // 0 0 0 *
-    fn rrca(&mut self) {
+    fn rrca(&mut self) -> bool {
         let carry = (self.registers.a & 0x1) == 1;
         self.registers.a = self.registers.a.rotate_right(1);
         self.registers.set_flags(false, false, false, carry);
+        true
     }
 
-    fn rlca(&mut self) {
+    fn rlca(&mut self) -> bool {
         let carry = (self.registers.a & 0x80) == 0x80;
         self.registers.a = self.registers.a.rotate_left(1);
         self.registers.set_flags(false, false, false, carry);
+        true
     }
 
-    fn daa(&self) {
+    fn daa(&self) -> bool {
         unimplemented!();
+        true
     }
 
     // Complement the A register
     // - 1 1 -
-    fn cpl(&mut self) {
+    fn cpl(&mut self) -> bool {
         self.registers.a = !self.registers.a;
         self.registers
             .set_flags_nz(true, true, self.registers.carry());
+        true
     }
 
     // Test the bit in a register
     // * 0 1 -
-    fn bit(&mut self, bit: u8, target: ArithmeticTarget) {
+    fn bit(&mut self, bit: u8, target: ArithmeticTarget) -> bool {
         let zero = (self.register_value(&target) & (1 << bit)) == 0;
         self.registers
             .set_flags(zero, false, true, self.registers.carry());
+        true
     }
 
     // Reset the bit at the given index
     // - - - -
-    fn reset(&mut self, bit: u8, target: ArithmeticTarget) {
+    fn reset(&mut self, bit: u8, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target) & !(1 << bit);
         self.set_register_by_target(&target, value);
+        true
     }
 
     // Set the bit at the given index
     // - - - -
-    fn set(&mut self, bit: u8, target: ArithmeticTarget) {
+    fn set(&mut self, bit: u8, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target) | (1 << bit);
         self.set_register_by_target(&target, value);
+        true
     }
 
     // * 0 0 *
-    fn srl(&mut self, target: ArithmeticTarget) {
+    fn srl(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = value >> 1;
         let carry = (value & 0x1) == 1;
         self.set_register_by_target(&target, new_value);
         self.registers
             .set_flags(new_value == 0, false, false, carry);
+        true
     }
 
     // * 0 0 *
-    fn rr(&mut self, target: ArithmeticTarget) {
+    fn rr(&mut self, target: ArithmeticTarget) -> bool {
         let curr_carry = if self.registers.carry() { 128 } else { 0 };
         let value = self.register_value(&target);
         let new_value = curr_carry | (value >> 1);
@@ -471,10 +491,11 @@ impl CPU {
         self.set_register_by_target(&target, new_value);
         self.registers
             .set_flags(new_value == 0, false, false, carry);
+        true
     }
 
     // * 0 0 *
-    fn rl(&mut self, target: ArithmeticTarget) {
+    fn rl(&mut self, target: ArithmeticTarget) -> bool {
         let curr_carry = if self.registers.carry() { 1 } else { 0 };
         let value = self.register_value(&target);
         let new_value = curr_carry | (value << 1);
@@ -482,57 +503,63 @@ impl CPU {
         self.set_register_by_target(&target, new_value);
         self.registers
             .set_flags(new_value == 0, false, false, carry);
+        true
     }
 
     // Rotate right and carry
     // * 0 0 *
-    fn rrc(&mut self, target: ArithmeticTarget) {
+    fn rrc(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let carry = (value & 0x1) == 1;
         let new_value = value.rotate_right(1);
         self.registers
             .set_flags(new_value == 0, false, false, carry);
         self.set_register_by_target(&target, new_value);
+        true
     }
 
     // Rotate left and carry
     // * 0 0 *
-    fn rlc(&mut self, target: ArithmeticTarget) {
+    fn rlc(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let carry = (value & 0x80) == 0x80;
         let new_value = value.rotate_left(1);
         self.registers
             .set_flags(new_value == 0, false, false, carry);
         self.set_register_by_target(&target, new_value);
+        true
     }
 
     // * 0 0 *
-    fn sra(&mut self, target: ArithmeticTarget) {
+    fn sra(&mut self, target: ArithmeticTarget) ->  bool {
         let value = self.register_value(&target);
         let new_value = value >> 1;
         let carry = (value & 0x01) == 1;
         self.registers
             .set_flags(new_value == 0, false, false, carry);
         self.set_register_by_target(&target, new_value);
+        true
     }
 
     // * 0 0 *
-    fn sla(&mut self, target: ArithmeticTarget) {
+    fn sla(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = value << 1;
         let carry = (value & 0x80) == 0x80;
         self.registers
             .set_flags(new_value == 0, false, false, carry);
         self.set_register_by_target(&target, new_value);
+        true
     }
 
     // Swap upper and lower nibbles of a register
     // - - - -
-    fn swap(&mut self, target: ArithmeticTarget) {
+    fn swap(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let swapped = (value & 0x0F) << 4 | (value & 0xF0) >> 4;
         self.set_register_by_target(&target, swapped);
         self.registers.set_zero(swapped == 0);
+        true
     }
 
     /// Jump to the address specified by the next word
@@ -542,10 +569,11 @@ impl CPU {
             let least_sig = self.bus.read_byte(self.pc.wrapping_add(1)) as u16;
             let most_sig = self.bus.read_byte(self.pc.wrapping_add(2)) as u16;
             self.pc = (most_sig << 8) | least_sig;
+            false
         } else {
-            self.pc = self.pc.wrapping_add(3);
+            self.pc = self.pc.wrapping_add(2);
+            true
         }
-        true
     }
 
     /// Add the immediate signed byte to the pc and jump to itAddr_0098
@@ -569,15 +597,16 @@ impl CPU {
             self.pc = self.pc.wrapping_add(1);
             println!("We didn't jump, skipping: {:#02x}", next_byte);
         }
-        true
+        false
     }
 
     // - - - -
-    fn load(&mut self, load_type: LoadType) {
+    fn load(&mut self, load_type: LoadType) -> bool {
         match load_type {
             LoadType::Byte(target, source) => self.load_byte_type(target, source),
             LoadType::Word(target, source) => self.load_word_type(target, source),
         }
+        true
     }
 
     fn load_byte_type(&mut self, target: LoadByteTarget, source: LoadByteSource) {
@@ -669,68 +698,75 @@ impl CPU {
     // mem[mem.next()] = A
     // - - - -
     // TODO: Maybe rename this something better
-    fn load_a_into_next_byte(&mut self) {
+    fn load_a_into_next_byte(&mut self) -> bool {
         let addr = self.read_next_word();
         self.bus.write_byte(addr, self.registers.a);
+        true
     }
 
     // A = mem[nn]; n = next_word()
     // - - - -
-    fn load_byte_at_next_address_into_a(&mut self) {
+    fn load_byte_at_next_address_into_a(&mut self) -> bool {
         let addr = self.read_next_word();
         self.registers.a = self.bus.read_byte(addr);
+        true
     }
 
     // A = mem[0xff00 + C]
     // - - - -
-    fn ldac(&mut self) {
+    fn ldac(&mut self) -> bool {
         let value = self.bus.read_byte(0xFF00 + self.registers.c as u16);
         self.registers.a = value;
+        true
     }
 
     // mem[0xff00 + C] = A
     // - - - -
-    fn ldca(&mut self) {
+    fn ldca(&mut self) -> bool {
         self.bus
             .write_byte(0xFF00 + self.registers.c as u16, self.registers.a);
+        true
     }
 
     // Put sp plus n effective address into hl
     // 0 0 H C
-    fn ldhlsp(&mut self) {
+    fn ldhlsp(&mut self) -> bool {
         let byte = self.read_next_byte();
         let new_value = self.add_value_to_sp(byte);
         self.registers.set_hl(new_value);
+        true
     }
 
     /// Halt CPU until an interrupt occurs.
     /// - - - -
-    fn halt(&mut self) {
+    fn halt(&mut self) -> bool{
         self.is_halted = true;
+        true
     }
 
     // (SP-1) = ssh, (SP-2) = ssl, SP = SP-2
     // - - - -
-    fn push_from_target(&mut self, target: StackTarget) {
+    fn push_from_target(&mut self, target: StackTarget) ->  bool {
         let value = match target {
             StackTarget::AF => self.registers.get_af(),
             StackTarget::BC => self.registers.get_bc(),
             StackTarget::DE => self.registers.get_de(),
             StackTarget::HL => self.registers.get_hl(),
         };
-        self.push(value);
+        self.push(value)
     }
 
     // (SP-1) = ssh, (SP-2) = ssl, SP = SP-2
     // - - - -
-    fn push(&mut self, value: u16) {
+    fn push(&mut self, value: u16) -> bool {
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, ((value & 0xFF00) >> 8) as u8);
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, (value & 0xFF) as u8);
+        true
     }
 
-    fn pop_and_store(&mut self, target: StackTarget) {
+    fn pop_and_store(&mut self, target: StackTarget) -> bool {
         let result = self.pop();
         match target {
             StackTarget::AF => self.registers.set_af(result),
@@ -738,6 +774,7 @@ impl CPU {
             StackTarget::DE => self.registers.set_de(result),
             StackTarget::HL => self.registers.set_hl(result),
         }
+        true
     }
 
     // ddl == (SP), ddh = (SP+1), SP = SP+2
@@ -762,7 +799,7 @@ impl CPU {
             self.pc = next_pc;
         }
         println!("Calling {:#02x}", self.pc);
-        true
+        false
     }
 
     /// Pops the stack and jumps to that address
@@ -771,53 +808,61 @@ impl CPU {
         if should_jump {
             self.pc = self.pop();
             println!("RET to {:#02x}", self.pc);
-            true
-        } else {
             false
+        } else {
+            true
         }
     }
 
-    fn reti(&mut self) {
+    fn reti(&mut self) ->  bool {
         self.ime = false;
         self.pc = self.pop();
+        true
     }
 
-    fn rst(&mut self, addr: RestartAddr) {
+    fn rst(&mut self, addr: RestartAddr) -> bool {
         self.push(self.pc);
         self.pc = u16::from(addr);
+        true
     }
 
     // - - - -
-    fn jump_to_address_hl(&mut self) {
+    fn jump_to_address_hl(&mut self) -> bool {
         self.pc = self.registers.get_hl();
+        true
     }
 
-    fn enable_interupts(&mut self) {
+    fn enable_interupts(&mut self) -> bool {
         self.ime = true;
+        true
     }
 
-    fn disable_interupts(&mut self) {
+    fn disable_interupts(&mut self) -> bool {
         self.ime = false;
+        true
     }
 
     // put A into memory address $FF00+n
     // - - - -
-    fn ldha(&mut self) {
+    fn ldha(&mut self) ->  bool {
         let n = self.read_next_byte();
         self.bus.write_byte(0xFF00 + n as u16, self.registers.a);
+        true
     }
 
     // A = mem[FF00 + n], n = mem.next
     // - - - -
-    fn ldha8(&mut self) {
+    fn ldha8(&mut self) -> bool {
         let n = self.read_next_byte();
         self.registers.a = self.bus.read_byte(0xFF00 + n as u16);
         println!("A is now {:#02x}", self.registers.a);
+        true
     }
 
-    fn stop(&mut self) {
+    fn stop(&mut self) -> bool {
         // TODO: We'll need to impl this op to continue
         unimplemented!();
+        true
     }
 
     fn read_next_byte(&mut self) -> u8 {

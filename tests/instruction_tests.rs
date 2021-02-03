@@ -181,7 +181,10 @@ fn from_byte_load() {
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::B, LoadByteSource::from(byte)), 4)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::B, LoadByteSource::from(byte)),
+                    4
+                )
             );
         }
     }
@@ -196,10 +199,12 @@ fn from_byte_load() {
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::C, LoadByteSource::from(byte)), 4)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::C, LoadByteSource::from(byte)),
+                    4
+                )
             );
         }
-
     }
 
     for byte in 0x50..0x57 {
@@ -212,7 +217,10 @@ fn from_byte_load() {
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::D, LoadByteSource::from(byte)), 4)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::D, LoadByteSource::from(byte)),
+                    4
+                )
             );
         }
     }
@@ -227,7 +235,10 @@ fn from_byte_load() {
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::E, LoadByteSource::from(byte)), 4)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::E, LoadByteSource::from(byte)),
+                    4
+                )
             );
         }
     }
@@ -242,7 +253,10 @@ fn from_byte_load() {
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::H, LoadByteSource::from(byte)), 4)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::H, LoadByteSource::from(byte)),
+                    4
+                )
             );
         }
     }
@@ -257,7 +271,10 @@ fn from_byte_load() {
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::L, LoadByteSource::from(byte)), 4)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::L, LoadByteSource::from(byte)),
+                    4
+                )
             );
         }
     }
@@ -267,7 +284,10 @@ fn from_byte_load() {
             let op = Instruction::from_byte(byte, false).unwrap();
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::HLI, LoadByteSource::from(byte)), 8)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::HLI, LoadByteSource::from(byte)),
+                    8
+                )
             );
         }
     }
@@ -277,18 +297,18 @@ fn from_byte_load() {
         if byte == 0x7E {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(
-                    LoadByteTarget::from(byte),
-                    LoadByteSource::from(byte)
-                ), 8)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
+                    8
+                )
             );
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(
-                    LoadByteTarget::from(byte),
-                    LoadByteSource::from(byte)
-                ), 4)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
+                    4
+                )
             );
         }
     }
@@ -298,12 +318,18 @@ fn from_byte_load() {
         if byte == 0x36 {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::D8), 12)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::D8),
+                    12
+                )
             )
         } else {
             assert_eq!(
                 op,
-                Instruction::LD(LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::D8), 8)
+                Instruction::LD(
+                    LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::D8),
+                    8
+                )
             )
         }
     }

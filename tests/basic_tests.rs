@@ -382,10 +382,10 @@ fn load_test_bci() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;
     cpu.registers.set_bc(0xA1A1);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::BCI,
-        LoadByteSource::A,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::BCI, LoadByteSource::A),
+        8,
+    ));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
 }
 
@@ -394,10 +394,10 @@ fn load_test_dei() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;
     cpu.registers.set_de(0xA1A1);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::DEI,
-        LoadByteSource::A,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::DEI, LoadByteSource::A),
+        8,
+    ));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
 }
 
@@ -406,10 +406,10 @@ fn load_test_hlinc() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;
     cpu.registers.set_hl(0xA1A1);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::HLINC,
-        LoadByteSource::A,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::HLINC, LoadByteSource::A),
+        8,
+    ));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
     assert_eq!(cpu.registers.get_hl() - 1, 0xA1A1);
 }
@@ -419,10 +419,10 @@ fn load_test_hldec() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;
     cpu.registers.set_hl(0xA1A1);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::HLDEC,
-        LoadByteSource::A,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::HLDEC, LoadByteSource::A),
+        8,
+    ));
     assert_eq!(cpu.bus.read_byte(0xA1A1), 0x10);
     assert_eq!(cpu.registers.get_hl() + 1, 0xA1A1);
 }
@@ -431,10 +431,10 @@ fn load_test_hldec() {
 fn load_tests() {
     let mut cpu = setup();
     cpu.registers.a = 0x10;
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::B,
-        LoadByteSource::A,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::B, LoadByteSource::A),
+        8,
+    ));
     assert_eq!(cpu.registers.b, 0x10);
 }
 
@@ -443,10 +443,10 @@ fn load_test_a_from_bci() {
     let mut cpu = setup();
     cpu.registers.set_bc(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x10);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::A,
-        LoadByteSource::BCI,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::A, LoadByteSource::BCI),
+        8,
+    ));
     assert_eq!(cpu.registers.a, 0x10);
 }
 
@@ -455,10 +455,10 @@ fn load_test_a_from_dei() {
     let mut cpu = setup();
     cpu.registers.set_de(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x10);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::A,
-        LoadByteSource::DEI,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::A, LoadByteSource::DEI),
+        8,
+    ));
     assert_eq!(cpu.registers.a, 0x10);
 }
 
@@ -467,10 +467,10 @@ fn load_test_a_from_hlinc() {
     let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x10);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::A,
-        LoadByteSource::HLINC,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::A, LoadByteSource::HLINC),
+        8,
+    ));
     assert_eq!(cpu.registers.a, 0x10);
     assert_eq!(cpu.registers.get_hl(), 0xA1A2);
 }
@@ -480,10 +480,10 @@ fn load_test_a_from_hldec() {
     let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
     cpu.bus.write_byte(0xA1A1, 0x10);
-    cpu.execute(Instruction::LD(LoadType::Byte(
-        LoadByteTarget::A,
-        LoadByteSource::HLDEC,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::A, LoadByteSource::HLDEC),
+        8,
+    ));
     assert_eq!(cpu.registers.a, 0x10);
     assert_eq!(cpu.registers.get_hl(), 0xA1A0);
 }
@@ -512,10 +512,10 @@ fn load_word_into_bc() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LD(LoadType::Word(
-        LoadWordTarget::BC,
-        LoadWordSource::D16,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Word(LoadWordTarget::BC, LoadWordSource::D16),
+        8,
+    ));
     assert_eq!(
         cpu.registers.get_bc(),
         0xFFAA,
@@ -533,10 +533,10 @@ fn load_word_into_de() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LD(LoadType::Word(
-        LoadWordTarget::DE,
-        LoadWordSource::D16,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Word(LoadWordTarget::DE, LoadWordSource::D16),
+        8,
+    ));
     assert_eq!(cpu.registers.get_de(), 0xFFAA);
 }
 
@@ -546,10 +546,10 @@ fn load_next_word_into_sp() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LD(LoadType::Word(
-        LoadWordTarget::SP,
-        LoadWordSource::D16,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16),
+        8,
+    ));
     assert_eq!(cpu.sp, 0xFFAA);
 }
 
@@ -559,10 +559,10 @@ fn load_sp_at_address_n() {
     cpu.bus.write_word(0x1001, 0xA1A1);
     cpu.sp = 0xAAAA;
     cpu.pc = 0x1000;
-    cpu.execute(Instruction::LD(LoadType::Word(
-        LoadWordTarget::D16,
-        LoadWordSource::SP,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
+        8,
+    ));
     assert_eq!(cpu.bus.read_word(0xA1A1), 0xAAAA);
 }
 
@@ -570,10 +570,10 @@ fn load_sp_at_address_n() {
 fn load_hl_into_sp() {
     let mut cpu = setup();
     cpu.registers.set_hl(0xA1A1);
-    cpu.execute(Instruction::LD(LoadType::Word(
-        LoadWordTarget::SP,
-        LoadWordSource::HL,
-    ), 8));
+    cpu.execute(Instruction::LD(
+        LoadType::Word(LoadWordTarget::SP, LoadWordSource::HL),
+        8,
+    ));
     assert_eq!(cpu.sp, 0xA1A1);
 }
 

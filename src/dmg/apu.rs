@@ -146,14 +146,20 @@ impl WavePatternRam {
     fn read(&self, address: u16) -> u8 {
         match address {
             0xFF30..=0xFF3F => self.ram[(address - 0xFF30) as usize],
-            _ => panic!("This address: {:#02x} does not belong to the WavePatternRam", address),
+            _ => panic!(
+                "This address: {:#02x} does not belong to the WavePatternRam",
+                address
+            ),
         }
     }
 
     fn write(&mut self, address: u16, value: u8) {
         match address {
             0xFF30..=0xFF3F => self.ram[(address - 0xFF30) as usize] = value,
-            _ => panic!("This address: {:#02x} does not belong to the WavePatternRam", address),
+            _ => panic!(
+                "This address: {:#02x} does not belong to the WavePatternRam",
+                address
+            ),
         }
     }
 

@@ -3,14 +3,14 @@ pub struct Timer {
     tima: u8, // 0xFF05
     tma: u8,  // 0xFF06
     tac: u8,  // 0xFF07
-    // TODO: May want to make tac it's own struct but it would still need to return the unimplemented bits since
-    // they're still there
-    // -> bit 2 = timer enabled
-    // -> bit 0..1 = Input clock select
-    //    ->  00: CPU Clock / 1024 (DMG, SGB2, CGB Single Speed Mode:   4096 Hz, SGB1:   ~4194 Hz, CGB Double Speed Mode:   8192 Hz)
-    //        01: CPU Clock / 16   (DMG, SGB2, CGB Single Speed Mode: 262144 Hz, SGB1: ~268400 Hz, CGB Double Speed Mode: 524288 Hz)
-    //        10: CPU Clock / 64   (DMG, SGB2, CGB Single Speed Mode:  65536 Hz, SGB1:  ~67110 Hz, CGB Double Speed Mode: 131072 Hz)
-    //        11: CPU Clock / 256  (DMG, SGB2, CGB Single Speed Mode:  16384 Hz, SGB1:  ~16780 Hz, CGB Double Speed Mode:  32768 Hz)
+              // TODO: May want to make tac it's own struct but it would still need to return the unimplemented bits since
+              // they're still there
+              // -> bit 2 = timer enabled
+              // -> bit 0..1 = Input clock select
+              //    ->  00: CPU Clock / 1024 (DMG, SGB2, CGB Single Speed Mode:   4096 Hz, SGB1:   ~4194 Hz, CGB Double Speed Mode:   8192 Hz)
+              //        01: CPU Clock / 16   (DMG, SGB2, CGB Single Speed Mode: 262144 Hz, SGB1: ~268400 Hz, CGB Double Speed Mode: 524288 Hz)
+              //        10: CPU Clock / 64   (DMG, SGB2, CGB Single Speed Mode:  65536 Hz, SGB1:  ~67110 Hz, CGB Double Speed Mode: 131072 Hz)
+              //        11: CPU Clock / 256  (DMG, SGB2, CGB Single Speed Mode:  16384 Hz, SGB1:  ~16780 Hz, CGB Double Speed Mode:  32768 Hz)
 }
 
 impl Default for Timer {

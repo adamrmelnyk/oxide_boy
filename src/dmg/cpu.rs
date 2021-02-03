@@ -63,17 +63,17 @@ impl CPU {
             println!("Prefix: {:#02x}", instruction_byte);
         }
 
-        let (next_pc, cycles) = if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed)
-        {
-            self.execute(instruction)
-        } else {
-            let description = format!(
-                "0x{}{:x}",
-                if prefixed { "cb" } else { "" },
-                instruction_byte
-            );
-            panic!("Unkown instruction found for: {}", description)
-        };
+        let (next_pc, cycles) =
+            if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed) {
+                self.execute(instruction)
+            } else {
+                let description = format!(
+                    "0x{}{:x}",
+                    if prefixed { "cb" } else { "" },
+                    instruction_byte
+                );
+                panic!("Unkown instruction found for: {}", description)
+            };
         let prefix = if prefixed { 1 } else { 0 };
         self.pc = next_pc + prefix;
         self.bus.step(cycles); // TODO: Not sure if this is the correct spot
@@ -118,14 +118,14 @@ impl CPU {
                 Instruction::CP(target, cycles) => (self.cp(target), cycles),
                 Instruction::INC(target, cycles) => (self.inc(target), cycles),
                 Instruction::DEC(target, cycles) => (self.dec(target), cycles),
-                Instruction::CCF(cycles)=> (self.ccf(), cycles),
-                Instruction::SCF(cycles)=> (self.scf(), cycles),
-                Instruction::RRA(cycles)=> (self.rra(), cycles),
-                Instruction::RLA(cycles)=> (self.rla(), cycles),
-                Instruction::RRCA(cycles)=> (self.rrca(), cycles),
-                Instruction::RLCA(cycles)=> (self.rlca(), cycles),
-                Instruction::DAA(cycles)=> (self.daa(), cycles),
-                Instruction::CPL(cycles)=> (self.cpl(), cycles),
+                Instruction::CCF(cycles) => (self.ccf(), cycles),
+                Instruction::SCF(cycles) => (self.scf(), cycles),
+                Instruction::RRA(cycles) => (self.rra(), cycles),
+                Instruction::RLA(cycles) => (self.rla(), cycles),
+                Instruction::RRCA(cycles) => (self.rrca(), cycles),
+                Instruction::RLCA(cycles) => (self.rlca(), cycles),
+                Instruction::DAA(cycles) => (self.daa(), cycles),
+                Instruction::CPL(cycles) => (self.cpl(), cycles),
                 Instruction::BIT(index, target, cycles) => (self.bit(index, target), cycles),
                 Instruction::RESET(index, target, cycles) => (self.reset(index, target), cycles),
                 Instruction::SET(index, target, cycles) => (self.set(index, target), cycles),
@@ -137,9 +137,13 @@ impl CPU {
                 Instruction::SRA(target, cycles) => (self.sra(target), cycles),
                 Instruction::SLA(target, cycles) => (self.sla(target), cycles),
                 Instruction::SWAP(target, cycles) => (self.swap(target), cycles),
-                Instruction::JP(condition, cycles, cond_cycle) => self.jump(condition, cycles, cond_cycle),
+                Instruction::JP(condition, cycles, cond_cycle) => {
+                    self.jump(condition, cycles, cond_cycle)
+                }
                 Instruction::JPHL(cycles) => (self.jump_to_address_hl(), cycles),
-                Instruction::JR(condition, cycles, cond_cycle) => self.jump_relative(condition, cycles, cond_cycle),
+                Instruction::JR(condition, cycles, cond_cycle) => {
+                    self.jump_relative(condition, cycles, cond_cycle)
+                }
                 Instruction::LD(load_type, cycles) => (self.load(load_type), cycles),
                 Instruction::LDAC(cycles) => (self.ldac(), cycles),
                 Instruction::LDCA(cycles) => (self.ldca(), cycles),
@@ -148,8 +152,12 @@ impl CPU {
                 Instruction::STOP(cycles) => (self.stop(), cycles),
                 Instruction::PUSH(target, cycles) => (self.push_from_target(target), cycles),
                 Instruction::POP(target, cycles) => (self.pop_and_store(target), cycles),
-                Instruction::CALL(condition, cycles, cond_cycle) => self.call(condition, cycles, cond_cycle),
-                Instruction::RET(condition, cycles, cond_cycle) => self.ret(condition, cycles, cond_cycle),
+                Instruction::CALL(condition, cycles, cond_cycle) => {
+                    self.call(condition, cycles, cond_cycle)
+                }
+                Instruction::RET(condition, cycles, cond_cycle) => {
+                    self.ret(condition, cycles, cond_cycle)
+                }
                 Instruction::RETI(cycles) => (self.reti(), cycles),
                 Instruction::RST(addr, cycles) => (self.rst(addr), cycles),
                 Instruction::EI(cycles) => (self.enable_interupts(), cycles),
@@ -531,7 +539,7 @@ impl CPU {
     }
 
     // * 0 0 *
-    fn sra(&mut self, target: ArithmeticTarget) ->  bool {
+    fn sra(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = value >> 1;
         let carry = (value & 0x01) == 1;
@@ -742,14 +750,14 @@ impl CPU {
 
     /// Halt CPU until an interrupt occurs.
     /// - - - -
-    fn halt(&mut self) -> bool{
+    fn halt(&mut self) -> bool {
         self.is_halted = true;
         true
     }
 
     // (SP-1) = ssh, (SP-2) = ssl, SP = SP-2
     // - - - -
-    fn push_from_target(&mut self, target: StackTarget) ->  bool {
+    fn push_from_target(&mut self, target: StackTarget) -> bool {
         let value = match target {
             StackTarget::AF => self.registers.get_af(),
             StackTarget::BC => self.registers.get_bc(),
@@ -820,7 +828,7 @@ impl CPU {
         }
     }
 
-    fn reti(&mut self) ->  bool {
+    fn reti(&mut self) -> bool {
         self.ime = false;
         self.pc = self.pop();
         true
@@ -850,7 +858,7 @@ impl CPU {
 
     // put A into memory address $FF00+n
     // - - - -
-    fn ldha(&mut self) ->  bool {
+    fn ldha(&mut self) -> bool {
         let n = self.read_next_byte();
         self.bus.write_byte(0xFF00 + n as u16, self.registers.a);
         true

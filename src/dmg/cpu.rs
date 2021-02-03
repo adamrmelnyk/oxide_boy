@@ -137,9 +137,9 @@ impl CPU {
                 Instruction::SRA(target, cycles) => (self.sra(target), cycles),
                 Instruction::SLA(target, cycles) => (self.sla(target), cycles),
                 Instruction::SWAP(target, cycles) => (self.swap(target), cycles),
-                Instruction::JP(condition, cycles, cond_cycle) => (self.jump(self.should_jump(condition)), cycles),
+                Instruction::JP(condition, cycles, cond_cycle) => self.jump(condition, cycles, cond_cycle),
                 Instruction::JPHL(cycles) => (self.jump_to_address_hl(), cycles),
-                Instruction::JR(condition, cycles, cond_cycle) => (self.jump_relative(self.should_jump(condition)), cycles),
+                Instruction::JR(condition, cycles, cond_cycle) => self.jump_relative(condition, cycles, cond_cycle),
                 Instruction::LD(load_type, cycles) => (self.load(load_type), cycles),
                 Instruction::LDAC(cycles) => (self.ldac(), cycles),
                 Instruction::LDCA(cycles) => (self.ldca(), cycles),
@@ -148,8 +148,8 @@ impl CPU {
                 Instruction::STOP(cycles) => (self.stop(), cycles),
                 Instruction::PUSH(target, cycles) => (self.push_from_target(target), cycles),
                 Instruction::POP(target, cycles) => (self.pop_and_store(target), cycles),
-                Instruction::CALL(condition, cycles, cond_cycle) => (self.call(self.should_jump(condition)), cycles),
-                Instruction::RET(condition, cycles, cond_cycle) => (self.ret(self.should_jump(condition)), cycles),
+                Instruction::CALL(condition, cycles, cond_cycle) => self.call(condition, cycles, cond_cycle),
+                Instruction::RET(condition, cycles, cond_cycle) => self.ret(condition, cycles, cond_cycle),
                 Instruction::RETI(cycles) => (self.reti(), cycles),
                 Instruction::RST(addr, cycles) => (self.rst(addr), cycles),
                 Instruction::EI(cycles) => (self.enable_interupts(), cycles),
@@ -433,7 +433,7 @@ impl CPU {
     }
 
     fn daa(&self) -> bool {
-        unimplemented!();
+        // unimplemented!();
         true
     }
 
@@ -564,21 +564,23 @@ impl CPU {
 
     /// Jump to the address specified by the next word
     // - - - -
-    fn jump(&mut self, should_jump: bool) -> bool {
+    fn jump(&mut self, condition: JumpCond, cycles: u8, cond_cycle: u8) -> (bool, u8) {
+        let should_jump = self.should_jump(condition);
         if should_jump {
             let least_sig = self.bus.read_byte(self.pc.wrapping_add(1)) as u16;
             let most_sig = self.bus.read_byte(self.pc.wrapping_add(2)) as u16;
             self.pc = (most_sig << 8) | least_sig;
-            false
+            (false, cond_cycle)
         } else {
             self.pc = self.pc.wrapping_add(2);
-            true
+            (true, cycles)
         }
     }
 
     /// Add the immediate signed byte to the pc and jump to itAddr_0098
     // - - - -
-    fn jump_relative(&mut self, should_jump: bool) -> bool {
+    fn jump_relative(&mut self, condition: JumpCond, cycles: u8, cond_cycle: u8) -> (bool, u8) {
+        let should_jump = self.should_jump(condition);
         let old_pc = self.pc;
         let next_byte = self.read_next_byte() as i8;
         if should_jump {
@@ -593,11 +595,12 @@ impl CPU {
                 self.pc = self.pc.wrapping_sub(jump_addr - 1);
                 println!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
             }
+            (false, cond_cycle)
         } else {
             self.pc = self.pc.wrapping_add(1);
             println!("We didn't jump, skipping: {:#02x}", next_byte);
+            (false, cycles)
         }
-        false
     }
 
     // - - - -
@@ -790,27 +793,30 @@ impl CPU {
 
     /// Pushes the address of the next instruction onto the stack
     /// - - - -
-    fn call(&mut self, should_jump: bool) -> bool {
+    fn call(&mut self, condition: JumpCond, cycles: u8, cond_cycle: u8) -> (bool, u8) {
+        let should_jump = self.should_jump(condition);
         let next_pc = self.pc.wrapping_add(3);
         if should_jump {
             self.push(next_pc);
             self.pc = self.bus.read_word(self.pc.wrapping_add(1));
+            println!("Calling {:#02x}", self.pc);
+            (false, cond_cycle)
         } else {
             self.pc = next_pc;
+            println!("Calling {:#02x}", self.pc);
+            (false, cycles)
         }
-        println!("Calling {:#02x}", self.pc);
-        false
     }
 
     /// Pops the stack and jumps to that address
     /// - - - -
-    fn ret(&mut self, should_jump: bool) -> bool {
-        if should_jump {
+    fn ret(&mut self, condition: JumpCond, cycles: u8, cond_cycle: u8) -> (bool, u8) {
+        if self.should_jump(condition) {
             self.pc = self.pop();
             println!("RET to {:#02x}", self.pc);
-            false
+            (false, cond_cycle)
         } else {
-            true
+            (true, cycles)
         }
     }
 
@@ -861,7 +867,7 @@ impl CPU {
 
     fn stop(&mut self) -> bool {
         // TODO: We'll need to impl this op to continue
-        unimplemented!();
+        // unimplemented!();
         true
     }
 

@@ -755,7 +755,8 @@ fn test_jump() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    let (res, _) = cpu.execute(Instruction::JP(JumpCond::Always, 16, 16));
+    let (res, cycles) = cpu.execute(Instruction::JP(JumpCond::Always, 12, 16));
+    assert_eq!(cycles, 16);
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
     assert_eq!(res, cpu.pc);
 }
@@ -767,7 +768,8 @@ fn test_jump_zero() {
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
-    let (res, _) = cpu.execute(Instruction::JP(JumpCond::Zero, 12, 16));
+    let (res, cycles) = cpu.execute(Instruction::JP(JumpCond::Zero, 12, 16));
+    assert_eq!(cycles, 16);
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
     assert_eq!(res, cpu.pc);
 }
@@ -779,8 +781,9 @@ fn test_jump_carry() {
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, true);
-    let (res, _) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
+    let (res, cycles) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+    assert_eq!(cycles, 16);
     assert_eq!(res, cpu.pc);
 }
 
@@ -790,7 +793,8 @@ fn test_no_jump_carry() {
     cpu.bus.write_byte(0x1001, 0xAA);
     cpu.bus.write_byte(0x1002, 0xFF);
     cpu.pc = 0x1000;
-    let (new_pc, _) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
+    let (new_pc, cycles) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
+    assert_eq!(cycles, 12);
     assert_eq!(
         new_pc, 0x1003,
         "Shouldn't jump but we should still move forward to the next spot"
@@ -802,7 +806,8 @@ fn test_jump_relative() {
     let mut cpu = setup();
     cpu.bus.write_byte(0x1001, 0b0000_0101);
     cpu.pc = 0x1000;
-    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Always, 12, 12));
+    let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Always, 12, 12));
+    assert_eq!(cycles, 12);
     assert_eq!(cpu.pc, 0x1007, "Should jump five spaces");
     assert_eq!(res, cpu.pc);
 }
@@ -812,7 +817,8 @@ fn test_jump_relative_negative() {
     let mut cpu = setup();
     cpu.bus.write_byte(0x020A, 0xFB);
     cpu.pc = 0x209;
-    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Always, 8, 12));
+    let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Always, 8, 12));
+    assert_eq!(cycles, 12);
     assert_eq!(
         cpu.pc, 0x0206,
         "Should jump back 5 spaces + the instruction length of two"
@@ -826,7 +832,8 @@ fn test_jump_relative_zero() {
     cpu.bus.write_byte(0x020A, 0xFB);
     cpu.pc = 0x0209;
     cpu.registers.set_flags(true, false, false, false);
-    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
+    let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
+    assert_eq!(cycles, 12);
     assert_eq!(cpu.pc, 0x0206, "Should jump back 5 spaces");
     assert_eq!(res, cpu.pc);
 }
@@ -837,7 +844,8 @@ fn test_jump_relative_zero_dont_jump() {
     cpu.bus.write_byte(0x020A, 0xFB);
     cpu.pc = 0x0209;
     cpu.registers.set_flags(false, false, false, false);
-    let (res, _) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
+    let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
+    assert_eq!(cycles, 8);
     assert_eq!(
         cpu.pc, 0x020B,
         "Should jump forward 2 spots (the instruction length)"
@@ -933,7 +941,8 @@ fn test_call_no_jump() {
     let mut cpu = setup();
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
-    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
+    let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
+    assert_eq!(cycles, 12);
     assert_eq!(
         res, 0x1003,
         "We should not be adding to the stack pointer since call already did that"
@@ -950,7 +959,8 @@ fn test_call_always_jump() {
     let mut cpu = setup();
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
-    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Always, 12, 24));
+    let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Always, 12, 24));
+    assert_eq!(cycles, 24);
     assert_eq!(
         res, 0xAABB,
         "We should not be adding to the stack pointer since call already did that"
@@ -968,7 +978,8 @@ fn test_call_zero_jump() {
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
-    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Zero, 12, 24));
+    let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Zero, 12, 24));
+    assert_eq!(cycles, 24);
     assert_eq!(
         res, 0xAABB,
         "We should not be adding to the stack pointer since call already did that"
@@ -986,7 +997,8 @@ fn test_call_carry_jump() {
     cpu.bus.write_word(0x1001, 0xAABB);
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, true);
-    let (res, _) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
+    let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
+    assert_eq!(cycles, 24);
     assert_eq!(
         res, 0xAABB,
         "We should not be adding to the stack pointer since call already did that"
@@ -1004,7 +1016,8 @@ fn test_ret() {
     cpu.registers.set_bc(0xAAFF);
     cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     cpu.pc = 0x1000;
-    let (new_pc, _) = cpu.execute(Instruction::RET(JumpCond::Always, 8, 20));
+    let (new_pc, cycles) = cpu.execute(Instruction::RET(JumpCond::Always, 8, 20));
+    assert_eq!(cycles, 20);
     assert_eq!(new_pc, 0xAAFF);
 }
 
@@ -1015,7 +1028,8 @@ fn test_ret_zero() {
     cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     cpu.pc = 0x1000;
     cpu.registers.set_flags(true, false, false, false);
-    let (new_pc, _) = cpu.execute(Instruction::RET(JumpCond::Zero, 8, 20));
+    let (new_pc, cycles) = cpu.execute(Instruction::RET(JumpCond::Zero, 8, 20));
+    assert_eq!(cycles, 20);
     assert_eq!(new_pc, 0xAAFF);
 }
 
@@ -1026,7 +1040,8 @@ fn test_ret_zero_dont_ret() {
     cpu.execute(Instruction::PUSH(StackTarget::BC, 16));
     cpu.pc = 0x1000;
     cpu.registers.set_flags(false, false, false, false);
-    let (new_pc, _) = cpu.execute(Instruction::RET(JumpCond::Zero, 8, 20));
+    let (new_pc, cycles) = cpu.execute(Instruction::RET(JumpCond::Zero, 8, 20));
+    assert_eq!(cycles, 8);
     assert_eq!(new_pc, 0x1001);
 }
 

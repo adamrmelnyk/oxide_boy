@@ -25,12 +25,12 @@ impl Default for Timer {
 }
 
 impl Timer {
-    fn step(&mut self, cycles: u8) {
+    pub fn step(&mut self, cycles: u8) {
         self.div += self.div.wrapping_add(1);
         if self.timer_enabled() {
             // Do the thing
         }
-        unimplemented!();
+        // unimplemented!();
     }
 
     pub fn read(&self, address: u16) -> u8 {

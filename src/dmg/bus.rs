@@ -72,11 +72,9 @@ impl Bus {
         self.memory.return_interrupt()
     }
 
-    // TODO: We'll need to pass the cycles in from the step function in the cpu
-    // which means we'll need to have execute return the number of cycles
     pub fn step(&mut self, cycles: u8) {
         self.ppu.step();
-        // self.timer.step(cycles: u8);
+        self.timer.step(cycles);
     }
 }
 

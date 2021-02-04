@@ -1,3 +1,5 @@
+use crate::dmg::busconnection::BusConnection;
+
 /// The Pixel Processing Unit
 pub struct PPU {
     lcdc: u8, // 0xFF40
@@ -33,12 +35,8 @@ impl Default for PPU {
     }
 }
 
-impl PPU {
-    pub fn step(&mut self) {
-        self.ly = self.ly.wrapping_add(1); // Temporary so we can get past the boot sequence
-    }
-
-    pub fn read(&self, address: u16) -> u8 {
+impl BusConnection for PPU {
+    fn read_byte(&self, address: u16) -> u8 {
         match address {
             0xFF40 => self.lcdc,
             0xFF41 => self.stat,
@@ -55,7 +53,7 @@ impl PPU {
         }
     }
 
-    pub fn write(&mut self, address: u16, value: u8) {
+    fn write_byte(&mut self, address: u16, value: u8) {
         match address {
             0xFF40 => self.lcdc = value,
             0xFF41 => self.stat = value,
@@ -70,6 +68,12 @@ impl PPU {
             0xFF4B => self.wx = value,
             _ => panic!("This should never happen"),
         }
+    }
+}
+
+impl PPU {
+    pub fn step(&mut self) {
+        self.ly = self.ly.wrapping_add(1); // Temporary so we can get past the boot sequence
     }
 
     #[cfg(test)]

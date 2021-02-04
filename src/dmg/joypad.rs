@@ -1,3 +1,5 @@
+use crate::dmg::busconnection::BusConnection;
+
 pub struct Joypad {
     unused_bit_7: bool,
     unused_bit_6: bool,
@@ -24,8 +26,8 @@ impl Default for Joypad {
     }
 }
 
-impl Joypad {
-    pub fn write(&mut self, address: u16, value: u8) {
+impl BusConnection for Joypad {
+    fn write_byte(&mut self, address: u16, value: u8) {
         if address == 0xFF00 {
             self.unused_bit_7 = (value & 0x80) == 0x80;
             self.unused_bit_6 = (value & 0x40) == 0x40;
@@ -40,7 +42,7 @@ impl Joypad {
         }
     }
 
-    pub fn read(&self, address: u16) -> u8 {
+    fn read_byte(&self, address: u16) -> u8 {
         if address == 0xFF00 {
             (if self.unused_bit_7 { 1 } else { 0 }) << 7
                 | (if self.unused_bit_6 { 1 } else { 0 }) << 6

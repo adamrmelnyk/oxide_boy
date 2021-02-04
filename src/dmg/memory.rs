@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 
+use crate::dmg::busconnection::BusConnection;
+
 const BOOT_ROM: &str = "src/dmg/rom/DMG_ROM.bin";
 
 pub enum Interrupt {
@@ -26,32 +28,17 @@ impl Default for Memory {
     }
 }
 
-impl Memory {
-    pub fn read_byte(&self, address: u16) -> u8 {
+impl BusConnection for Memory {
+    fn read_byte(&self, address: u16) -> u8 {
         self.memory[address as usize]
     }
 
-    pub fn write_byte(&mut self, address: u16, value: u8) {
+    fn write_byte(&mut self, address: u16, value: u8) {
         self.memory[address as usize] = value;
     }
+}
 
-    /// Reads the word from the address
-    /// Note that we are using little-endian
-    pub fn read_word(&self, address: u16) -> u16 {
-        let l_byte = self.memory[address as usize];
-        let h_byte = self.memory[(address + 1) as usize];
-        ((h_byte as u16) << 8) | l_byte as u16
-    }
-
-    /// Writes the word from the address
-    /// This uses little endian
-    pub fn write_word(&mut self, address: u16, value: u16) {
-        let h_byte = (value >> 8) as u8;
-        let l_byte = value as u8;
-        self.write_byte(address, l_byte);
-        self.write_byte(address + 1, h_byte);
-    }
-
+impl Memory {
     fn interrupt_enable(&self) -> u8 {
         self.memory[0xFFFF]
     }

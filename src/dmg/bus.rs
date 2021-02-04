@@ -3,6 +3,7 @@ use crate::dmg::joypad::Joypad;
 use crate::dmg::memory::{Interrupt, Memory};
 use crate::dmg::ppu::PPU;
 use crate::dmg::timer::Timer;
+use crate::dmg::busconnection::BusConnection;
 
 /// Struct for representing the bus which serves as the interface
 /// through which the cpu can communicate with other devices
@@ -30,12 +31,12 @@ impl Bus {
     pub fn read_byte(&self, address: u16) -> u8 {
         // TODO: Add the rest pointing to other devices
         match address {
-            0xFF00 => self.joypad.read(address),
-            0xFF04..=0xFF07 => self.timer.read(address),
+            0xFF00 => self.joypad.read_byte(address),
+            0xFF04..=0xFF07 => self.timer.read_byte(address),
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.read(address)
             }
-            0xFF40..=0xFF45 => self.ppu.read(address),
+            0xFF40..=0xFF45 => self.ppu.read_byte(address),
             _ => self.memory.read_byte(address),
         }
     }
@@ -43,12 +44,12 @@ impl Bus {
     pub fn write_byte(&mut self, address: u16, value: u8) {
         // TODO: Add the rest pointing to other devices
         match address {
-            0xFF00 => self.joypad.write(address, value),
-            0xFF04..=0xFF07 => self.timer.write(address, value),
+            0xFF00 => self.joypad.write_byte(address, value),
+            0xFF04..=0xFF07 => self.timer.write_byte(address, value),
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.write(address, value)
             }
-            0xFF40..=0xFF45 | 0xFF47..=0xFF4B => self.ppu.write(address, value),
+            0xFF40..=0xFF45 | 0xFF47..=0xFF4B => self.ppu.write_byte(address, value),
             _ => self.memory.write_byte(address, value),
         };
     }

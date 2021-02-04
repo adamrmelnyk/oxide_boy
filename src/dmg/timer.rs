@@ -1,3 +1,5 @@
+use crate::dmg::busconnection::BusConnection;
+
 pub struct Timer {
     div: u8,  // 0xFF04
     tima: u8, // 0xFF05
@@ -24,16 +26,8 @@ impl Default for Timer {
     }
 }
 
-impl Timer {
-    pub fn step(&mut self, cycles: u8) {
-        self.div += self.div.wrapping_add(1);
-        if self.timer_enabled() {
-            // Do the thing
-        }
-        // unimplemented!();
-    }
-
-    pub fn read(&self, address: u16) -> u8 {
+impl BusConnection for Timer {
+    fn read_byte(&self, address: u16) -> u8 {
         match address {
             0xFF04 => self.div,
             0xFF05 => self.tima,
@@ -43,7 +37,7 @@ impl Timer {
         }
     }
 
-    pub fn write(&mut self, address: u16, value: u8) {
+    fn write_byte(&mut self, address: u16, value: u8) {
         match address {
             0xFF04 => self.div = 0,
             0xFF05 => self.tima = value,
@@ -52,8 +46,35 @@ impl Timer {
             _ => panic!("This should never happen"),
         }
     }
+}
+
+impl Timer {
+    pub fn step(&mut self, cycles: u8) {
+        // TODO: Implement the step function
+        // self.div += self.div.wrapping_add(1);
+        // let mut timer_clocksum: u32 = 0;
+        // if self.timer_enabled() {
+        //     timer_clocksum += cycles as u32;
+
+        //     let freq = match self.tac & 3 {
+        //         0 => 4096,
+        //         1 => 262144,
+        //         2 => 65536,
+        //         3 => 16384,
+        //         _ => panic!("We've defied a law of mathematics!!")
+        //     };
+
+        //     while timer_clocksum >= (4194304 / freq) {
+        //         self.tima = self.tima.wrapping_add(1);
+        //         if self.tima == 0 {
+        //             // TODO: Write to interrupt flags that we've overflowed at 0xFF0F
+        //         }
+        //     }
+        // }
+    }
 
     fn timer_enabled(&self) -> bool {
+        // The second bit of the tac tells is of the timer is enabled
         ((self.tac >> 2) & 0x1) == 1
     }
 

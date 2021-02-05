@@ -74,8 +74,8 @@ impl Bus {
     }
 
     pub fn step(&mut self, cycles: u8) {
-        self.ppu.step();
         self.timer.step(cycles);
+        self.ppu.step();
     }
 }
 

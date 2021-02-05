@@ -21,8 +21,7 @@ cargo run
 ## TODO
 
 * Timers
-  * Timer step function
-  * Jump, ret, call, jump_relative etc. functions need to use the conditional cycle amounts
+  * The last thing the timer needs to do is trigger the interrupt from the step function which is marked with a TODO
 * GUI
   * LY is the only ppu register being inc'd, the rest of the step function in the ppu needs to be implemented.
 * Add the cartrige to the device
@@ -42,3 +41,4 @@ This emulator couldn't have been built without the help of many others (this is 
 * [Emudev](https://emudev.de/gameboy-emulator/overview/)
 * [The Ultimate Gameboy Talk](https://www.youtube.com/watch?v=HyzD8pNlpwI&t=29m12s)
 * [GBDev.io](https://gbdev.io/)
+* [An archived page](https://web.archive.org/web/20181011215339/http://www.codeslinger.co.uk/pages/projects/gameboy.html) that contains lots of documentation and implementation details for parts of the DMG.

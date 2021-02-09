@@ -18,6 +18,8 @@ After building you can run the project by using
 cargo run
 ```
 
+Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot ROM.
+
 ## TODO
 
 * Timers
@@ -28,6 +30,8 @@ cargo run
   * Currently we stop at the anti-piracy step when the boot rom checks to see if the nintendo logo in the cartrige is correct.
 * Sound
 * I/O
+* CLI args so we can accept a ROM
+* Shutdown after locking up at 0xe9 of the boot ROM
 * Hard code the boot rom so we don't need a file for it?
 
 ### Resources
@@ -35,7 +39,7 @@ cargo run
 This emulator couldn't have been built without the help of many others (this is an inexhaustive list):
 
 * [Challenging projects](https://web.eecs.utk.edu/~azh/blog/challengingprojects.html): The Blog post that inspired the project.
-* [Rylev's book](https://rylev.github.io/DMG-01/public/book/appendix/cartridge_header.html): This book has a lot of TODO's but it was a good starting point that you can build off of. The author also did a [talk](https://media.ccc.de/v/rustfest-rome-3-gameboy-emulator#t=1551) on the emulator project.
+* [Rylev's book](https://rylev.github.io/DMG-01/public/book/introduction.html): This book has a lot of TODO's but it was a good starting point that you can build off of. The author also did a [talk](https://media.ccc.de/v/rustfest-rome-3-gameboy-emulator#t=1551) on the emulator project.
 * [GB CPU Docs](http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf)
 * [GB OP Codes](https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
 * [Emudev](https://emudev.de/gameboy-emulator/overview/)

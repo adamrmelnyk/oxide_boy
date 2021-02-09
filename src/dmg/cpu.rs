@@ -647,9 +647,9 @@ impl CPU {
         }
         match source {
             // If we read from the D8, we should move the pc up one extra spot
-            // TODO: May be able to remove this condition
             LoadByteSource::D8 => {
-                self.pc.wrapping_add(1);
+                // TODO: May or may not need to inc the PC here. This needs to have a
+                //       test written for it.
             }
             LoadByteSource::HLINC => {
                 self.registers

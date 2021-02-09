@@ -75,7 +75,7 @@ impl Bus {
 
     pub fn step(&mut self, cycles: u8) {
         self.timer.step(cycles);
-        self.ppu.step();
+        self.ppu.step(cycles);
     }
 }
 
@@ -94,8 +94,8 @@ fn write_to_mem() {
 #[test]
 fn write_to_ppu() {
     let mut bus = setup();
-    bus.write_byte(0xFF44, 0xAA);
-    assert_eq!(bus.ppu.ly(), 0xAA);
+    bus.write_byte(0xFF40, 0xAA);
+    assert_eq!(bus.ppu.lcdc(), 0xAA);
 }
 
 #[test]

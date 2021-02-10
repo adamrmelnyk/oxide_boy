@@ -25,10 +25,13 @@ Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot 
 * Timers
   * The last thing the timer needs to do is trigger the interrupt from the step function which is marked with a TODO
 * GUI
-  * LY is the only ppu register being inc'd, the rest of the step function in the ppu needs to be implemented.
+  * Render tiles
+  * Render sprites
+  * Add a library to display everything
 * Add the cartrige to the device
   * Currently we stop at the anti-piracy step when the boot rom checks to see if the nintendo logo in the cartrige is correct.
 * Sound
+  * Step function needs to be implemented
 * I/O
 * CLI args so we can accept a ROM
 * Shutdown after locking up at 0xe9 of the boot ROM

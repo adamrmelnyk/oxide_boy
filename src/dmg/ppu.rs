@@ -172,12 +172,13 @@ impl PPU {
         }
     }
 
+    /// Renders the window and background tiles
     fn render_tiles(&self) {
-
+        // TODO
     }
 
     fn render_sprites(&self) {
-
+        // TODO
     }
 
     fn lcd_enabled(&self) -> bool {

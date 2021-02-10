@@ -6,6 +6,7 @@ const BG_TMDS_POS: u8 = 3;
 const OBJ_SIZE_POS: u8 = 2;
 const OBJ_DISPLAY_POS: u8 = 1;
 
+#[derive(Debug, PartialEq)]
 pub struct Lcdc {
     pub lcdc_enabled: bool,
     window_tile_map_display_select: bool, // enum
@@ -17,6 +18,7 @@ pub struct Lcdc {
     pub bg_window_display: bool,
 }
 
+#[derive(Debug, PartialEq)]
 enum ObjSize {
     S8x8,
     S16x16,
@@ -92,4 +94,48 @@ impl std::convert::From<&u8> for ObjSize {
     }
 }
 
-// TODO: Write tests for conversions
+#[test]
+fn lcdc_to_u8() {
+    let lcdc = Lcdc {
+        lcdc_enabled: true,
+        window_tile_map_display_select: true,
+        window_display: false,
+        bg_window_tile_data_select: true,
+        bg_tile_map_data_select: false,
+        obj_size: ObjSize::S8x8,
+        obj_display: true,
+        bg_window_display: true,
+    };
+    assert_eq!(u8::from(&lcdc), 0b1101_0011);
+}
+
+#[test]
+fn u8_to_lcdc() {
+    let byte = 0b1101_0011;
+    let expected = Lcdc {
+        lcdc_enabled: true,
+        window_tile_map_display_select: true,
+        window_display: false,
+        bg_window_tile_data_select: true,
+        bg_tile_map_data_select: false,
+        obj_size: ObjSize::S8x8,
+        obj_display: true,
+        bg_window_display: true,
+    };
+    assert_eq!(Lcdc::from(&byte), expected);
+}
+
+#[test]
+fn u8_to_objsize() {
+    let byte = 0b0000_0100;
+    assert_eq!(ObjSize::from(&byte), ObjSize::S16x16);
+    let byte = 0b0000_0000;
+    assert_eq!(ObjSize::from(&byte), ObjSize::S8x8);
+}
+
+#[test]
+fn objsize_to_u8() {
+    assert_eq!(u8::from(&ObjSize::S16x16), 0b0000_0100);
+    assert_eq!(u8::from(&ObjSize::S8x8), 0b0000_0000);
+
+}

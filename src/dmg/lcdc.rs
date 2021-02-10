@@ -137,5 +137,4 @@ fn u8_to_objsize() {
 fn objsize_to_u8() {
     assert_eq!(u8::from(&ObjSize::S16x16), 0b0000_0100);
     assert_eq!(u8::from(&ObjSize::S8x8), 0b0000_0000);
-
 }

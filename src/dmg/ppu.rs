@@ -23,10 +23,9 @@ const MAX_SCAN_LINES: u8 = 153;
 /// The Pixel Processing Unit
 pub struct PPU {
     lcdc: Lcdc, // 0xFF40
-        // TODO: Break down LCDC
     stat: Stat, // 0xFF41
     scy: u8,  // 0xFF42
-    scx: u8,  // 0xFF43Scammer BEGS For His Deleted Files As I Drink His Tears
+    scx: u8,  // 0xFF43
     ly: u8,   // 0xFF44
     lyc: u8,  // 0xFF45
 
@@ -188,6 +187,11 @@ impl PPU {
     #[cfg(test)]
     pub fn lcdc(&self) -> u8 {
         u8::from(&self.lcdc)
+    }
+    
+    #[cfg(test)]
+    pub fn stat(&self) -> u8 {
+        u8::from(&self.stat)
     }
 }
 

@@ -1069,6 +1069,14 @@ fn writing_to_lcdc() {
 }
 
 #[test]
+fn writing_to_stat() {
+    let mut cpu = setup();
+    assert_eq!(cpu.bus.read_byte(0xFF41), 0);
+    cpu.bus.write_byte(0xFF41, 0x40);
+    assert_eq!(cpu.bus.read_byte(0xFF41), 0x40);
+}
+
+#[test]
 fn writing_to_ly() {
     let mut cpu = setup();
     assert_eq!(cpu.bus.read_byte(0xFF44), 0);

@@ -1,6 +1,5 @@
 #![feature(destructuring_assignment)]
-
-mod dmg;
+pub mod dmg;
 
 use oxide_boy::CPU;
 

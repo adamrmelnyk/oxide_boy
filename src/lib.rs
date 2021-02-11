@@ -1,6 +1,5 @@
 #![feature(destructuring_assignment)]
-
-mod dmg;
+pub mod dmg;
 
 pub use dmg::cpu::CPU;
 pub use dmg::instructions::{

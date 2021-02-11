@@ -1061,19 +1061,35 @@ fn test_ldaby() {
 // TODO: Tests for prefix byte making the pc inc two places. test should be for step
 
 #[test]
+fn writing_to_lcdc() {
+    let mut cpu = setup();
+    assert_eq!(cpu.bus.read_byte(0xFF40), 0);
+    cpu.bus.write_byte(0xFF40, 0x40);
+    assert_eq!(cpu.bus.read_byte(0xFF40), 0x40);
+}
+
+#[test]
+fn writing_to_stat() {
+    let mut cpu = setup();
+    assert_eq!(cpu.bus.read_byte(0xFF41), 0);
+    cpu.bus.write_byte(0xFF41, 0x40);
+    assert_eq!(cpu.bus.read_byte(0xFF41), 0x40);
+}
+
+#[test]
 fn writing_to_ly() {
     let mut cpu = setup();
     assert_eq!(cpu.bus.read_byte(0xFF44), 0);
     cpu.bus.write_byte(0xFF44, 0x40);
-    assert_eq!(cpu.bus.read_byte(0xFF44), 0x40);
+    assert_eq!(cpu.bus.read_byte(0xFF40), 0, "ly should be reset to zero if we write to it");
 }
 
 #[test]
-fn reading_from_ly() {
+fn reading_from_lcdc() {
     let mut cpu = setup();
     assert_eq!(cpu.registers.a, 0);
-    cpu.bus.write_byte(0xFF44, 0x40);
-    cpu.bus.write_byte(0x1001, 0x44);
+    cpu.bus.write_byte(0xFF40, 0x40);
+    cpu.bus.write_byte(0x1001, 0x40);
     cpu.pc = 0x1000;
     cpu.execute(Instruction::LDHA8(12));
     assert_eq!(cpu.registers.a, 0x40);

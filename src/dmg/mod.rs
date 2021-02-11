@@ -8,3 +8,5 @@ pub mod ppu;
 pub mod registers;
 pub mod timer;
 pub mod busconnection;
+pub mod stat;
+pub mod lcdc;

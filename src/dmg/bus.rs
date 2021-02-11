@@ -55,14 +55,16 @@ impl Bus {
     }
 
     pub fn read_word(&self, address: u16) -> u16 {
-        // TODO: Same as below
-        self.memory.read_word(address)
+        let l_byte = self.read_byte(address);
+        let h_byte = self.read_byte(address + 1);
+        ((h_byte as u16) << 8) | l_byte as u16
     }
 
     pub fn write_word(&mut self, address: u16, value: u16) {
-        // TODO: It's possible that one of the bytes could be in one or even two, of our devices so we might have to
-        // change this to use the write_byte method which takes that into account.
-        self.memory.write_word(address, value);
+        let h_byte = (value >> 8) as u8;
+        let l_byte = value as u8;
+        self.write_byte(address, l_byte);
+        self.write_byte(address + 1, h_byte);
     }
 
     pub fn interrupt_flag_off(&mut self) {
@@ -75,7 +77,7 @@ impl Bus {
 
     pub fn step(&mut self, cycles: u8) {
         self.timer.step(cycles);
-        self.ppu.step();
+        self.ppu.step(cycles);
     }
 }
 
@@ -92,10 +94,17 @@ fn write_to_mem() {
 }
 
 #[test]
-fn write_to_ppu() {
+fn write_to_ppu_lcdc() {
     let mut bus = setup();
-    bus.write_byte(0xFF44, 0xAA);
-    assert_eq!(bus.ppu.ly(), 0xAA);
+    bus.write_byte(0xFF40, 0xAA);
+    assert_eq!(bus.ppu.lcdc(), 0xAA);
+}
+
+#[test]
+fn write_to_ppu_stat() {
+    let mut bus = setup();
+    bus.write_byte(0xFF41, 0b00101010);
+    assert_eq!(bus.ppu.stat(), 0b00101010);
 }
 
 #[test]

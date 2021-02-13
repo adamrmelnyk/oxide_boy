@@ -5,10 +5,10 @@ const OBJ_DISPLAY_POS: u8 = 1;
 #[derive(Debug, PartialEq)]
 pub struct Lcdc {
     pub lcdc_enabled: bool,
-    window_tile_map_display_select: TileMap,
-    window_display: bool,
-    bg_window_tile_data_select: TileData,
-    bg_tile_map_data_select: TileMap,
+    pub window_tile_map_display_select: TileMap,
+    pub window_display: bool,
+    pub bg_window_tile_data_select: TileData,
+    pub bg_tile_map_data_select: TileMap,
     obj_size: ObjSize,
     obj_display: bool,
     pub bg_window_display: bool,
@@ -21,13 +21,13 @@ enum ObjSize {
 }
 
 #[derive(Debug, PartialEq)]
-enum TileMap {
+pub enum TileMap {
     S9800, // 9800 - 9BFF
     S9C00, // 9C00 - 9FFF
 }
 
 #[derive(Debug, PartialEq)]
-enum TileData {
+pub enum TileData {
     S8800, // 8800 - 97FF
     S8000, // 8000 - 8FFF
 }

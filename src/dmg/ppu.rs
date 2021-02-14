@@ -180,19 +180,6 @@ impl PPU {
     fn render_sprites(&self) {
         // TODO
     }
-
-    fn lcd_enabled(&self) -> bool {
-        self.lcdc.lcdc_enabled
-    }
-
-    fn render_sprites(&self) {
-        // TODO
-    }
-
-    #[cfg(test)]
-    pub fn lcdc(&self) -> u8 {
-        u8::from(&self.lcdc)
-    }
     
     #[cfg(test)]
     pub fn lcdc(&self) -> u8 {

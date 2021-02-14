@@ -22,6 +22,17 @@ pub enum ObjSize {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TileMap {
+    pub bg_window_display: bool,
+}
+
+#[derive(Debug, PartialEq)]
+enum ObjSize {
+    S8x8,
+    S16x16,
+}
+
+#[derive(Debug, PartialEq)]
+enum TileMap {
     S9800, // 9800 - 9BFF
     S9C00, // 9C00 - 9FFF
 }

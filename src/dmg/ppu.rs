@@ -1,6 +1,6 @@
 use crate::dmg::busconnection::BusConnection;
 use crate::dmg::stat::{Stat, LcdMode};
-use crate::dmg::lcdc::Lcdc;
+use crate::dmg::lcdc::{Lcdc, TileData};
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;
@@ -97,7 +97,7 @@ impl PPU {
     pub fn step(&mut self, cycles: u8) {
         self.set_lcd_status();
 
-        if self.lcd_enabled() {
+        if self.lcdc.lcdc_enabled() {
             let (new_count, did_overflow) = self.scanline_counter.overflowing_sub(cycles as u16);
             self.scanline_counter = new_count;
             if did_overflow {
@@ -121,7 +121,7 @@ impl PPU {
     }
 
     fn set_lcd_status(&mut self) {
-        if !self.lcd_enabled() {
+        if !self.lcdc.lcdc_enabled() {
             self.scanline_counter = SCANLINE_COUNTER_MAX;
             self.ly = 0;
             self.stat.mode_flag = LcdMode::VBlank;
@@ -163,11 +163,11 @@ impl PPU {
     }
 
     fn draw_scanline(&mut self) {
-        if self.lcdc.bg_window_display {
+        if self.lcdc.bg_window_display() {
             self.render_tiles();
         }
 
-        if self.lcdc.bg_window_display {
+        if self.lcdc.obj_display() {
             self.render_sprites();
         }
     }
@@ -185,6 +185,15 @@ impl PPU {
         self.lcdc.lcdc_enabled
     }
 
+    fn render_sprites(&self) {
+        // TODO
+    }
+
+    #[cfg(test)]
+    pub fn lcdc(&self) -> u8 {
+        u8::from(&self.lcdc)
+    }
+    
     #[cfg(test)]
     pub fn lcdc(&self) -> u8 {
         u8::from(&self.lcdc)
@@ -199,9 +208,9 @@ impl PPU {
 #[test]
 fn lcd_is_enabled() {
     let mut ppu = PPU::default();
-    assert_eq!(ppu.lcd_enabled(), false);
+    assert_eq!(ppu.lcdc.lcdc_enabled(), false);
     ppu.lcdc = Lcdc::from(&255);
-    assert_eq!(ppu.lcd_enabled(), true);
+    assert_eq!(ppu.lcdc.lcdc_enabled(), true);
 }
 
 #[test]

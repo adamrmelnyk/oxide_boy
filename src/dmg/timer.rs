@@ -1,9 +1,16 @@
 use crate::dmg::busconnection::BusConnection;
 
 pub struct Timer {
+    /// The Divider Register
     div: u8,  // 0xFF04
+
+    /// Timer counter
     tima: u8, // 0xFF05
+
+    /// Timer Modulo
     tma: u8,  // 0xFF06
+    
+    /// Timer Control
     tac: u8,  // 0xFF07
               // TODO: May want to make tac it's own struct but it would still need to return the unimplemented bits since
               // they're still there

@@ -1,6 +1,6 @@
 use crate::dmg::busconnection::BusConnection;
 use crate::dmg::stat::{Stat, LcdMode};
-use crate::dmg::lcdc::{Lcdc, TileData};
+use crate::dmg::lcdc::{Lcdc};
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;

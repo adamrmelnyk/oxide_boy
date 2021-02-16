@@ -3,6 +3,15 @@ use std::io::Read;
 
 use crate::dmg::busconnection::BusConnection;
 
+/// These values are taken from The pan docs at https://gbdev.io/pandocs/#memory-map
+/// There are other blogs and sites with conflicting information, but these values seem
+/// to be be correct.
+const INTERNAL_RAM_START: u16 = 0xC000;
+
+/// This RAM is a mirror echo of the above memory map. Any attempt to write to
+const ECHO_RAM_START: u16 = 0xE000;
+const ECHO_RAM_END: u16 = 0xFDFF;
+
 const BOOT_ROM: &str = "src/dmg/rom/DMG_ROM.bin";
 
 pub enum Interrupt {
@@ -30,11 +39,17 @@ impl Default for Memory {
 
 impl BusConnection for Memory {
     fn read_byte(&self, address: u16) -> u8 {
-        self.memory[address as usize]
+        match address {
+            ECHO_RAM_START..=ECHO_RAM_END => self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize],
+            _ => self.memory[address as usize],
+        }
     }
 
     fn write_byte(&mut self, address: u16, value: u8) {
-        self.memory[address as usize] = value;
+        match address {
+            ECHO_RAM_START..=ECHO_RAM_END => self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize] = value,
+            _ => self.memory[address as usize] = value,
+        }
     }
 }
 
@@ -224,4 +239,22 @@ fn write_word() {
     bus.write_word(0x1111, 0xFFAA);
     assert_eq!(bus.read_byte(0x1111), 0xAA);
     assert_eq!(bus.read_byte(0x1112), 0xFF);
+}
+
+#[test]
+fn echo_ram() {
+    let mut bus = Memory::default();
+    bus.write_byte(INTERNAL_RAM_START + 1, 0xAA);
+    let mut j = 0;
+    for i in INTERNAL_RAM_START..INTERNAL_RAM_END {
+        assert_eq!(bus.read_byte(ECHO_RAM_START + j), bus.read_byte(i));
+        j += 1;
+    }
+}
+
+#[test]
+fn write_to_echo_ram() {
+    let mut bus = Memory::default();
+    bus.write_byte(ECHO_RAM_START + 10, 0xAA);
+    assert_eq!(bus.read_byte(INTERNAL_RAM_START + 10), 0xAA);
 }

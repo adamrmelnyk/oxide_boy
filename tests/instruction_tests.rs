@@ -59,7 +59,7 @@ fn from_byte_prefix_rr_hli() {
 
 #[test]
 fn from_byte_add() {
-    for byte in 0x80..0x87 {
+    for byte in 0x80..=0x87 {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x86 {
             assert_eq!(op, Instruction::ADD(ArithmeticTarget::HLI, 8));
@@ -73,7 +73,7 @@ fn from_byte_add() {
 
 #[test]
 fn from_byte_adc() {
-    for byte in 0x88..0x8F {
+    for byte in 0x88..=0x8F {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x8E {
             assert_eq!(op, Instruction::ADC(ArithmeticTarget::HLI, 8));
@@ -87,7 +87,7 @@ fn from_byte_adc() {
 
 #[test]
 fn from_byte_sub() {
-    for byte in 0x90..0x97 {
+    for byte in 0x90..=0x97 {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x96 {
             assert_eq!(op, Instruction::SUB(ArithmeticTarget::HLI, 8));
@@ -101,7 +101,7 @@ fn from_byte_sub() {
 
 #[test]
 fn from_byte_sbc() {
-    for byte in 0x98..0x9F {
+    for byte in 0x98..=0x9F {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x9E {
             assert_eq!(op, Instruction::SBC(ArithmeticTarget::HLI, 8));
@@ -115,7 +115,7 @@ fn from_byte_sbc() {
 
 #[test]
 fn from_byte_and() {
-    for byte in 0xA0..0xA7 {
+    for byte in 0xA0..=0xA7 {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0xA6 {
             assert_eq!(op, Instruction::AND(ArithmeticTarget::HLI, 8));
@@ -129,7 +129,7 @@ fn from_byte_and() {
 
 #[test]
 fn from_byte_xor() {
-    for byte in 0xA8..0xAF {
+    for byte in 0xA8..=0xAF {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0xAE {
             assert_eq!(op, Instruction::XOR(ArithmeticTarget::HLI, 8));
@@ -143,7 +143,7 @@ fn from_byte_xor() {
 
 #[test]
 fn from_byte_or() {
-    for byte in 0xB0..0xB7 {
+    for byte in 0xB0..=0xB7 {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0xB6 {
             assert_eq!(op, Instruction::OR(ArithmeticTarget::HLI, 8));
@@ -157,7 +157,7 @@ fn from_byte_or() {
 
 #[test]
 fn from_byte_cp() {
-    for byte in 0xB8..0xBF {
+    for byte in 0xB8..=0xBF {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0xBE {
             assert_eq!(op, Instruction::CP(ArithmeticTarget::HLI, 8));
@@ -171,7 +171,7 @@ fn from_byte_cp() {
 
 #[test]
 fn from_byte_load() {
-    for byte in 0x40..0x47 {
+    for byte in 0x40..=0x47 {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x46 {
             assert_eq!(
@@ -189,7 +189,7 @@ fn from_byte_load() {
         }
     }
 
-    for byte in 0x48..0x4F {
+    for byte in 0x48..=0x4F {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x4E {
             assert_eq!(
@@ -207,7 +207,7 @@ fn from_byte_load() {
         }
     }
 
-    for byte in 0x50..0x57 {
+    for byte in 0x50..=0x57 {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x56 {
             assert_eq!(
@@ -225,7 +225,7 @@ fn from_byte_load() {
         }
     }
 
-    for byte in 0x58..0x5F {
+    for byte in 0x58..=0x5F {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x5E {
             assert_eq!(
@@ -243,7 +243,7 @@ fn from_byte_load() {
         }
     }
 
-    for byte in 0x60..0x67 {
+    for byte in 0x60..=0x67 {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x66 {
             assert_eq!(
@@ -261,7 +261,7 @@ fn from_byte_load() {
         }
     }
 
-    for byte in 0x68..0x6F {
+    for byte in 0x68..=0x6F {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x6E {
             assert_eq!(
@@ -279,7 +279,7 @@ fn from_byte_load() {
         }
     }
 
-    for byte in 0x70..0x77 {
+    for byte in 0x70..=0x77 {
         if byte != 0x76 {
             let op = Instruction::from_byte(byte, false).unwrap();
             assert_eq!(
@@ -292,7 +292,7 @@ fn from_byte_load() {
         }
     }
 
-    for byte in 0x78..0x7F {
+    for byte in 0x78..=0x7F {
         let op = Instruction::from_byte(byte, false).unwrap();
         if byte == 0x7E {
             assert_eq!(

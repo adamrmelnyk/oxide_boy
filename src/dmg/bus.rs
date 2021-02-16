@@ -36,7 +36,8 @@ impl Bus {
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.read(address)
             }
-            0xFF40..=0xFF45 => self.ppu.read_byte(address),
+            0xFF40..=0xFF4B => self.ppu.read_byte(address),
+            0xFEA0..=0xFEFF => 0xFF, /* Unused Memory. Return Default value */
             _ => self.memory.read_byte(address),
         }
     }
@@ -49,7 +50,8 @@ impl Bus {
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.write(address, value)
             }
-            0xFF40..=0xFF45 | 0xFF47..=0xFF4B => self.ppu.write_byte(address, value),
+            0xFF40..=0xFF4B => self.ppu.write_byte(address, value),
+            0xFEA0..=0xFEFF => { /* Unused memory. Do Nothing */},
             _ => self.memory.write_byte(address, value),
         };
     }
@@ -135,4 +137,13 @@ fn write_to_apu_wave_pattern_ram() {
     bus.write_byte(0xFF3F, 0xAA);
     assert_eq!(bus.apu.wave_pattern_ram()[0], 0x10);
     assert_eq!(bus.apu.wave_pattern_ram()[0xF], 0xAA);
+}
+
+#[test]
+fn unused_memory() {
+    let mut bus = setup();
+    bus.write_byte(0xFEA1, 0xAA);
+    for i in 0xFEA0..=0xFEFF {
+        assert_eq!(bus.read_byte(i), 0xFF);
+    }
 }

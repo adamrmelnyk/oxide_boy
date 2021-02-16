@@ -7,6 +7,7 @@ use crate::dmg::busconnection::BusConnection;
 /// There are other blogs and sites with conflicting information, but these values seem
 /// to be be correct.
 const INTERNAL_RAM_START: u16 = 0xC000;
+const INTERNAL_RAM_END: u16 = 0xDDFF;
 
 /// This RAM is a mirror echo of the above memory map. Any attempt to write to
 const ECHO_RAM_START: u16 = 0xE000;

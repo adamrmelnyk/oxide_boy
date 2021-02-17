@@ -36,6 +36,7 @@ pub struct PPU {
     wy: u8, //0xFF4A
     wx: u8, //0xFF4B
     scanline_counter: u16,
+    vram: [u8; 8192],
 }
 
 impl Default for PPU {
@@ -52,7 +53,8 @@ impl Default for PPU {
             obp1: 0,
             wy: 0,
             wx: 0,
-            scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline
+            scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
+            vram: [0; 8192],
         }
     }
 }
@@ -60,6 +62,7 @@ impl Default for PPU {
 impl BusConnection for PPU {
     fn read_byte(&self, address: u16) -> u8 {
         match address {
+            0x8000..=0x9FFF => self.read_vram(address),
             0xFF40 => u8::from(&self.lcdc),
             0xFF41 => u8::from(&self.stat),
             0xFF42 => self.scy,
@@ -77,6 +80,7 @@ impl BusConnection for PPU {
 
     fn write_byte(&mut self, address: u16, value: u8) {
         match address {
+            0x8000..=0x9FFF => self.write_vram(address, value),
             0xFF40 => self.lcdc = Lcdc::from(&value),
             0xFF41 => self.stat = Stat::from(&value),
             0xFF42 => self.scy = value,
@@ -180,6 +184,25 @@ impl PPU {
     fn render_sprites(&self) {
         // TODO
     }
+
+    /// VRAM is only accessible during Modes 0-2
+    /// Reading when the mode flag is set to 3 will return the default value of 0xFF
+    /// See: https://gbdev.io/pandocs/#accessing-vram-and-oam for more info
+    fn read_vram(&self, address: u16) -> u8 {
+        if self.stat.mode_flag == LcdMode::TransferingDataToLCDDriver {
+            0xFF
+        } else {
+            self.vram[(address - 0x8000) as usize]
+        }
+    }
+
+    /// VRAM is only accessible during Modes 0-2
+    /// Writing when the mode flag is set to 3 will not change the data
+    fn write_vram(&mut self, address: u16, value: u8) {
+        if self.stat.mode_flag != LcdMode::TransferingDataToLCDDriver {
+            self.vram[(address - 0x8000) as usize] = value;
+        }
+    }
     
     #[cfg(test)]
     pub fn lcdc(&self) -> u8 {
@@ -189,6 +212,11 @@ impl PPU {
     #[cfg(test)]
     pub fn stat(&self) -> u8 {
         u8::from(&self.stat)
+    }
+
+    #[cfg(test)]
+    pub fn vram(&self) -> [u8; 8192] {
+        self.vram
     }
 }
 
@@ -217,4 +245,29 @@ fn write_to_ly() {
     assert_eq!(ppu.lcdc(), 0, "Writing to ly should reset the value");
 }
 
+#[test]
+fn write_to_vram() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0x9000, 0xAA);
+    assert_eq!(ppu.vram()[0x1000], 0xAA);
+    assert_eq!(ppu.read_byte(0x9000), 0xAA);
+}
+
+#[test]
+fn read_vram_when_stat_mode_3() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0x9000, 0xAA);
+    ppu.stat.mode_flag = LcdMode::TransferingDataToLCDDriver;
+    assert_eq!(ppu.vram()[0x1000], 0xAA, "The correct byte 0xAA should be present in Vram");
+    assert_eq!(ppu.read_byte(0x9000), 0xFF, "VRAM read through it's public methods should return 0xFF when disabled");
+}
+
+#[test]
+fn write_vram_when_stat_mode_3() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0x9000, 0xAA);
+    ppu.stat.mode_flag = LcdMode::TransferingDataToLCDDriver;
+    ppu.write_byte(0x9000, 0xBB);
+    assert_eq!(ppu.vram()[0x1000], 0xAA, "VRAM should not have been written to a second time");
+}
 // TODO: Tests for the step function effects on ppu.stat

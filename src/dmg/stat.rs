@@ -44,9 +44,9 @@ impl std::convert::From<&u8> for Stat {
         let mode_10 = (byte >> MODE_10_POS) & 0b1 != 0;
         let mode_01 = (byte >> MODE_01_POS) & 0b1 != 0;
         let mode_00 = (byte >> MODE_00_POS) & 0b1 != 0;
-        let coincidence_flag= (byte >> COINCIDENCE_FLAG_POS) & 0b1 != 0;
+        let coincidence_flag = (byte >> COINCIDENCE_FLAG_POS) & 0b1 != 0;
         let mode_flag = LcdMode::from(*byte);
-        
+
         Stat {
             coincidence_selectable,
             mode_10,

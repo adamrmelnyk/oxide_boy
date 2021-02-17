@@ -1,6 +1,6 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::stat::{Stat, LcdMode};
-use crate::dmg::lcdc::{Lcdc};
+use crate::dmg::lcdc::Lcdc;
+use crate::dmg::stat::{LcdMode, Stat};
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;
@@ -24,10 +24,10 @@ const MAX_SCAN_LINES: u8 = 153;
 pub struct PPU {
     lcdc: Lcdc, // 0xFF40
     stat: Stat, // 0xFF41
-    scy: u8,  // 0xFF42
-    scx: u8,  // 0xFF43
-    ly: u8,   // 0xFF44
-    lyc: u8,  // 0xFF45
+    scy: u8,    // 0xFF42
+    scx: u8,    // 0xFF43
+    ly: u8,     // 0xFF44
+    lyc: u8,    // 0xFF45
 
     bgp: u8,  // 0xFF47
     obp0: u8, // 0xFF48
@@ -133,7 +133,7 @@ impl PPU {
             let current_mode = self.stat.mode_flag;
             let mut interrupt_triggered = false;
             let new_mode;
-    
+
             if self.ly >= VISIBLE_SCAN_LINES {
                 new_mode = LcdMode::VBlank;
                 self.stat.mode_flag = LcdMode::VBlank;
@@ -150,11 +150,11 @@ impl PPU {
                 self.stat.mode_flag = LcdMode::HBlank;
                 interrupt_triggered = self.stat.mode_00;
             }
-    
+
             if interrupt_triggered && (new_mode != current_mode) {
                 // TODO: RequestInterrupt(1)
             }
-            
+
             if self.ly == self.lyc {
                 self.stat.coincidence_flag = true;
                 if self.stat.coincidence_selectable {
@@ -203,12 +203,12 @@ impl PPU {
             self.vram[(address - 0x8000) as usize] = value;
         }
     }
-    
+
     #[cfg(test)]
     pub fn lcdc(&self) -> u8 {
         u8::from(&self.lcdc)
     }
-    
+
     #[cfg(test)]
     pub fn stat(&self) -> u8 {
         u8::from(&self.stat)
@@ -258,8 +258,16 @@ fn read_vram_when_stat_mode_3() {
     let mut ppu = PPU::default();
     ppu.write_byte(0x9000, 0xAA);
     ppu.stat.mode_flag = LcdMode::TransferingDataToLCDDriver;
-    assert_eq!(ppu.vram()[0x1000], 0xAA, "The correct byte 0xAA should be present in Vram");
-    assert_eq!(ppu.read_byte(0x9000), 0xFF, "VRAM read through it's public methods should return 0xFF when disabled");
+    assert_eq!(
+        ppu.vram()[0x1000],
+        0xAA,
+        "The correct byte 0xAA should be present in Vram"
+    );
+    assert_eq!(
+        ppu.read_byte(0x9000),
+        0xFF,
+        "VRAM read through it's public methods should return 0xFF when disabled"
+    );
 }
 
 #[test]
@@ -268,6 +276,10 @@ fn write_vram_when_stat_mode_3() {
     ppu.write_byte(0x9000, 0xAA);
     ppu.stat.mode_flag = LcdMode::TransferingDataToLCDDriver;
     ppu.write_byte(0x9000, 0xBB);
-    assert_eq!(ppu.vram()[0x1000], 0xAA, "VRAM should not have been written to a second time");
+    assert_eq!(
+        ppu.vram()[0x1000],
+        0xAA,
+        "VRAM should not have been written to a second time"
+    );
 }
 // TODO: Tests for the step function effects on ppu.stat

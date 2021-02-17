@@ -2,24 +2,24 @@ use crate::dmg::busconnection::BusConnection;
 
 pub struct Timer {
     /// The Divider Register
-    div: u8,  // 0xFF04
+    div: u8, // 0xFF04
 
     /// Timer counter
     tima: u8, // 0xFF05
 
     /// Timer Modulo
-    tma: u8,  // 0xFF06
-    
+    tma: u8, // 0xFF06
+
     /// Timer Control
-    tac: u8,  // 0xFF07
-              // TODO: May want to make tac it's own struct but it would still need to return the unimplemented bits since
-              // they're still there
-              // -> bit 2 = timer enabled
-              // -> bit 0..1 = Input clock select
-              //    ->  00: CPU Clock / 1024 (DMG, SGB2, CGB Single Speed Mode:   4096 Hz, SGB1:   ~4194 Hz, CGB Double Speed Mode:   8192 Hz)
-              //        01: CPU Clock / 16   (DMG, SGB2, CGB Single Speed Mode: 262144 Hz, SGB1: ~268400 Hz, CGB Double Speed Mode: 524288 Hz)
-              //        10: CPU Clock / 64   (DMG, SGB2, CGB Single Speed Mode:  65536 Hz, SGB1:  ~67110 Hz, CGB Double Speed Mode: 131072 Hz)
-              //        11: CPU Clock / 256  (DMG, SGB2, CGB Single Speed Mode:  16384 Hz, SGB1:  ~16780 Hz, CGB Double Speed Mode:  32768 Hz)
+    tac: u8, // 0xFF07
+    // TODO: May want to make tac it's own struct but it would still need to return the unimplemented bits since
+    // they're still there
+    // -> bit 2 = timer enabled
+    // -> bit 0..1 = Input clock select
+    //    ->  00: CPU Clock / 1024 (DMG, SGB2, CGB Single Speed Mode:   4096 Hz, SGB1:   ~4194 Hz, CGB Double Speed Mode:   8192 Hz)
+    //        01: CPU Clock / 16   (DMG, SGB2, CGB Single Speed Mode: 262144 Hz, SGB1: ~268400 Hz, CGB Double Speed Mode: 524288 Hz)
+    //        10: CPU Clock / 64   (DMG, SGB2, CGB Single Speed Mode:  65536 Hz, SGB1:  ~67110 Hz, CGB Double Speed Mode: 131072 Hz)
+    //        11: CPU Clock / 256  (DMG, SGB2, CGB Single Speed Mode:  16384 Hz, SGB1:  ~16780 Hz, CGB Double Speed Mode:  32768 Hz)
     timer_counter: u16,
 }
 
@@ -58,7 +58,7 @@ impl BusConnection for Timer {
                 if curr_freq != new_freq {
                     self.timer_counter = self.cpu_cycles_per_tick();
                 }
-            },
+            }
             _ => panic!("This should never happen"),
         }
     }
@@ -76,7 +76,6 @@ impl Timer {
         if self.timer_enabled() {
             let (new_tc, tc_overflow) = self.timer_counter.overflowing_sub(cycles as u16);
             if tc_overflow {
-
                 // Reset the timer
                 self.timer_counter = self.cpu_cycles_per_tick();
 
@@ -105,7 +104,7 @@ impl Timer {
             1 => 16,   // 01: 262144 Hz, 4194304 cycles per second
             2 => 64,   // 10: 65536 Hz, 4194304 cycles per second
             3 => 256,  // 11: 16384 Hz, 4194304 cycles per second
-            _ => panic!("We've defied a law of mathematics!!")
+            _ => panic!("We've defied a law of mathematics!!"),
         }
     }
 
@@ -124,14 +123,24 @@ impl Timer {
 fn timer_write_to_div() {
     let mut t = Timer::default();
     t.write_byte(0xFF04, 10);
-    assert_eq!(t.div, 0, "The div should always be set to zero if we write to it");
+    assert_eq!(
+        t.div, 0,
+        "The div should always be set to zero if we write to it"
+    );
 }
 
 #[test]
 fn timer_counter_test_initial() {
     let t = Timer::default();
-    assert_eq!(t.cpu_cycles_per_tick(), 1024, "Timer cpu cylces should start at 1024");
-    assert_eq!(t.timer_counter, 1024, "The timer counter should begin at 1024");
+    assert_eq!(
+        t.cpu_cycles_per_tick(),
+        1024,
+        "Timer cpu cylces should start at 1024"
+    );
+    assert_eq!(
+        t.timer_counter, 1024,
+        "The timer counter should begin at 1024"
+    );
 }
 
 #[test]
@@ -140,7 +149,11 @@ fn timer_counter_partial_step() {
     t.tac = 5;
     t.timer_counter = t.cpu_cycles_per_tick();
     assert_eq!(t.timer_enabled(), true);
-    assert_eq!(t.cpu_cycles_per_tick(), 16, "Timer cpu cylces should start at 16");
+    assert_eq!(
+        t.cpu_cycles_per_tick(),
+        16,
+        "Timer cpu cylces should start at 16"
+    );
     t.step(10);
     assert_eq!(t.timer_counter, 6, "We didn't make a full clock tick");
 }
@@ -151,9 +164,16 @@ fn timer_should_inc_once() {
     t.tac = 5;
     t.timer_counter = t.cpu_cycles_per_tick();
     assert_eq!(t.timer_enabled(), true);
-    assert_eq!(t.cpu_cycles_per_tick(), 16, "Timer cpu cylces should start at 16");
+    assert_eq!(
+        t.cpu_cycles_per_tick(),
+        16,
+        "Timer cpu cylces should start at 16"
+    );
     t.step(20);
-    assert_eq!(t.timer_counter, 16, "Timer should have reset to 16 according to the TAC");
+    assert_eq!(
+        t.timer_counter, 16,
+        "Timer should have reset to 16 according to the TAC"
+    );
 }
 
 #[test]
@@ -162,7 +182,10 @@ fn timer_disabled_doesnt_move() {
     assert_eq!(t.timer_enabled(), false, "Timer begins as disables");
     assert_eq!(t.timer_counter, 1024, "Timer cpu cylces should start at 16");
     t.step(10);
-    assert_eq!(t.timer_counter, 1024, "Timer should stil be at the starting point");
+    assert_eq!(
+        t.timer_counter, 1024,
+        "Timer should stil be at the starting point"
+    );
 }
 
 #[test]
@@ -170,12 +193,25 @@ fn changing_frequency_changes_timer() {
     let mut t = Timer::default();
     assert_eq!(t.timer_counter, 1024);
     t.write_byte(0xFF07, 0b100);
-    assert_eq!(t.timer_enabled(), true, "TAC at one should enable our timer");
-    assert_eq!(t.timer_counter, 1024, "TAC has changed but hasn't change the freqency, so this should still be 1024");
+    assert_eq!(
+        t.timer_enabled(),
+        true,
+        "TAC at one should enable our timer"
+    );
+    assert_eq!(
+        t.timer_counter, 1024,
+        "TAC has changed but hasn't change the freqency, so this should still be 1024"
+    );
     t.step(10);
-    assert_eq!(t.timer_counter, 1014, "A partial step should result in the timer counter moving");
+    assert_eq!(
+        t.timer_counter, 1014,
+        "A partial step should result in the timer counter moving"
+    );
     t.write_byte(0xFF07, 0b101);
-    assert_eq!(t.timer_counter, 16, "The timer should be reset to a new frequency");
+    assert_eq!(
+        t.timer_counter, 16,
+        "The timer should be reset to a new frequency"
+    );
 }
 
 // TODO: Test for triggering interrupt

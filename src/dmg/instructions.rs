@@ -55,7 +55,7 @@ fn conditional_cycle(byte: u8) -> u8 {
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
-    ADD(ArithmeticTarget,u8),
+    ADD(ArithmeticTarget, u8),
     SUB(ArithmeticTarget, u8),
     ADDHL(SixteenBitArithmeticTarget, u8),
     ADDSP(u8),
@@ -146,7 +146,11 @@ impl Instruction {
         match byte {
             0x00 => Some(Instruction::NOP(cycles)),
             0x10 => Some(Instruction::STOP(cycles)),
-            0x20 | 0x30 | 0x18 | 0x28 | 0x38 => Some(Instruction::JR(JumpCond::from(byte), cycles, conditional_cycle(byte))),
+            0x20 | 0x30 | 0x18 | 0x28 | 0x38 => Some(Instruction::JR(
+                JumpCond::from(byte),
+                cycles,
+                conditional_cycle(byte),
+            )),
             0x76 => Some(Instruction::HALT(cycles)),
             0x40..=0x7F
             | 0x01 | 0x11 | 0x21 | 0x31
@@ -210,23 +214,83 @@ impl Instruction {
             0xD5 => Some(Instruction::PUSH(StackTarget::DE, cycles)),
             0xE5 => Some(Instruction::PUSH(StackTarget::HL, cycles)),
             0xF5 => Some(Instruction::PUSH(StackTarget::AF, cycles)),
-            0xC0 => Some(Instruction::RET(JumpCond::NotZero, cycles, conditional_cycle(byte))),
-            0xD0 => Some(Instruction::RET(JumpCond::NotCarry, cycles, conditional_cycle(byte))),
-            0xC8 => Some(Instruction::RET(JumpCond::Zero, cycles, conditional_cycle(byte))),
-            0xD8 => Some(Instruction::RET(JumpCond::Carry, cycles, conditional_cycle(byte))),
-            0xC9 => Some(Instruction::RET(JumpCond::Always, cycles, conditional_cycle(byte))),
+            0xC0 => Some(Instruction::RET(
+                JumpCond::NotZero,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xD0 => Some(Instruction::RET(
+                JumpCond::NotCarry,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xC8 => Some(Instruction::RET(
+                JumpCond::Zero,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xD8 => Some(Instruction::RET(
+                JumpCond::Carry,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xC9 => Some(Instruction::RET(
+                JumpCond::Always,
+                cycles,
+                conditional_cycle(byte),
+            )),
             0xD9 => Some(Instruction::RETI(cycles)),
-            0xC2 => Some(Instruction::JP(JumpCond::NotZero, cycles, conditional_cycle(byte))),
-            0xD2 => Some(Instruction::JP(JumpCond::NotCarry, cycles, conditional_cycle(byte))),
-            0xC3 => Some(Instruction::JP(JumpCond::Always, cycles, conditional_cycle(byte))),
-            0xCA => Some(Instruction::JP(JumpCond::Zero, cycles, conditional_cycle(byte))),
-            0xDA => Some(Instruction::JP(JumpCond::Carry, cycles, conditional_cycle(byte))),
+            0xC2 => Some(Instruction::JP(
+                JumpCond::NotZero,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xD2 => Some(Instruction::JP(
+                JumpCond::NotCarry,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xC3 => Some(Instruction::JP(
+                JumpCond::Always,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xCA => Some(Instruction::JP(
+                JumpCond::Zero,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xDA => Some(Instruction::JP(
+                JumpCond::Carry,
+                cycles,
+                conditional_cycle(byte),
+            )),
             0xE9 => Some(Instruction::JPHL(cycles)),
-            0xC4 => Some(Instruction::CALL(JumpCond::NotZero, cycles, conditional_cycle(byte))),
-            0xD4 => Some(Instruction::CALL(JumpCond::NotCarry, cycles, conditional_cycle(byte))),
-            0xCC => Some(Instruction::CALL(JumpCond::Zero, cycles, conditional_cycle(byte))),
-            0xDC => Some(Instruction::CALL(JumpCond::Carry, cycles, conditional_cycle(byte))),
-            0xCD => Some(Instruction::CALL(JumpCond::Always, cycles, conditional_cycle(byte))),
+            0xC4 => Some(Instruction::CALL(
+                JumpCond::NotZero,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xD4 => Some(Instruction::CALL(
+                JumpCond::NotCarry,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xCC => Some(Instruction::CALL(
+                JumpCond::Zero,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xDC => Some(Instruction::CALL(
+                JumpCond::Carry,
+                cycles,
+                conditional_cycle(byte),
+            )),
+            0xCD => Some(Instruction::CALL(
+                JumpCond::Always,
+                cycles,
+                conditional_cycle(byte),
+            )),
             0xC7 => Some(Instruction::RST(RestartAddr::H00, cycles)),
             0xD7 => Some(Instruction::RST(RestartAddr::H10, cycles)),
             0xE7 => Some(Instruction::RST(RestartAddr::H20, cycles)),

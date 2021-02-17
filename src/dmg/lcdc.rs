@@ -50,19 +50,19 @@ impl Default for Lcdc {
 impl std::convert::From<&Lcdc> for u8 {
     fn from(lcdc: &Lcdc) -> u8 {
         (if lcdc.lcdc_enabled { 1 } else { 0 }) << LCDC_ENABLED_POS
-           | TileMap::u8_from_window(&lcdc.window_tile_map_display_select)
-           | (if lcdc.window_display { 1 } else { 0 }) << WINDOW_DISPLAY_POS
-           | u8::from(&lcdc.bg_window_tile_data_select)
-           | TileMap::u8_from_bg(&lcdc.bg_tile_map_data_select)
-           | u8::from(&lcdc.obj_size)
-           | (if lcdc.obj_display { 1 } else { 0 }) << OBJ_DISPLAY_POS
-           | (if lcdc.bg_window_display { 1 } else { 0 })
+            | TileMap::u8_from_window(&lcdc.window_tile_map_display_select)
+            | (if lcdc.window_display { 1 } else { 0 }) << WINDOW_DISPLAY_POS
+            | u8::from(&lcdc.bg_window_tile_data_select)
+            | TileMap::u8_from_bg(&lcdc.bg_tile_map_data_select)
+            | u8::from(&lcdc.obj_size)
+            | (if lcdc.obj_display { 1 } else { 0 }) << OBJ_DISPLAY_POS
+            | (if lcdc.bg_window_display { 1 } else { 0 })
     }
 }
 
 impl std::convert::From<&u8> for Lcdc {
     fn from(byte: &u8) -> Lcdc {
-        let lcdc_enabled = (byte >> LCDC_ENABLED_POS) & 0b1 == 1; 
+        let lcdc_enabled = (byte >> LCDC_ENABLED_POS) & 0b1 == 1;
         let window_tile_map_display_select = TileMap::from_window(byte);
         let window_display = (byte >> WINDOW_DISPLAY_POS) & 0b1 == 1;
         let bg_window_tile_data_select = TileData::from(byte);
@@ -153,7 +153,7 @@ impl TileMap {
             TileMap::S9C00 => 64,
         }
     }
-    
+
     fn u8_from_bg(tile: &TileMap) -> u8 {
         match tile {
             TileMap::S9800 => 0,

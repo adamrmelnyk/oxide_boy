@@ -1,9 +1,9 @@
 use crate::dmg::apu::Apu;
+use crate::dmg::busconnection::BusConnection;
 use crate::dmg::joypad::Joypad;
 use crate::dmg::memory::{Interrupt, Memory};
 use crate::dmg::ppu::PPU;
 use crate::dmg::timer::Timer;
-use crate::dmg::busconnection::BusConnection;
 
 /// Struct for representing the bus which serves as the interface
 /// through which the cpu can communicate with other devices
@@ -51,7 +51,7 @@ impl Bus {
                 self.apu.write(address, value)
             }
             0x8000..=0x9FFF | 0xFF40..=0xFF4B => self.ppu.write_byte(address, value),
-            0xFEA0..=0xFEFF => { /* Unused memory. Do Nothing */},
+            0xFEA0..=0xFEFF => { /* Unused memory. Do Nothing */ }
             _ => self.memory.write_byte(address, value),
         };
     }

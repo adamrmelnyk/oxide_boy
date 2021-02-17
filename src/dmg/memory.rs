@@ -7,6 +7,8 @@ use crate::dmg::busconnection::BusConnection;
 /// There are other blogs and sites with conflicting information, but these values seem
 /// to be be correct.
 const INTERNAL_RAM_START: u16 = 0xC000;
+
+#[cfg(test)]
 const INTERNAL_RAM_END: u16 = 0xDDFF;
 
 /// This RAM is a mirror echo of the above memory map. Any attempt to write to
@@ -41,14 +43,18 @@ impl Default for Memory {
 impl BusConnection for Memory {
     fn read_byte(&self, address: u16) -> u8 {
         match address {
-            ECHO_RAM_START..=ECHO_RAM_END => self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize],
+            ECHO_RAM_START..=ECHO_RAM_END => {
+                self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize]
+            }
             _ => self.memory[address as usize],
         }
     }
 
     fn write_byte(&mut self, address: u16, value: u8) {
         match address {
-            ECHO_RAM_START..=ECHO_RAM_END => self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize] = value,
+            ECHO_RAM_START..=ECHO_RAM_END => {
+                self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize] = value
+            }
             _ => self.memory[address as usize] = value,
         }
     }
@@ -213,10 +219,22 @@ impl std::convert::From<u8> for LoadType {
             0x08 => LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
             0xF9 => LoadType::Word(LoadWordTarget::SP, LoadWordSource::HL),
             0x40..=0x7F
-            | 0x06 | 0x16 | 0x26 | 0x36
-            | 0x02 | 0x12 | 0x22 | 0x32
-            | 0x0A | 0x1A | 0x2A | 0x3A
-            | 0x0E | 0x1E | 0x2E | 0x3E => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
+            | 0x06
+            | 0x16
+            | 0x26
+            | 0x36
+            | 0x02
+            | 0x12
+            | 0x22
+            | 0x32
+            | 0x0A
+            | 0x1A
+            | 0x2A
+            | 0x3A
+            | 0x0E
+            | 0x1E
+            | 0x2E
+            | 0x3E => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }
     }

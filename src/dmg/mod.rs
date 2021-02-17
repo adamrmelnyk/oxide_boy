@@ -1,12 +1,12 @@
 pub mod apu;
 pub mod bus;
+pub mod busconnection;
 pub mod cpu;
 pub mod instructions;
 pub mod joypad;
+pub mod lcdc;
 pub mod memory;
 pub mod ppu;
 pub mod registers;
-pub mod timer;
-pub mod busconnection;
 pub mod stat;
-pub mod lcdc;
+pub mod timer;

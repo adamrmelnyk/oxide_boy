@@ -1081,7 +1081,11 @@ fn writing_to_ly() {
     let mut cpu = setup();
     assert_eq!(cpu.bus.read_byte(0xFF44), 0);
     cpu.bus.write_byte(0xFF44, 0x40);
-    assert_eq!(cpu.bus.read_byte(0xFF40), 0, "ly should be reset to zero if we write to it");
+    assert_eq!(
+        cpu.bus.read_byte(0xFF40),
+        0,
+        "ly should be reset to zero if we write to it"
+    );
 }
 
 #[test]

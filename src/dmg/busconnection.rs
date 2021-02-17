@@ -3,7 +3,7 @@ pub trait BusConnection {
     fn read_byte(&self, address: u16) -> u8;
 
     /// Writes a byte to a given address
-    fn write_byte(&mut self, address:u16, value: u8);
+    fn write_byte(&mut self, address: u16, value: u8);
 
     /// Reads the word from the address
     /// Note that we are using little-endian

@@ -36,7 +36,7 @@ impl Bus {
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.read(address)
             }
-            0x8000..=0x9FFF | 0xFF40..=0xFF4B => self.ppu.read_byte(address),
+            0x8000..=0x9FFF | 0xFF40..=0xFF4B | 0xFE00..=0xFE9F => self.ppu.read_byte(address),
             0xFEA0..=0xFEFF => 0xFF, /* Unused Memory. Return Default value */
             _ => self.memory.read_byte(address),
         }
@@ -50,7 +50,9 @@ impl Bus {
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.write(address, value)
             }
-            0x8000..=0x9FFF | 0xFF40..=0xFF4B => self.ppu.write_byte(address, value),
+            0x8000..=0x9FFF | 0xFF40..=0xFF4B | 0xFE00..=0xFE9F => {
+                self.ppu.write_byte(address, value)
+            }
             0xFEA0..=0xFEFF => { /* Unused memory. Do Nothing */ }
             _ => self.memory.write_byte(address, value),
         };
@@ -153,4 +155,11 @@ fn vram() {
     let mut bus = setup();
     bus.write_byte(0x9000, 0xAA);
     assert_eq!(bus.ppu.vram()[0x1000], 0xAA);
+}
+
+#[test]
+fn oam() {
+    let mut bus = setup();
+    bus.write_byte(0xFE10, 0xAA);
+    assert_eq!(bus.ppu.oam()[0x0010], 0xAA);
 }

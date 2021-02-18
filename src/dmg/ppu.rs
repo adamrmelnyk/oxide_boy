@@ -37,6 +37,7 @@ pub struct PPU {
     wx: u8, //0xFF4B
     scanline_counter: u16,
     vram: [u8; 8192],
+    oam: [u8; 160],
 }
 
 impl Default for PPU {
@@ -55,6 +56,7 @@ impl Default for PPU {
             wx: 0,
             scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
             vram: [0; 8192],
+            oam: [0; 160],
         }
     }
 }
@@ -63,6 +65,7 @@ impl BusConnection for PPU {
     fn read_byte(&self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.read_vram(address),
+            0xFE00..=0xFE9F => self.read_oam(address),
             0xFF40 => u8::from(&self.lcdc),
             0xFF41 => u8::from(&self.stat),
             0xFF42 => self.scy,
@@ -81,6 +84,7 @@ impl BusConnection for PPU {
     fn write_byte(&mut self, address: u16, value: u8) {
         match address {
             0x8000..=0x9FFF => self.write_vram(address, value),
+            0xFE00..=0xFE9F => self.write_oam(address, value),
             0xFF40 => self.lcdc = Lcdc::from(&value),
             0xFF41 => self.stat = Stat::from(&value),
             0xFF42 => self.scy = value,
@@ -204,6 +208,22 @@ impl PPU {
         }
     }
 
+    /// OAM is only accessible during Modes 0 & 1
+    /// Reading when the mode flag is set to 2 or 3 will return the default value of 0xFF
+    /// See: https://gbdev.io/pandocs/#accessing-vram-and-oam for more info
+    fn read_oam(&self, address: u16) -> u8 {
+        match self.stat.mode_flag {
+            LcdMode::HBlank | LcdMode::VBlank => self.oam[(address - 0xFE00) as usize],
+            LcdMode::SearchSpriteAttributes | LcdMode::TransferingDataToLCDDriver => 0xFF,
+        }
+    }
+
+    fn write_oam(&mut self, address: u16, value: u8) {
+        if self.stat.mode_flag == LcdMode::HBlank || self.stat.mode_flag == LcdMode::VBlank {
+            self.oam[(address - 0xFE00) as usize] = value;
+        }
+    }
+
     #[cfg(test)]
     pub fn lcdc(&self) -> u8 {
         u8::from(&self.lcdc)
@@ -217,6 +237,11 @@ impl PPU {
     #[cfg(test)]
     pub fn vram(&self) -> [u8; 8192] {
         self.vram
+    }
+
+    #[cfg(test)]
+    pub fn oam(&self) -> [u8; 160] {
+        self.oam
     }
 }
 
@@ -254,6 +279,14 @@ fn write_to_vram() {
 }
 
 #[test]
+fn write_to_end_of_vram() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0x9FFF, 0xAA);
+    assert_eq!(ppu.vram()[0x1FFF], 0xAA);
+    assert_eq!(ppu.read_byte(0x9FFF), 0xAA);
+}
+
+#[test]
 fn read_vram_when_stat_mode_3() {
     let mut ppu = PPU::default();
     ppu.write_byte(0x9000, 0xAA);
@@ -282,4 +315,51 @@ fn write_vram_when_stat_mode_3() {
         "VRAM should not have been written to a second time"
     );
 }
+
+#[test]
+fn write_to_oam() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0xFE10, 0xAA);
+    assert_eq!(ppu.oam()[0x0010], 0xAA);
+    assert_eq!(ppu.read_byte(0xFE10), 0xAA);
+}
+
+#[test]
+fn write_to_end_of_oam() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0xFE9F, 0xAA);
+    assert_eq!(ppu.oam()[0x009F], 0xAA);
+    assert_eq!(ppu.read_byte(0xFE9f), 0xAA);
+}
+
+#[test]
+fn read_oam_when_stat_mode_3() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0xFE10, 0xAA);
+    ppu.stat.mode_flag = LcdMode::TransferingDataToLCDDriver;
+    assert_eq!(
+        ppu.oam()[0x0010],
+        0xAA,
+        "The correct byte 0xAA should be present in OAM"
+    );
+    assert_eq!(
+        ppu.read_byte(0xFE10),
+        0xFF,
+        "OAM read through it's public methods should return 0xFF when disabled"
+    );
+}
+
+#[test]
+fn write_oam_when_stat_mode_3() {
+    let mut ppu = PPU::default();
+    ppu.write_byte(0xFE10, 0xAA);
+    ppu.stat.mode_flag = LcdMode::TransferingDataToLCDDriver;
+    ppu.write_byte(0xFE10, 0xBB);
+    assert_eq!(
+        ppu.oam()[0x0010],
+        0xAA,
+        "OAM should not have been written to a second time"
+    );
+}
+
 // TODO: Tests for the step function effects on ppu.stat

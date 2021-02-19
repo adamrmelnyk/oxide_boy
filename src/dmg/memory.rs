@@ -28,12 +28,14 @@ pub enum Interrupt {
 
 pub struct Memory {
     memory: [u8; 0xFFFF + 1],
+    boot_rom: [u8; 0xFF + 1],
 }
 
 impl Default for Memory {
     fn default() -> Self {
         let mut mem = Memory {
             memory: [0; 0xFFFF + 1],
+            boot_rom: [0; 0xFF + 1],
         };
         mem.load_boot_rom();
         mem
@@ -41,9 +43,11 @@ impl Default for Memory {
 }
 
 impl BusConnection for Memory {
+    /// Reads bytes from memory, or from the boot rom if 0xFF50 is zero
     fn read_byte(&self, address: u16) -> u8 {
-        match address {
-            ECHO_RAM_START..=ECHO_RAM_END => {
+        match (address, self.memory[0xFF50] == 0) {
+            (0x00..=0xFF, true) => self.boot_rom[address as usize],
+            (ECHO_RAM_START..=ECHO_RAM_END, _) => {
                 self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize]
             }
             _ => self.memory[address as usize],
@@ -89,13 +93,13 @@ impl Memory {
         }
     }
 
-    // Loads the boot rom from 0-0x100
+    /// Loads the boot rom from 0-0xFF
     fn load_boot_rom(&mut self) {
-        let mut buffer = [0u8; 0x100];
+        let mut buffer = [0u8; 0xFF + 1];
         match File::open(BOOT_ROM) {
             Ok(mut file) => match file.read(&mut buffer[..]) {
                 Ok(_bytes) => {
-                    self.memory[0x0..0x100].copy_from_slice(&buffer);
+                    self.boot_rom[0..0xFF + 1].copy_from_slice(&buffer);
                 }
                 Err(err) => eprintln!("Error reading file: {}", err),
             },
@@ -219,22 +223,10 @@ impl std::convert::From<u8> for LoadType {
             0x08 => LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
             0xF9 => LoadType::Word(LoadWordTarget::SP, LoadWordSource::HL),
             0x40..=0x7F
-            | 0x06
-            | 0x16
-            | 0x26
-            | 0x36
-            | 0x02
-            | 0x12
-            | 0x22
-            | 0x32
-            | 0x0A
-            | 0x1A
-            | 0x2A
-            | 0x3A
-            | 0x0E
-            | 0x1E
-            | 0x2E
-            | 0x3E => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
+            | 0x06 | 0x16 | 0x26 | 0x36
+            | 0x02 | 0x12 | 0x22 | 0x32
+            | 0x0A | 0x1A | 0x2A | 0x3A
+            | 0x0E | 0x1E | 0x2E | 0x3E => LoadType::Byte(LoadByteTarget::from(byte), LoadByteSource::from(byte)),
             _ => panic!("u8 {:?} cannot be converted into a LoadType", byte),
         }
     }
@@ -276,4 +268,13 @@ fn write_to_echo_ram() {
     let mut bus = Memory::default();
     bus.write_byte(ECHO_RAM_START + 10, 0xAA);
     assert_eq!(bus.read_byte(INTERNAL_RAM_START + 10), 0xAA);
+}
+
+#[test]
+fn disable_boot_rom() {
+    let mut bus = Memory::default();
+    assert_eq!(bus.read_byte(0xFF), 0x50);
+    bus.memory[0xFF as usize] = 0x10;
+    bus.memory[0xFF50 as usize] = 1;
+    assert_eq!(bus.read_byte(0xFF), 0x10);
 }

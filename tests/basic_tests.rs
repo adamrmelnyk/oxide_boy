@@ -874,8 +874,8 @@ fn test_ldha() {
 #[test]
 fn test_ld8a() {
     let mut cpu = setup();
-    cpu.pc = 0x0011;
-    cpu.bus.write_byte(0x0012, 0x11);
+    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0x1001, 0x11);
     cpu.bus.write_byte(0xFF11, 0x10);
     cpu.execute(Instruction::LDHA8(12));
     assert_eq!(cpu.registers.a, 0x10);

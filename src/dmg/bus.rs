@@ -163,3 +163,12 @@ fn oam() {
     bus.write_byte(0xFE10, 0xAA);
     assert_eq!(bus.ppu.oam()[0x0010], 0xAA);
 }
+
+#[test]
+fn disable_boot_rom() {
+    let mut bus = setup();
+    assert_eq!(bus.read_byte(0xFF50), 0);
+    assert_eq!(bus.read_byte(0xFF), 0x50);
+    bus.write_byte(0xFF50, 1);
+    assert_eq!(bus.read_byte(0xFF), 0, "We should be reading from memory now instead of the bootrom");
+}

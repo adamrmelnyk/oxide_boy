@@ -93,8 +93,8 @@ fn setup() -> Bus {
 #[test]
 fn write_to_mem() {
     let mut bus = setup();
-    bus.write_byte(0x1000, 0xAA);
-    assert_eq!(bus.memory.read_word(0x1000), 0xAA);
+    bus.write_byte(0xA000, 0xAA);
+    assert_eq!(bus.memory.read_word(0xA000), 0xAA);
 }
 
 #[test]

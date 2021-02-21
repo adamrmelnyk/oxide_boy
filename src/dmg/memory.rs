@@ -99,7 +99,7 @@ impl Memory {
         match File::open(BOOT_ROM) {
             Ok(mut file) => match file.read(&mut buffer[..]) {
                 Ok(_bytes) => {
-                    self.boot_rom[0..0xFF + 1].copy_from_slice(&buffer);
+                    self.boot_rom[0..=0xFF].copy_from_slice(&buffer);
                 }
                 Err(err) => eprintln!("Error reading file: {}", err),
             },
@@ -235,10 +235,10 @@ impl std::convert::From<u8> for LoadType {
 #[test]
 fn read_word() {
     let mut bus = Memory::default();
-    bus.write_byte(0x1111, 0xAA);
-    bus.write_byte(0x1112, 0xFF);
+    bus.write_byte(0xA000, 0xAA);
+    bus.write_byte(0xA001, 0xFF);
     assert_eq!(
-        bus.read_word(0x1111),
+        bus.read_word(0xA000),
         0xFFAA,
         "We expect this to be read as little endian"
     );
@@ -247,9 +247,9 @@ fn read_word() {
 #[test]
 fn write_word() {
     let mut bus = Memory::default();
-    bus.write_word(0x1111, 0xFFAA);
-    assert_eq!(bus.read_byte(0x1111), 0xAA);
-    assert_eq!(bus.read_byte(0x1112), 0xFF);
+    bus.write_word(0xA000, 0xFFAA);
+    assert_eq!(bus.read_byte(0xA000), 0xAA);
+    assert_eq!(bus.read_byte(0xA001), 0xFF);
 }
 
 #[test]
@@ -257,7 +257,7 @@ fn echo_ram() {
     let mut bus = Memory::default();
     bus.write_byte(INTERNAL_RAM_START + 1, 0xAA);
     let mut j = 0;
-    for i in INTERNAL_RAM_START..INTERNAL_RAM_END {
+    for i in INTERNAL_RAM_START..=INTERNAL_RAM_END {
         assert_eq!(bus.read_byte(ECHO_RAM_START + j), bus.read_byte(i));
         j += 1;
     }

@@ -1,6 +1,6 @@
 # Oxide Boy
 
-A gameboy emulator
+A gameboy / DMG emulator
 
 ## Building
 

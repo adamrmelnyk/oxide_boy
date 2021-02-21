@@ -195,8 +195,8 @@ fn addhl_half_overflow_test() {
 fn addsp_test() {
     let mut cpu = setup();
     cpu.sp = 0x0001;
-    cpu.bus.write_byte(0x1001, 0x01);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0x01);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::ADDSP(16));
     assert_eq!(0x0002, cpu.sp);
     assert_flags_znhc(cpu.registers, false, false, false, false);
@@ -206,8 +206,8 @@ fn addsp_test() {
 fn addsp_overflow_test() {
     let mut cpu = setup();
     cpu.sp = 0xFFFF;
-    cpu.bus.write_byte(0x1001, 0x01);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0x01);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::ADDSP(16));
     assert_eq!(0x0000, cpu.sp);
     assert_flags_znhc(cpu.registers, false, false, true, true);
@@ -217,8 +217,8 @@ fn addsp_overflow_test() {
 fn addsp_half_overflow_test() {
     let mut cpu = setup();
     cpu.sp = 0x00FF;
-    cpu.bus.write_byte(0x1001, 0x01);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0x01);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::ADDSP(16));
     assert_eq!(0x0100, cpu.sp);
     assert_flags_znhc(cpu.registers, false, false, true, false);
@@ -339,8 +339,8 @@ fn cp_test() {
 fn cp_test_next_byte() {
     let mut cpu = setup();
     cpu.registers.a = 0x0000;
-    cpu.bus.write_byte(0x1001, 0x90);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0x90);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::CP(ArithmeticTarget::D8, 8));
     assert_flags_znhc(cpu.registers, false, true, false, true);
 }
@@ -349,8 +349,8 @@ fn cp_test_next_byte() {
 fn cp_test_zero() {
     let mut cpu = setup();
     cpu.registers.a = 0x0090;
-    cpu.bus.write_byte(0x1001, 0x90);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0x90);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::CP(ArithmeticTarget::D8, 8));
     assert_flags_znhc(cpu.registers, true, true, false, false);
 }
@@ -509,9 +509,9 @@ fn load_c_plus_0xff00_from_a() {
 #[test]
 fn load_word_into_bc() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xAA);
-    cpu.bus.write_byte(0x1002, 0xFF);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0xAA);
+    cpu.bus.write_byte(0xA002, 0xFF);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::LD(
         LoadType::Word(LoadWordTarget::BC, LoadWordSource::D16),
         8,
@@ -522,7 +522,7 @@ fn load_word_into_bc() {
         "BC should be loaded with the next word we wrote in front of the pc"
     );
     assert_eq!(
-        cpu.pc, 0x1002,
+        cpu.pc, 0xA002,
         "LD reads two words so the pc should be incremented by two"
     );
 }
@@ -530,9 +530,9 @@ fn load_word_into_bc() {
 #[test]
 fn load_word_into_de() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xAA);
-    cpu.bus.write_byte(0x1002, 0xFF);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0xAA);
+    cpu.bus.write_byte(0xA002, 0xFF);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::LD(
         LoadType::Word(LoadWordTarget::DE, LoadWordSource::D16),
         8,
@@ -543,9 +543,9 @@ fn load_word_into_de() {
 #[test]
 fn load_next_word_into_sp() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xAA);
-    cpu.bus.write_byte(0x1002, 0xFF);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0xAA);
+    cpu.bus.write_byte(0xA002, 0xFF);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::LD(
         LoadType::Word(LoadWordTarget::SP, LoadWordSource::D16),
         8,
@@ -556,9 +556,9 @@ fn load_next_word_into_sp() {
 #[test]
 fn load_sp_at_address_n() {
     let mut cpu = setup();
-    cpu.bus.write_word(0x1001, 0xA1A1);
+    cpu.bus.write_word(0xA001, 0xA1A1);
     cpu.sp = 0xAAAA;
-    cpu.pc = 0x1000;
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::LD(
         LoadType::Word(LoadWordTarget::D16, LoadWordSource::SP),
         8,
@@ -580,9 +580,9 @@ fn load_hl_into_sp() {
 #[test]
 fn load_byte_at_next_address_into_a_test() {
     let mut cpu = setup();
-    cpu.bus.write_word(0x1001, 0xAAFF);
+    cpu.bus.write_word(0xA001, 0xAAFF);
     cpu.bus.write_byte(0xAAFF, 0xAA);
-    cpu.pc = 0x1000;
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::LDA(8));
     assert_eq!(cpu.registers.a, 0xAA);
 }
@@ -752,9 +752,9 @@ fn test_rst() {
 #[test]
 fn test_jump() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xAA);
-    cpu.bus.write_byte(0x1002, 0xFF);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0xAA);
+    cpu.bus.write_byte(0xA002, 0xFF);
+    cpu.pc = 0xA000;
     let (res, cycles) = cpu.execute(Instruction::JP(JumpCond::Always, 12, 16));
     assert_eq!(cycles, 16);
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
@@ -764,9 +764,9 @@ fn test_jump() {
 #[test]
 fn test_jump_zero() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xAA);
-    cpu.bus.write_byte(0x1002, 0xFF);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0xAA);
+    cpu.bus.write_byte(0xA002, 0xFF);
+    cpu.pc = 0xA000;
     cpu.registers.set_flags(true, false, false, false);
     let (res, cycles) = cpu.execute(Instruction::JP(JumpCond::Zero, 12, 16));
     assert_eq!(cycles, 16);
@@ -777,9 +777,9 @@ fn test_jump_zero() {
 #[test]
 fn test_jump_carry() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xAA);
-    cpu.bus.write_byte(0x1002, 0xFF);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0xAA);
+    cpu.bus.write_byte(0xA002, 0xFF);
+    cpu.pc = 0xA000;
     cpu.registers.set_flags(false, false, false, true);
     let (res, cycles) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
     assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
@@ -790,13 +790,13 @@ fn test_jump_carry() {
 #[test]
 fn test_no_jump_carry() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0xAA);
-    cpu.bus.write_byte(0x1002, 0xFF);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0xAA);
+    cpu.bus.write_byte(0xA002, 0xFF);
+    cpu.pc = 0xA000;
     let (new_pc, cycles) = cpu.execute(Instruction::JP(JumpCond::Carry, 12, 16));
     assert_eq!(cycles, 12);
     assert_eq!(
-        new_pc, 0x1003,
+        new_pc, 0xA003,
         "Shouldn't jump but we should still move forward to the next spot"
     );
 }
@@ -804,23 +804,23 @@ fn test_no_jump_carry() {
 #[test]
 fn test_jump_relative() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x1001, 0b0000_0101);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0b0000_0101);
+    cpu.pc = 0xA000;
     let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Always, 12, 12));
     assert_eq!(cycles, 12);
-    assert_eq!(cpu.pc, 0x1007, "Should jump five spaces");
+    assert_eq!(cpu.pc, 0xA007, "Should jump five spaces");
     assert_eq!(res, cpu.pc);
 }
 
 #[test]
 fn test_jump_relative_negative() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x020A, 0xFB);
-    cpu.pc = 0x209;
+    cpu.bus.write_byte(0xA20A, 0xFB);
+    cpu.pc = 0xA209;
     let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Always, 8, 12));
     assert_eq!(cycles, 12);
     assert_eq!(
-        cpu.pc, 0x0206,
+        cpu.pc, 0xA206,
         "Should jump back 5 spaces + the instruction length of two"
     );
     assert_eq!(cpu.pc, res);
@@ -829,25 +829,25 @@ fn test_jump_relative_negative() {
 #[test]
 fn test_jump_relative_zero() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x020A, 0xFB);
-    cpu.pc = 0x0209;
+    cpu.bus.write_byte(0xA20A, 0xFB);
+    cpu.pc = 0xA209;
     cpu.registers.set_flags(true, false, false, false);
     let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
     assert_eq!(cycles, 12);
-    assert_eq!(cpu.pc, 0x0206, "Should jump back 5 spaces");
+    assert_eq!(cpu.pc, 0xA206, "Should jump back 5 spaces");
     assert_eq!(res, cpu.pc);
 }
 
 #[test]
 fn test_jump_relative_zero_dont_jump() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0x020A, 0xFB);
-    cpu.pc = 0x0209;
+    cpu.bus.write_byte(0xA20A, 0xFB);
+    cpu.pc = 0xA209;
     cpu.registers.set_flags(false, false, false, false);
     let (res, cycles) = cpu.execute(Instruction::JR(JumpCond::Zero, 8, 12));
     assert_eq!(cycles, 8);
     assert_eq!(
-        cpu.pc, 0x020B,
+        cpu.pc, 0xA20B,
         "Should jump forward 2 spots (the instruction length)"
     );
     assert_eq!(res, cpu.pc);
@@ -874,8 +874,8 @@ fn test_ldha() {
 #[test]
 fn test_ld8a() {
     let mut cpu = setup();
-    cpu.pc = 0x1000;
-    cpu.bus.write_byte(0x1001, 0x11);
+    cpu.pc = 0xA000;
+    cpu.bus.write_byte(0xA001, 0x11);
     cpu.bus.write_byte(0xFF11, 0x10);
     cpu.execute(Instruction::LDHA8(12));
     assert_eq!(cpu.registers.a, 0x10);
@@ -939,15 +939,15 @@ fn test_pop() {
 #[test]
 fn test_call_no_jump() {
     let mut cpu = setup();
-    cpu.bus.write_word(0x1001, 0xAABB);
-    cpu.pc = 0x1000;
+    cpu.bus.write_word(0xA001, 0xAABB);
+    cpu.pc = 0xA000;
     let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
     assert_eq!(cycles, 12);
     assert_eq!(
-        res, 0x1003,
+        res, 0xA003,
         "We should not be adding to the stack pointer since call already did that"
     );
-    assert_eq!(cpu.pc, 0x1003);
+    assert_eq!(cpu.pc, 0xA003);
     assert_eq!(
         cpu.sp, 0xFFFE,
         "The Stack pointer should be at 0xFFFE because the stack is empty"
@@ -957,8 +957,8 @@ fn test_call_no_jump() {
 #[test]
 fn test_call_always_jump() {
     let mut cpu = setup();
-    cpu.bus.write_word(0x1001, 0xAABB);
-    cpu.pc = 0x1000;
+    cpu.bus.write_word(0xA001, 0xAABB);
+    cpu.pc = 0xA000;
     let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Always, 12, 24));
     assert_eq!(cycles, 24);
     assert_eq!(
@@ -975,8 +975,8 @@ fn test_call_always_jump() {
 #[test]
 fn test_call_zero_jump() {
     let mut cpu = setup();
-    cpu.bus.write_word(0x1001, 0xAABB);
-    cpu.pc = 0x1000;
+    cpu.bus.write_word(0xA001, 0xAABB);
+    cpu.pc = 0xA000;
     cpu.registers.set_flags(true, false, false, false);
     let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Zero, 12, 24));
     assert_eq!(cycles, 24);
@@ -994,8 +994,8 @@ fn test_call_zero_jump() {
 #[test]
 fn test_call_carry_jump() {
     let mut cpu = setup();
-    cpu.bus.write_word(0x1001, 0xAABB);
-    cpu.pc = 0x1000;
+    cpu.bus.write_word(0xA001, 0xAABB);
+    cpu.pc = 0xA000;
     cpu.registers.set_flags(false, false, false, true);
     let (res, cycles) = cpu.execute(Instruction::CALL(JumpCond::Carry, 12, 24));
     assert_eq!(cycles, 24);
@@ -1048,11 +1048,11 @@ fn test_ret_zero_dont_ret() {
 #[test]
 fn test_ldaby() {
     let mut cpu = setup();
-    cpu.pc = 0x1000;
-    cpu.bus.write_word(0x1001, 0xAABB);
+    cpu.pc = 0xA000;
+    cpu.bus.write_word(0xA001, 0xAABB);
     cpu.registers.a = 0xEE;
     let (next_pc, _) = cpu.execute(Instruction::LDABY(12));
-    assert_eq!(next_pc, 0x1003);
+    assert_eq!(next_pc, 0xA003);
     assert_eq!(cpu.bus.read_word(0xAABB), 0xEE);
 }
 
@@ -1093,8 +1093,8 @@ fn reading_from_lcdc() {
     let mut cpu = setup();
     assert_eq!(cpu.registers.a, 0);
     cpu.bus.write_byte(0xFF40, 0x40);
-    cpu.bus.write_byte(0x1001, 0x40);
-    cpu.pc = 0x1000;
+    cpu.bus.write_byte(0xA001, 0x40);
+    cpu.pc = 0xA000;
     cpu.execute(Instruction::LDHA8(12));
     assert_eq!(cpu.registers.a, 0x40);
 }

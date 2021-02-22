@@ -10,3 +10,7 @@ pub mod ppu;
 pub mod registers;
 pub mod stat;
 pub mod timer;
+pub mod boot_rom;
+pub mod cartridge;
+pub mod rom_only;
+pub mod mbc1;

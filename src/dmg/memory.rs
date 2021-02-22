@@ -1,6 +1,3 @@
-use std::fs::File;
-use std::io::Read;
-
 use crate::dmg::busconnection::BusConnection;
 
 /// These values are taken from The pan docs at https://gbdev.io/pandocs/#memory-map
@@ -15,8 +12,6 @@ const INTERNAL_RAM_END: u16 = 0xDDFF;
 const ECHO_RAM_START: u16 = 0xE000;
 const ECHO_RAM_END: u16 = 0xFDFF;
 
-const BOOT_ROM: &str = "src/dmg/rom/DMG_ROM.bin";
-
 pub enum Interrupt {
     VBlank,
     LcdStat,
@@ -28,16 +23,13 @@ pub enum Interrupt {
 
 pub struct Memory {
     memory: [u8; 0xFFFF + 1],
-    boot_rom: [u8; 0xFF + 1],
 }
 
 impl Default for Memory {
     fn default() -> Self {
         let mut mem = Memory {
             memory: [0; 0xFFFF + 1],
-            boot_rom: [0; 0xFF + 1],
         };
-        mem.load_boot_rom();
         mem
     }
 }
@@ -45,9 +37,8 @@ impl Default for Memory {
 impl BusConnection for Memory {
     /// Reads bytes from memory, or from the boot rom if 0xFF50 is zero
     fn read_byte(&self, address: u16) -> u8 {
-        match (address, self.memory[0xFF50] == 0) {
-            (0x00..=0xFF, true) => self.boot_rom[address as usize],
-            (ECHO_RAM_START..=ECHO_RAM_END, _) => {
+        match address {
+            ECHO_RAM_START..=ECHO_RAM_END => {
                 self.memory[(address - ECHO_RAM_START + INTERNAL_RAM_START) as usize]
             }
             _ => self.memory[address as usize],
@@ -90,20 +81,6 @@ impl Memory {
             Interrupt::JoypadPress
         } else {
             Interrupt::NONE
-        }
-    }
-
-    /// Loads the boot rom from 0-0xFF
-    fn load_boot_rom(&mut self) {
-        let mut buffer = [0u8; 0xFF + 1];
-        match File::open(BOOT_ROM) {
-            Ok(mut file) => match file.read(&mut buffer[..]) {
-                Ok(_bytes) => {
-                    self.boot_rom[0..=0xFF].copy_from_slice(&buffer);
-                }
-                Err(err) => eprintln!("Error reading file: {}", err),
-            },
-            Err(err) => eprintln!("Error opening file: {}", err),
         }
     }
 }
@@ -268,13 +245,4 @@ fn write_to_echo_ram() {
     let mut bus = Memory::default();
     bus.write_byte(ECHO_RAM_START + 10, 0xAA);
     assert_eq!(bus.read_byte(INTERNAL_RAM_START + 10), 0xAA);
-}
-
-#[test]
-fn disable_boot_rom() {
-    let mut bus = Memory::default();
-    assert_eq!(bus.read_byte(0xFF), 0x50);
-    bus.memory[0xFF as usize] = 0x10;
-    bus.memory[0xFF50 as usize] = 1;
-    assert_eq!(bus.read_byte(0xFF), 0x10);
 }

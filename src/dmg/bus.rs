@@ -4,6 +4,8 @@ use crate::dmg::joypad::Joypad;
 use crate::dmg::memory::{Interrupt, Memory};
 use crate::dmg::ppu::PPU;
 use crate::dmg::timer::Timer;
+use crate::dmg::boot_rom::BootRom;
+use crate::dmg::cartridge::Cartridge;
 
 /// Struct for representing the bus which serves as the interface
 /// through which the cpu can communicate with other devices
@@ -13,6 +15,8 @@ pub struct Bus {
     ppu: PPU,
     apu: Apu,
     joypad: Joypad,
+    cartridge: Cartridge,
+    boot_rom: BootRom,
 }
 
 impl Default for Bus {
@@ -23,6 +27,8 @@ impl Default for Bus {
             ppu: PPU::default(),
             apu: Apu::default(),
             joypad: Joypad::default(),
+            cartridge: Cartridge::default(),
+            boot_rom: BootRom::default(),
         }
     }
 }
@@ -30,13 +36,17 @@ impl Default for Bus {
 impl Bus {
     pub fn read_byte(&self, address: u16) -> u8 {
         // TODO: Add the rest pointing to other devices
+        if address <= 0xFF && self.memory.read_byte(0xFF50) == 0 {
+            return self.boot_rom.read_byte(address);
+        }
         match address {
+            0x0000 ..= 0x7FFF | 0xA000 ..= 0xBFFF => self.cartridge.read_byte(address),
+            0x8000..=0x9FFF | 0xFF40..=0xFF4B | 0xFE00..=0xFE9F => self.ppu.read_byte(address),
             0xFF00 => self.joypad.read_byte(address),
             0xFF04..=0xFF07 => self.timer.read_byte(address),
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.read(address)
             }
-            0x8000..=0x9FFF | 0xFF40..=0xFF4B | 0xFE00..=0xFE9F => self.ppu.read_byte(address),
             0xFEA0..=0xFEFF => 0xFF, /* Unused Memory. Return Default value */
             _ => self.memory.read_byte(address),
         }
@@ -45,6 +55,7 @@ impl Bus {
     pub fn write_byte(&mut self, address: u16, value: u8) {
         // TODO: Add the rest pointing to other devices
         match address {
+            0x0000 ..= 0x7FFF | 0xA000 ..= 0xBFFF => self.cartridge.write_byte(address, value),
             0xFF00 => self.joypad.write_byte(address, value),
             0xFF04..=0xFF07 => self.timer.write_byte(address, value),
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
@@ -93,8 +104,8 @@ fn setup() -> Bus {
 #[test]
 fn write_to_mem() {
     let mut bus = setup();
-    bus.write_byte(0xA000, 0xAA);
-    assert_eq!(bus.memory.read_word(0xA000), 0xAA);
+    bus.write_byte(0xC000, 0xAA);
+    assert_eq!(bus.memory.read_word(0xC000), 0xAA);
 }
 
 #[test]
@@ -171,4 +182,12 @@ fn disable_boot_rom() {
     assert_eq!(bus.read_byte(0xFF), 0x50);
     bus.write_byte(0xFF50, 1);
     assert_eq!(bus.read_byte(0xFF), 0, "We should be reading from memory now instead of the bootrom");
+}
+
+#[test]
+fn default_no_cart_is_rom() {
+    let mut bus = setup();
+    assert_eq!(bus.read_byte(0xA000), 0);
+    bus.write_byte(0xA000, 10);
+    assert_eq!(bus.read_byte(0xA000), 0, "0xA000 should still be zero because we have no cart and default to ROM");
 }

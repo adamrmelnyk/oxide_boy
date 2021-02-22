@@ -22,6 +22,7 @@ Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot 
 
 ## TODO
 
+* Finish MBC1
 * Timers
   * The last thing the timer needs to do is trigger the interrupt from the step function which is marked with a TODO
 * GUI
@@ -33,7 +34,7 @@ Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot 
 * Sound
   * Step function needs to be implemented
 * I/O
-* CLI args so we can accept a ROM
+* CLI args so we can accept a ROM / Cartridge
 * Shutdown after locking up at 0xe9 of the boot ROM
 * Hard code the boot rom so we don't need a file for it?
 

@@ -22,7 +22,8 @@ Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot 
 
 ## TODO
 
-* Finish MBC1
+* MBC1
+  * Read a save file for the RAM if one exists (And if it has a battery)
 * Timers
   * The last thing the timer needs to do is trigger the interrupt from the step function which is marked with a TODO
 * GUI

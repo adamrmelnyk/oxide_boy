@@ -27,10 +27,9 @@ pub struct Memory {
 
 impl Default for Memory {
     fn default() -> Self {
-        let mut mem = Memory {
+        Memory {
             memory: [0; 0xFFFF + 1],
-        };
-        mem
+        }
     }
 }
 

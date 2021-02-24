@@ -11,26 +11,25 @@ pub struct BootRom {
 
 impl Default for BootRom {
     fn default() -> BootRom {
-        let mut boot_rom = BootRom {
-            rom: [0; 0xFF + 1],
-        };
-        boot_rom.load_boot_rom();
-        boot_rom
+        BootRom {
+            rom: load_boot_rom(),
+        }
     }
 }
 
-impl BootRom {
-    /// Loads the boot rom from 0-0xFF
-    fn load_boot_rom(&mut self) {
-        let mut buffer = [0u8; 0xFF + 1];
-        match File::open(BOOT_ROM) {
-            Ok(mut file) => match file.read(&mut buffer[..]) {
-                Ok(_bytes) => {
-                    self.rom[0..=0xFF].copy_from_slice(&buffer);
-                }
-                Err(err) => eprintln!("Error reading file: {}", err),
-            },
-            Err(err) => eprintln!("Error opening file: {}", err),
+fn load_boot_rom() -> [u8; 0x100] {
+    let mut buffer = [0u8; 0xFF + 1];
+    match File::open(BOOT_ROM) {
+        Ok(mut file) => match file.read(&mut buffer[..]) {
+            Ok(_bytes) => buffer,
+            Err(err) => {
+                eprintln!("Error reading file: {}", err);
+                [0u8; 0x100]
+            }
+        },
+        Err(err) => {
+            eprintln!("Error opening file: {}", err);
+            [0u8; 0x100]
         }
     }
 }

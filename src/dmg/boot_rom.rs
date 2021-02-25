@@ -7,12 +7,14 @@ const BOOT_ROM: &str = "src/dmg/rom/DMG_ROM.bin";
 
 pub struct BootRom {
     rom: [u8; 0xFF + 1],
+    enabled: bool,
 }
 
 impl Default for BootRom {
     fn default() -> BootRom {
         BootRom {
             rom: load_boot_rom(),
+            enabled: true,
         }
     }
 }
@@ -39,8 +41,18 @@ impl BusConnection for BootRom {
         self.rom[address as usize]
     }
 
-    fn write_byte(&mut self, _address: u16, _value: u8) {
-        /* Do nothing this is ROM */
+    fn write_byte(&mut self, address: u16, value: u8) {
+        match address {
+            0..=0xFF => { /* Do nothing this is ROM */ },
+            0xFF50 => self.enabled = value == 0,
+            _ => panic!("This should never happen!")
+        }
+    }
+}
+
+impl BootRom {
+    pub fn enabled(&self) -> bool {
+        self.enabled
     }
 }
 

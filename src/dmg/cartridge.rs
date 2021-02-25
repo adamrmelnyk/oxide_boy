@@ -82,8 +82,14 @@ impl std::convert::From<u8> for Type {
 
 impl Default for Cartridge {
     fn default() -> Cartridge {
+        Cartridge::new(DEFAULT_ROM)
+    }
+}
+
+impl Cartridge {
+    pub fn new(file_name: &str) -> Cartridge {
         let mut data = vec!();
-        match File::open(DEFAULT_ROM) {
+        match File::open(file_name) {
             Ok(mut file) => match file.read_to_end(&mut data) {
                 Ok(_size) => {},
                 Err(err) => eprintln!("Error reading file: {}", err),

@@ -36,7 +36,7 @@ impl Default for Bus {
 impl Bus {
     pub fn read_byte(&self, address: u16) -> u8 {
         // TODO: Add the rest pointing to other devices
-        if address <= 0xFF && self.memory.read_byte(0xFF50) == 0 {
+        if address <= 0xFF && self.boot_rom.enabled() {
             return self.boot_rom.read_byte(address);
         }
         match address {
@@ -44,10 +44,14 @@ impl Bus {
             0x8000..=0x9FFF | 0xFF40..=0xFF4B | 0xFE00..=0xFE9F => self.ppu.read_byte(address),
             0xFF00 => self.joypad.read_byte(address),
             0xFF04..=0xFF07 => self.timer.read_byte(address),
-            0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
+            0xFF10..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF, /* Unused Memory. Return Default value */
+            0xFF01..=0xFF03 => {
+                eprintln!("Unimplementd");
+                0xFF // TODO: The serial transfer port
+            },
             _ => self.memory.read_byte(address),
         }
     }
@@ -64,7 +68,9 @@ impl Bus {
             0x8000..=0x9FFF | 0xFF40..=0xFF4B | 0xFE00..=0xFE9F => {
                 self.ppu.write_byte(address, value)
             }
+            0xFF01..=0xFF03 => eprintln!("Unimplementd"),
             0xFEA0..=0xFEFF => { /* Unused memory. Do Nothing */ }
+            0xFF50 => self.boot_rom.write_byte(address, value),
             _ => self.memory.write_byte(address, value),
         };
     }
@@ -181,12 +187,20 @@ fn disable_boot_rom() {
     assert_eq!(bus.read_byte(0xFF50), 0);
     assert_eq!(bus.read_byte(0xFF), 0x50);
     bus.write_byte(0xFF50, 1);
-    assert_eq!(bus.read_byte(0xFF), 0, "We should be reading from memory now instead of the bootrom");
+    assert_eq!(bus.read_byte(0xFF), 0xFF, "We should be reading from memory now instead of the bootrom");
 }
 
 #[test]
 fn default_no_cart_is_rom() {
-    let mut bus = setup();
+    let mut bus = Bus {
+        memory: Memory::default(),
+        timer: Timer::default(),
+        ppu: PPU::default(),
+        apu: Apu::default(),
+        joypad: Joypad::default(),
+        cartridge: Cartridge::new("notARealFile.bin"),
+        boot_rom: BootRom::default(),
+    };
     assert_eq!(bus.read_byte(0xA000), 0);
     bus.write_byte(0xA000, 10);
     assert_eq!(bus.read_byte(0xA000), 0, "0xA000 should still be zero because we have no cart and default to ROM");

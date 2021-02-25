@@ -96,7 +96,7 @@ impl BusConnection for PPU {
             0xFF49 => self.obp1 = value,
             0xFF4A => self.wy = value,
             0xFF4B => self.wx = value,
-            _ => panic!("This should never happen"),
+            _ => panic!("This should never happen: {:#02x}", address),
         }
     }
 }

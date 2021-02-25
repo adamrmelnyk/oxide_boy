@@ -1121,6 +1121,6 @@ fn writing_to_wave_pattern_ram() {
 #[test]
 fn writing_to_default_rom_does_nothing() {
     let mut cpu = setup();
-    cpu.bus.write_byte(0xA000, 0x40);
-    assert_eq!(cpu.bus.read_byte(0xA000), 0);
+    cpu.bus.write_byte(0x7FFF, 0x40);
+    assert_eq!(cpu.bus.read_byte(0x7FFF), 0);
 }

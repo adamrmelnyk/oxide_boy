@@ -22,6 +22,7 @@ Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot 
 
 ## TODO
 
+* Alter tests so they still work when there is no Default rom
 * MBC1
   * Read a save file for the RAM if one exists (And if it has a battery)
 * Timers
@@ -49,5 +50,5 @@ This emulator couldn't have been built without the help of many others (this is 
 * [GB OP Codes](https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
 * [Emudev](https://emudev.de/gameboy-emulator/overview/)
 * [The Ultimate Gameboy Talk](https://www.youtube.com/watch?v=HyzD8pNlpwI&t=29m12s)
-* [GBDev.io](https://gbdev.io/)
+* [Pan Docs](https://gbdev.io/pandocs): An excellent guide with a lot of information on the nuts and bolts of the DMG
 * [An archived page](https://web.archive.org/web/20181011215339/http://www.codeslinger.co.uk/pages/projects/gameboy.html) that contains lots of documentation and implementation details for parts of the DMG.

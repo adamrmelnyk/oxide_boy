@@ -77,7 +77,7 @@ impl BusConnection for PPU {
             0xFF49 => self.obp1,
             0xFF4A => self.wy,
             0xFF4B => self.wx,
-            _ => panic!("This should never happen"),
+            _ => panic!("This should never happen! Address: {:#02x}", address),
         }
     }
 
@@ -96,7 +96,7 @@ impl BusConnection for PPU {
             0xFF49 => self.obp1 = value,
             0xFF4A => self.wy = value,
             0xFF4B => self.wx = value,
-            _ => panic!("This should never happen: {:#02x}", address),
+            _ => panic!("This should never happen! Address: {:#02x}", address),
         }
     }
 }
@@ -218,6 +218,8 @@ impl PPU {
         }
     }
 
+    /// OAM is only accessible during Modes 0 & 1
+    /// Writing when the mode flag is set to 2 or 3 will not change the data
     fn write_oam(&mut self, address: u16, value: u8) {
         if self.stat.mode_flag == LcdMode::HBlank || self.stat.mode_flag == LcdMode::VBlank {
             self.oam[(address - 0xFE00) as usize] = value;

@@ -65,11 +65,12 @@ impl Bus {
             0xFF10..=0xFF14 | 0xFF16..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => {
                 self.apu.write(address, value)
             }
-            0x8000..=0x9FFF | 0xFF40..=0xFF4B | 0xFE00..=0xFE9F => {
+            0x8000..=0x9FFF | 0xFF40..=0xFF45 | 0xFF47..=0xFF4B | 0xFE00..=0xFE9F => {
                 self.ppu.write_byte(address, value)
             }
             0xFF01..=0xFF03 => eprintln!("Unimplementd"),
             0xFEA0..=0xFEFF => { /* Unused memory. Do Nothing */ }
+            0xFF46 => self.dma(value),
             0xFF50 => self.boot_rom.write_byte(address, value),
             _ => self.memory.write_byte(address, value),
         };
@@ -99,6 +100,17 @@ impl Bus {
     pub fn step(&mut self, cycles: u8) {
         self.timer.step(cycles);
         self.ppu.step(cycles);
+    }
+
+    /// Initiates the dma transfer
+    /// Moves sprite data from to OAM
+    /// TODO: This takes 160 cycles
+    fn dma(&mut self, value: u8) {
+        let source_address = (value as u16) << 8;
+        for i in 0..=0x9F {
+            let val = self.read_byte(source_address + i);
+            self.write_byte(0xFE00 + i, val);
+        }
     }
 }
 
@@ -204,4 +216,16 @@ fn default_no_cart_is_rom() {
     assert_eq!(bus.read_byte(0xA000), 0);
     bus.write_byte(0xA000, 10);
     assert_eq!(bus.read_byte(0xA000), 0, "0xA000 should still be zero because we have no cart and default to ROM");
+}
+
+#[test]
+fn dma_transfer() {
+    let mut bus = Bus::default();
+    assert_eq!(bus.read_byte(0x0101), 0xC3);
+    assert_eq!(bus.read_byte(0x0102), 0x50);
+    assert_eq!(bus.read_byte(0xFE01), 0);
+    assert_eq!(bus.read_byte(0xFE02), 0);
+    bus.write_byte(0xFF46, 0x1);
+    assert_eq!(bus.read_byte(0xFE01), 0xC3);
+    assert_eq!(bus.read_byte(0xFE02), 0x50);
 }

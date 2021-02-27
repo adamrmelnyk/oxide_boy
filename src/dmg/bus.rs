@@ -2,7 +2,7 @@ use crate::dmg::apu::Apu;
 use crate::dmg::busconnection::BusConnection;
 use crate::dmg::joypad::Joypad;
 use crate::dmg::memory::{Interrupt, Memory};
-use crate::dmg::ppu::PPU;
+use crate::dmg::ppu::ppu::PPU;
 use crate::dmg::timer::Timer;
 use crate::dmg::boot_rom::BootRom;
 use crate::dmg::cartridge::Cartridge;

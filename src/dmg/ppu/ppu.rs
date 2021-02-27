@@ -1,6 +1,6 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::lcdc::Lcdc;
-use crate::dmg::stat::{LcdMode, Stat};
+use crate::dmg::ppu::lcdc::Lcdc;
+use crate::dmg::ppu::stat::{LcdMode, Stat};
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;
@@ -37,7 +37,9 @@ pub struct PPU {
     wx: u8, //0xFF4B
     scanline_counter: u16,
     vram: [u8; 8192],
-    oam: [u8; 160],
+
+    /// An array of 40, 4-byte objects
+    oam: [u8; 160], // could also be [u32; 40]
 }
 
 impl Default for PPU {

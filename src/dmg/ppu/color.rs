@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-enum Color {
+pub enum Color {
     White,
     LightGrey,
     DarkGrey,

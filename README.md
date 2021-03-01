@@ -2,7 +2,7 @@
 
 A gameboy / DMG emulator
 
-This project is currently in progress and has a few missing parts. Currently there is no GUI, sound or user input, though the vast majority of the project including the run loop and CPU instructions are implemented.
+This project is currently in progress and has a few missing parts. Currently there is no GUI, sound or user input, though the vast majority of the project including the run loop and CPU instructions are implemented. Currently running only displays and executes the instructions without a GUI.
 
 ## Building
 
@@ -29,7 +29,6 @@ Currently running tests requires a rom to be present at `/src/dmg/rom/DEFAULT_RO
 ```sh
 cargo test
 ```
-
 
 ## TODO
 

@@ -11,6 +11,40 @@ pub struct OamEntry {
     attributes: OamEntryFlag,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Palette {
+    Obp0,
+    Obp1,
+}
+
+impl OamEntry {
+    pub fn new(oam: [u8; 160], sprite: usize) -> OamEntry {
+        let index: usize = sprite * 4 ;
+        OamEntry {
+            y_pos: oam[index] - 16,
+            x_pos: oam[index + 1] - 8,
+            tile_location: oam[index + 2],
+            attributes: OamEntryFlag::from(oam[index + 3]),
+        }
+    }
+
+    pub fn y_pos(self) -> u8 {
+        self.y_pos
+    }
+
+    pub fn x_pos(self) -> u8 {
+        self.x_pos
+    }
+
+    pub fn tile_location(self) -> u8 {
+        self.tile_location
+    }
+
+    pub fn attributes(self) -> OamEntryFlag {
+        self.attributes
+    }
+}
+
 pub struct OamEntryFlag {
     obj_to_bg_priority: bool,
     y_flip: bool, // vertically mirrored
@@ -23,31 +57,21 @@ pub struct OamEntryFlag {
     _cgb_palette_number: u8,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Palette {
-    Obp0,
-    Obp1,
-}
-
-impl OamEntry {
-    fn new(oam: [u8; 160], sprite: usize) -> OamEntry {
-        let index: usize = sprite * 4 ;
-        OamEntry {
-            y_pos: oam[index] - 16,
-            x_pos: oam[index + 1] - 8,
-            tile_location: oam[index + 2],
-            attributes: OamEntryFlag::from(oam[index + 3]),
-        }
-    }
-
-    pub fn attributes(self) -> OamEntryFlag {
-        self.attributes
-    }
-}
-
 impl OamEntryFlag {
-    fn obj_to_bg_priority(self) -> bool {
+    pub fn obj_to_bg_priority(self) -> bool {
         self.obj_to_bg_priority
+    }
+
+    pub fn y_flip(self) -> bool {
+        self.y_flip
+    }
+
+    pub fn x_flip(self) -> bool {
+        self.x_flip
+    }
+
+    pub fn palette_number(self) -> Palette {
+        self.palette_number
     }
 }
 
@@ -97,5 +121,22 @@ fn convert_4_bytes_to_oam_entry() {
     assert_eq!(res.attributes.palette_number, Palette::Obp1);
 
     // Check the rest of the attributes for CGB
-// TODO: Tests for converstions
+}
+
+#[test]
+fn convert_byte_to_oamentryflag() {
+    let byte = 0b1011_0000;
+    let res = OamEntryFlag::from(byte);
+    assert_eq!(res.obj_to_bg_priority, true);
+    assert_eq!(res.y_flip, false);
+    assert_eq!(res.x_flip, true);
+    assert_eq!(res.palette_number, Palette::Obp1);
+}
+
+#[test]
+fn convert_byte_to_palette_number() {
+    let byte = 0b0001_0000;
+    assert_eq!(Palette::from(byte), Palette::Obp1);
+    let byte = 0;
+    assert_eq!(Palette::from(byte), Palette::Obp0);
 }

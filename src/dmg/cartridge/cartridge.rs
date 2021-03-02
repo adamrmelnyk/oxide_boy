@@ -1,6 +1,6 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::rom_only::RomOnly;
-use crate::dmg::mbc1::MBC1;
+use crate::dmg::cartridge::rom_only::RomOnly;
+use crate::dmg::cartridge::mbc1::MBC1;
 
 use std::fs::File;
 use std::io::Read;

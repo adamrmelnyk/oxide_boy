@@ -36,7 +36,7 @@ cargo test
 * MBC1
   * Read a save file for the RAM if one exists (And if it has a battery)
 * Timers
-  * The last thing the timer needs to do is trigger the interrupt from the step function which is marked with a TODO
+  * Trigger the interrupt from the step function
 * GUI
   * Render tiles
   * Render sprites
@@ -44,6 +44,7 @@ cargo test
 * Sound
   * Step function needs to be implemented
 * I/O
+  * Joypad step function
 * CLI args so we can accept a ROM / Cartridge
 * Shutdown after locking up at 0xe9 of the boot ROM
 

@@ -5,7 +5,7 @@ use crate::dmg::memory::{Interrupt, Memory};
 use crate::dmg::ppu::ppu::PPU;
 use crate::dmg::timer::Timer;
 use crate::dmg::boot_rom::BootRom;
-use crate::dmg::cartridge::Cartridge;
+use crate::dmg::cartridge::cartridge::Cartridge;
 
 /// Struct for representing the bus which serves as the interface
 /// through which the cpu can communicate with other devices

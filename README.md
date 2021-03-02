@@ -12,13 +12,38 @@ You will need nightly Rust to build this project. After installing nightly rust,
 cargo build
 ```
 
-## Running
-
-After building you can run the project by using
+## CLI
 
 ```sh
-cargo run
+oxide_boy 0.1.0
+
+USAGE:
+    oxide_boy <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+SUBCOMMANDS:
+    default    For development purposes: Runs the default rom at src/dmg/rom/DEFAULT_ROM.bin
+    help       Prints this message or the help of the given subcommand(s)
+    run        Runs the specified ROM
 ```
+
+## Running
+
+After building you can run the project by using:
+
+```sh
+oxide_boy run my_file.bin
+```
+
+or for development, to use the default rom file:
+
+```sh
+oxide_boy default
+```
+
 
 Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot ROM. As there is no CLI built yet, you will need to place the ROM at `/src/dmg/rom/DEFAULT_ROM.bin` in order to see it run.
 
@@ -45,7 +70,6 @@ cargo test
   * Step function needs to be implemented
 * I/O
   * Joypad step function
-* CLI args so we can accept a ROM / Cartridge
 * Shutdown after locking up at 0xe9 of the boot ROM
 
 ### Resources

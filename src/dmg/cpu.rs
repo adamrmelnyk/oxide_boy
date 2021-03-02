@@ -37,6 +37,17 @@ impl Default for CPU {
 }
 
 impl CPU {
+    pub fn new(file: &str) -> CPU {
+        CPU {
+            registers: Registers::default(),
+            bus: Bus::new(file),
+            pc: 0,
+            sp: 0xFFFE,
+            is_halted: false,
+            ime: false,
+        }
+    }
+
     fn set_register_by_target(&mut self, target: &ArithmeticTarget, value: u8) {
         match target {
             ArithmeticTarget::A => self.registers.a = value,

@@ -34,6 +34,18 @@ impl Default for Bus {
 }
 
 impl Bus {
+    pub fn new(file: &str) -> Bus {
+        Bus {
+            memory: Memory::default(),
+            timer: Timer::default(),
+            ppu: PPU::default(),
+            apu: Apu::default(),
+            joypad: Joypad::default(),
+            cartridge: Cartridge::new(file),
+            boot_rom: BootRom::default(),
+        }
+    }
+
     pub fn read_byte(&self, address: u16) -> u8 {
         // TODO: Add the rest pointing to other devices
         if address <= 0xFF && self.boot_rom.enabled() {

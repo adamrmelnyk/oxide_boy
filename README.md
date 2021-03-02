@@ -45,7 +45,7 @@ oxide_boy default
 ```
 
 
-Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot ROM. As there is no CLI built yet, you will need to place the ROM at `/src/dmg/rom/DEFAULT_ROM.bin` in order to see it run.
+Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot ROM. To run the default rom you will need to place the ROM at `/src/dmg/rom/DEFAULT_ROM.bin`.
 
 ## Testing
 
@@ -71,6 +71,7 @@ cargo test
 * I/O
   * Joypad step function
 * Shutdown after locking up at 0xe9 of the boot ROM
+* Log to console only in Debug mode
 
 ### Resources
 

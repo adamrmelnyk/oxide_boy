@@ -114,7 +114,7 @@ impl Cartridge {
 fn cart(cart_type: &Type, data: Vec<u8>) -> Box<dyn BusConnection> {
     match cart_type {
         Type::RomOnly => Box::new(RomOnly::new(data)),
-        Type::MBC1 => Box::new(MBC1::new(data)),
+        Type::MBC1 | Type::Mbc1Ram | Type::Mbc1RamBattery => Box::new(MBC1::new(data)),
         _ => panic!("The type: {:?}, is not implemented", cart_type),
     }
 }

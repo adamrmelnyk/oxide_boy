@@ -44,8 +44,7 @@ or for development, to use the default rom file:
 oxide_boy default
 ```
 
-
-Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot ROM. To run the default rom you will need to place the ROM at `/src/dmg/rom/DEFAULT_ROM.bin`.
+Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot ROM. To run the default rom you will need to place the ROM at `/src/dmg/rom/DEFAULT_ROM.bin`. You can find some roms made for testing [here](https://github.com/retrio/gb-test-roms)
 
 ## Testing
 

@@ -17,6 +17,15 @@ pub enum Palette {
     Obp1,
 }
 
+impl std::convert::From<Palette> for u16 {
+    fn from(palette: Palette) -> u16 {
+        match palette {
+            Palette::Obp0 => 0xFF48,
+            Palette::Obp1 => 0xFF49,
+        }
+    }
+}
+
 impl OamEntry {
     pub fn new(oam: [u8; 160], sprite: usize) -> OamEntry {
         let index: usize = sprite * 4 ;

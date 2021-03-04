@@ -40,6 +40,8 @@ pub struct PPU {
 
     /// An array of 40, 4-byte objects
     oam: [u8; 160], // could also be [u32; 40]
+
+    // screen: [[u8; 0x90]; 0xA0],
 }
 
 impl Default for PPU {
@@ -59,6 +61,7 @@ impl Default for PPU {
             scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
             vram: [0; 8192],
             oam: [0; 160],
+            // screen: [[0; 0x90]; 0xA0],
         }
     }
 }
@@ -187,7 +190,7 @@ impl PPU {
         // TODO
     }
 
-    fn render_sprites(&self) {
+    fn render_sprites(&mut self) {
         // TODO
     }
 

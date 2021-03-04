@@ -611,7 +611,7 @@ impl CPU {
             } else {
                 let jump_addr = next_byte.abs() as u16;
                 println!("next byte is dec {:#02x}", next_byte);
-                self.pc = self.pc.wrapping_sub(jump_addr - 1);
+                self.pc = self.pc.wrapping_sub(jump_addr.wrapping_sub(1));
                 println!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
             }
             (false, cond_cycle)

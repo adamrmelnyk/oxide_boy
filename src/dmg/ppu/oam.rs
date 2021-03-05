@@ -5,10 +5,10 @@ const PALETTE_NUMBER_POS: u8 = 4;
 const CGB_TILE_VRAM_BLANK_POS: u8 = 3;
 
 pub struct OamEntry {
-    y_pos: u8,
-    x_pos: u8,
-    tile_location: u8,
-    attributes: OamEntryFlag,
+    pub y_pos: i16,
+    pub x_pos: i16,
+    pub tile_location: u8,
+    pub attributes: OamEntryFlag,
 }
 
 #[derive(Debug, PartialEq)]
@@ -17,8 +17,8 @@ pub enum Palette {
     Obp1,
 }
 
-impl std::convert::From<Palette> for u16 {
-    fn from(palette: Palette) -> u16 {
+impl std::convert::From<&Palette> for u16 {
+    fn from(palette: &Palette) -> u16 {
         match palette {
             Palette::Obp0 => 0xFF48,
             Palette::Obp1 => 0xFF49,
@@ -30,58 +30,24 @@ impl OamEntry {
     pub fn new(oam: [u8; 160], sprite: usize) -> OamEntry {
         let index: usize = sprite * 4 ;
         OamEntry {
-            y_pos: oam[index] - 16,
-            x_pos: oam[index + 1] - 8,
+            y_pos: oam[index] as i16 - 16,
+            x_pos: oam[index + 1] as i16 - 8,
             tile_location: oam[index + 2],
             attributes: OamEntryFlag::from(oam[index + 3]),
         }
     }
-
-    pub fn y_pos(self) -> u8 {
-        self.y_pos
-    }
-
-    pub fn x_pos(self) -> u8 {
-        self.x_pos
-    }
-
-    pub fn tile_location(self) -> u8 {
-        self.tile_location
-    }
-
-    pub fn attributes(self) -> OamEntryFlag {
-        self.attributes
-    }
 }
 
 pub struct OamEntryFlag {
-    obj_to_bg_priority: bool,
-    y_flip: bool, // vertically mirrored
-    x_flip: bool, // horizontally mirrored
-    palette_number: Palette,
+    pub obj_to_bg_priority: bool,
+    pub y_flip: bool, // vertically mirrored
+    pub x_flip: bool, // horizontally mirrored
+    pub palette_number: Palette,
 
     /// These Flags are only required for use with
     /// the Color Gameboy
     _cgb_tile_vram_bank: bool,
     _cgb_palette_number: u8,
-}
-
-impl OamEntryFlag {
-    pub fn obj_to_bg_priority(self) -> bool {
-        self.obj_to_bg_priority
-    }
-
-    pub fn y_flip(self) -> bool {
-        self.y_flip
-    }
-
-    pub fn x_flip(self) -> bool {
-        self.x_flip
-    }
-
-    pub fn palette_number(self) -> Palette {
-        self.palette_number
-    }
 }
 
 impl std::convert::From<u8> for OamEntryFlag {

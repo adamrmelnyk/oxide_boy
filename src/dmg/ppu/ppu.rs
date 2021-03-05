@@ -1,6 +1,8 @@
 use crate::dmg::busconnection::BusConnection;
 use crate::dmg::ppu::lcdc::Lcdc;
 use crate::dmg::ppu::stat::{LcdMode, Stat};
+use crate::dmg::ppu::oam::{OamEntry, OamEntryFlag};
+use crate::dmg::ppu::color::Color;
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;
@@ -41,7 +43,7 @@ pub struct PPU {
     /// An array of 40, 4-byte objects
     oam: [u8; 160], // could also be [u32; 40]
 
-    // screen: [[u8; 0x90]; 0xA0],
+    screen: [[u8; 0x90]; 0xA0],
 }
 
 impl Default for PPU {
@@ -61,7 +63,7 @@ impl Default for PPU {
             scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
             vram: [0; 8192],
             oam: [0; 160],
-            // screen: [[0; 0x90]; 0xA0],
+            screen: [[0; 0x90]; 0xA0],
         }
     }
 }
@@ -191,7 +193,47 @@ impl PPU {
     }
 
     fn render_sprites(&mut self) {
-        // TODO
+        for sprite in 0..=39 {
+            let oam_entry = OamEntry::new(self.oam, sprite);
+            let scanline = self.ly as i16;
+            let ysize = self.lcdc.obj_size().vertical_size();
+            let x_flip = oam_entry.attributes.x_flip;
+
+            if scanline >= oam_entry.y_pos && scanline < oam_entry.y_pos + ysize {
+                let mut row = scanline - oam_entry.y_pos;
+                if oam_entry.attributes.y_flip {
+                    row = ysize - row - 1;
+                }
+
+                row *= 2; // same as for tiles
+                let data_address: u16 = (0x8000 + (oam_entry.tile_location as u16 * 16)) + row as u16;
+                let data1 = self.vram[data_address as usize];
+                let data2 = self.vram[data_address as usize + 1];
+
+                // Pixel 0 = bit 7, Pixel 1 = 6...
+                for tile_pixel in 7..=0i16 {
+                    let col = if x_flip { 7 - tile_pixel } else { tile_pixel };
+
+                    // the rest is the same as for tiles
+                    let mut color_num: u8 = get_pos_from_byte(data2,col);
+                    color_num <<= 1;
+                    color_num |= get_pos_from_byte(data1,col) ;
+
+                    let color_palette = self.read_byte(u16::from(&oam_entry.attributes.palette_number));
+                    let color = get_color(color_num, color_palette);
+                    if color != Color::White {
+
+                        let x_pix = 7 - tile_pixel ;
+
+                        let pixel = oam_entry.x_pos + x_pix;
+
+                        if (scanline >= 0) && (scanline <= 143) && (pixel >= 0) && (pixel <= 159) {
+                            self.screen[pixel as usize][scanline as usize] = color.rgb();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// VRAM is only accessible during Modes 0-2
@@ -250,6 +292,32 @@ impl PPU {
     pub fn oam(&self) -> [u8; 160] {
         self.oam
     }
+}
+
+fn get_color(num: u8, palette: u8) -> Color {
+    let (high, low) = match num {
+        0 => (1, 0),
+        1 => (3, 2),
+        2 => (5, 4),
+        3 => (7, 6),
+        _ => panic!("This should never happen: {}", num),
+    };
+ 
+    // use the palette to get the colour
+    let color = (get_pos_from_byte(palette, high) << 1) | get_pos_from_byte(palette, low);
+ 
+    match color {
+      0 => Color::White,
+      1 => Color::LightGrey,
+      2 => Color::DarkGrey,
+      3 => Color::Black,
+      _ => panic!("This should never happen: {}", color),
+    }
+}
+
+/// returns the value of the bit at pos
+fn get_pos_from_byte(byte: u8, pos: i16) -> u8 {
+    (byte >> pos) & 1
 }
 
 #[test]

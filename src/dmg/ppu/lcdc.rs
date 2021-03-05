@@ -122,7 +122,7 @@ impl std::convert::From<&u8> for TileData {
 }
 
 impl ObjSize {
-    pub fn vertical_size(&self) -> u8 {
+    pub fn vertical_size(&self) -> i16 {
         match self {
             ObjSize::S8x16 => 16,
             ObjSize::S8x8 => 8,

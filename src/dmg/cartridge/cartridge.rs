@@ -4,6 +4,7 @@ use crate::dmg::cartridge::mbc1::MBC1;
 
 use std::fs::File;
 use std::io::Read;
+use log::error;
 
 const DEFAULT_ROM: &str = "src/dmg/rom/DEFAULT_ROM.bin";
 
@@ -92,10 +93,10 @@ impl Cartridge {
         match File::open(file_name) {
             Ok(mut file) => match file.read_to_end(&mut data) {
                 Ok(_size) => {},
-                Err(err) => eprintln!("Error reading file: {}", err),
+                Err(err) => error!("Error reading file: {}", err),
             },
             Err(err) => {
-                eprintln!("Error opening file: {}, defaulting to empty RomOnly Cartridge", err);
+                error!("Error opening file: {}, defaulting to empty RomOnly Cartridge", err);
                 return Cartridge {
                     cart: Box::new(RomOnly::new(vec![0u8; 0xC000])), // This is mainly so that tests may run without a cartridge
                 }

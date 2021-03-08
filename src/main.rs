@@ -1,8 +1,11 @@
 #![feature(destructuring_assignment)]
 pub mod dmg;
 
+use log::info;
 use oxide_boy::CPU;
 use structopt::StructOpt;
+
+use env_logger;
 
 #[derive(StructOpt)]
 #[structopt(rename_all = "kebab-case")]
@@ -22,6 +25,7 @@ pub enum Command {
 }
 
 fn main() {
+    env_logger::init();
     let args = Command::from_args();
     match args {
         Command::Run { file } => run(file),
@@ -30,7 +34,7 @@ fn main() {
 }
 
 fn default() {
-    println!("Starting emulator!");
+    info!("Starting emulator!");
     let mut cpu = CPU::default();
     loop {
         cpu.step();

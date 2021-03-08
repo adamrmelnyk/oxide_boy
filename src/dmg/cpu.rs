@@ -1,3 +1,5 @@
+use log::info;
+
 use crate::dmg::bus::Bus;
 use crate::dmg::instructions::{
     ArithmeticTarget, Instruction, JumpCond, RestartAddr, SixteenBitArithmeticTarget, StackTarget,
@@ -61,17 +63,17 @@ impl CPU {
             _ => panic!("target: {:?}, not allowed", target),
         }
         if self.registers.b == 1 && &ArithmeticTarget::B == target {
-            println!("Setting b to 1");
+            info!("Setting b to 1");
         }
     }
 
     pub fn step(&mut self) {
         let mut instruction_byte = self.bus.read_byte(self.pc);
         let prefixed = instruction_byte == 0xCB;
-        println!("Instruction {:#02x}", instruction_byte);
+        info!("PC: {:#02x}, Instruction {:#02x}", self.pc, instruction_byte);
         if instruction_byte == 0xCB {
             instruction_byte = self.bus.read_byte(self.pc + 1);
-            println!("Prefix: {:#02x}", instruction_byte);
+            info!("Prefix: {:#02x}", instruction_byte);
         }
 
         let (next_pc, cycles) =
@@ -605,19 +607,19 @@ impl CPU {
         if should_jump {
             if next_byte > 0 {
                 let jump_addr = next_byte as u16;
-                println!("next byte is inc {:#02x}", next_byte);
+                info!("next byte is inc {:#02x}", next_byte);
                 self.pc = self.pc.wrapping_add(jump_addr + 1);
-                println!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
+                info!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
             } else {
                 let jump_addr = next_byte.abs() as u16;
-                println!("next byte is dec {:#02x}", next_byte);
+                info!("next byte is dec {:#02x}", next_byte);
                 self.pc = self.pc.wrapping_sub(jump_addr.wrapping_sub(1));
-                println!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
+                info!("jumping to {:#02x}, from: {:#02x}", self.pc, old_pc);
             }
             (false, cond_cycle)
         } else {
             self.pc = self.pc.wrapping_add(1);
-            println!("We didn't jump, skipping: {:#02x}", next_byte);
+            info!("We didn't jump, skipping: {:#02x}", next_byte);
             (false, cycles)
         }
     }
@@ -818,11 +820,11 @@ impl CPU {
         if should_jump {
             self.push(next_pc);
             self.pc = self.bus.read_word(self.pc.wrapping_add(1));
-            println!("Calling {:#02x}", self.pc);
+            info!("Calling {:#02x}", self.pc);
             (false, cond_cycle)
         } else {
             self.pc = next_pc;
-            println!("Calling {:#02x}", self.pc);
+            info!("Calling {:#02x}", self.pc);
             (false, cycles)
         }
     }
@@ -832,7 +834,7 @@ impl CPU {
     fn ret(&mut self, condition: JumpCond, cycles: u8, cond_cycle: u8) -> (bool, u8) {
         if self.should_jump(condition) {
             self.pc = self.pop();
-            println!("RET to {:#02x}", self.pc);
+            info!("RET to {:#02x}", self.pc);
             (false, cond_cycle)
         } else {
             (true, cycles)
@@ -880,7 +882,7 @@ impl CPU {
     fn ldha8(&mut self) -> bool {
         let n = self.read_next_byte();
         self.registers.a = self.bus.read_byte(0xFF00 + n as u16);
-        println!("A is now {:#02x}", self.registers.a);
+        info!("A is now {:#02x}", self.registers.a);
         true
     }
 

@@ -3,6 +3,8 @@ use crate::dmg::busconnection::BusConnection;
 use std::fs::File;
 use std::io::Read;
 
+use log::error;
+
 const BOOT_ROM: &str = "src/dmg/rom/DMG_ROM.bin";
 
 pub struct BootRom {
@@ -25,12 +27,12 @@ fn load_boot_rom() -> [u8; 0x100] {
         Ok(mut file) => match file.read(&mut buffer[..]) {
             Ok(_bytes) => buffer,
             Err(err) => {
-                eprintln!("Error reading file: {}", err);
+                error!("Error reading file: {}", err);
                 [0u8; 0x100]
             }
         },
         Err(err) => {
-            eprintln!("Error opening file: {}", err);
+            error!("Error opening file: {}", err);
             [0u8; 0x100]
         }
     }

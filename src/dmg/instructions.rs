@@ -1,3 +1,5 @@
+use log::info;
+
 use crate::dmg::memory::LoadType;
 
 const PREFIXED_OPERATION_CYCLES: [u8; 256] = [
@@ -306,7 +308,7 @@ impl Instruction {
             0xF8 => Some(Instruction::LDHLSP(cycles)),
             0xCB => panic!("This is a prefixed byte! This should never happen!"),
             0xD3 | 0xE3 | 0xE4 | 0xF4 | 0xDB | 0xEB | 0xEC | 0xFC | 0xDD | 0xED | 0xFD => {
-                println!("{} is an undefined function", byte);
+                info!("{} is an undefined function", byte);
                 None
             }
             0xE0 => Some(Instruction::LDHA(cycles)),

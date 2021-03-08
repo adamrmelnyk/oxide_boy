@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 cargo test;
-cargo run default;
+RUST_LOG=info cargo run run debug;

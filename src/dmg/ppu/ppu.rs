@@ -1,5 +1,5 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::ppu::lcdc::Lcdc;
+use crate::dmg::ppu::lcdc::{Lcdc, TileData};
 use crate::dmg::ppu::stat::{LcdMode, Stat};
 use crate::dmg::ppu::oam::{OamEntry, OamEntryFlag};
 use crate::dmg::ppu::color::Color;
@@ -188,7 +188,7 @@ impl PPU {
     }
 
     /// Renders the window and background tiles
-    fn render_tiles(&self) {
+    fn render_tiles(&mut self) {
         // TODO
     }
 
@@ -211,7 +211,7 @@ impl PPU {
                 let data2 = self.vram[data_address as usize + 1];
 
                 // Pixel 0 = bit 7, Pixel 1 = 6...
-                for tile_pixel in 7..=0i16 {
+                for tile_pixel in 7..=0u8 {
                     let col = if x_flip { 7 - tile_pixel } else { tile_pixel };
 
                     // the rest is the same as for tiles
@@ -225,7 +225,7 @@ impl PPU {
 
                         let x_pix = 7 - tile_pixel ;
 
-                        let pixel = oam_entry.x_pos + x_pix;
+                        let pixel = oam_entry.x_pos + x_pix as i16;
 
                         if (scanline >= 0) && (scanline <= 143) && (pixel >= 0) && (pixel <= 159) {
                             self.screen[pixel as usize][scanline as usize] = color.rgb();
@@ -316,7 +316,7 @@ fn get_color(num: u8, palette: u8) -> Color {
 }
 
 /// returns the value of the bit at pos
-fn get_pos_from_byte(byte: u8, pos: i16) -> u8 {
+fn get_pos_from_byte(byte: u8, pos: u8) -> u8 {
     (byte >> pos) & 1
 }
 

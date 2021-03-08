@@ -160,6 +160,22 @@ impl TileMap {
             TileMap::S9C00 => 8,
         }
     }
+
+    pub fn address(&self) -> u16 {
+        match self {
+            TileMap::S9800 => 0x9800,
+            TileMap::S9C00 => 0x9C00,
+        }
+    }
+}
+
+impl TileData {
+    pub fn address(&self) -> u16 {
+        match self {
+            TileData::S8000 => 0x8000,
+            TileData::S8800 => 0x8800,
+        }
+    }
 }
 
 impl Lcdc {

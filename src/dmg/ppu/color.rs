@@ -7,12 +7,12 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn rgb(self) -> u8 {
+    pub fn rgb(self) -> u32 {
         match self {
-            Color::White => 255,
-            Color::LightGrey => 0xCC,
-            Color::DarkGrey => 0x77,
-            Color::Black => 0x00,
+            Color::White => 0x9bbc0f,
+            Color::LightGrey => 0x8bac0f,
+            Color::DarkGrey => 0x306230,
+            Color::Black => 0x0f380f,
         }
     }
 }

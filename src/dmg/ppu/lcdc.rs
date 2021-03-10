@@ -122,7 +122,7 @@ impl std::convert::From<&u8> for TileData {
 }
 
 impl ObjSize {
-    pub fn vertical_size(&self) -> u8 {
+    pub fn vertical_size(&self) -> i16 {
         match self {
             ObjSize::S8x16 => 16,
             ObjSize::S8x8 => 8,
@@ -158,6 +158,22 @@ impl TileMap {
         match tile {
             TileMap::S9800 => 0,
             TileMap::S9C00 => 8,
+        }
+    }
+
+    pub fn address(&self) -> u16 {
+        match self {
+            TileMap::S9800 => 0x9800,
+            TileMap::S9C00 => 0x9C00,
+        }
+    }
+}
+
+impl TileData {
+    pub fn address(&self) -> u16 {
+        match self {
+            TileData::S8000 => 0x8000,
+            TileData::S8800 => 0x8800,
         }
     }
 }

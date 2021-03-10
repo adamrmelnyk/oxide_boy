@@ -1,6 +1,9 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::ppu::lcdc::Lcdc;
+use crate::dmg::ppu::lcdc::{Lcdc, TileData, TileMap};
 use crate::dmg::ppu::stat::{LcdMode, Stat};
+use crate::dmg::ppu::oam::OamEntry;
+use crate::dmg::ppu::color::Color;
+use minifb::{Window, WindowOptions, Scale};
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;
@@ -41,11 +44,13 @@ pub struct PPU {
     /// An array of 40, 4-byte objects
     oam: [u8; 160], // could also be [u32; 40]
 
-    // screen: [[u8; 0x90]; 0xA0],
+    screen: [[u32; 0x90]; 0xA0],
+    window: Window,
 }
 
 impl Default for PPU {
     fn default() -> PPU {
+        let window = default_window();
         PPU {
             lcdc: Lcdc::default(),
             stat: Stat::default(),
@@ -61,7 +66,8 @@ impl Default for PPU {
             scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
             vram: [0; 8192],
             oam: [0; 160],
-            // screen: [[0; 0x90]; 0xA0],
+            screen: [[Color::White.rgb(); 0x90]; 0xA0],
+            window,
         }
     }
 }
@@ -133,6 +139,16 @@ impl PPU {
         }
     }
 
+    fn draw_graphics(&mut self) {
+        let mut buf = Vec::new();
+        for i in 0..self.screen.len() {
+            for j in 0..self.screen[0].len() {
+                buf.push(self.screen[i][j])
+            }
+        }
+        self.window.update_with_buffer(&buf, 160, 144).unwrap();
+    }
+
     fn set_lcd_status(&mut self) {
         if !self.lcdc.lcdc_enabled() {
             self.scanline_counter = SCANLINE_COUNTER_MAX;
@@ -183,10 +199,12 @@ impl PPU {
         if self.lcdc.obj_display() {
             self.render_sprites();
         }
+
+        self.draw_graphics();
     }
 
     /// Renders the window and background tiles
-    fn render_tiles(&self) {
+    fn render_tiles(&mut self) {
         // TODO
     }
 
@@ -250,6 +268,54 @@ impl PPU {
     pub fn oam(&self) -> [u8; 160] {
         self.oam
     }
+}
+
+fn get_color(num: u8, palette: u8) -> Color {
+    let (high, low) = match num {
+        0 => (1, 0),
+        1 => (3, 2),
+        2 => (5, 4),
+        3 => (7, 6),
+        _ => panic!("This should never happen: {}", num),
+    };
+ 
+    // use the palette to get the colour
+    let color = (get_pos_from_byte(palette, high) << 1) | get_pos_from_byte(palette, low);
+ 
+    match color {
+      0 => Color::White,
+      1 => Color::LightGrey,
+      2 => Color::DarkGrey,
+      3 => Color::Black,
+      _ => panic!("This should never happen: {}", color),
+    }
+}
+
+/// returns the value of the bit at pos
+fn get_pos_from_byte(byte: u8, pos: u8) -> u8 {
+    (byte >> pos) & 1
+}
+
+fn test_bit(byte: u8, pos: u8) -> bool {
+    get_pos_from_byte(byte, pos) & 1 == 1
+}
+
+// Returns a window with the default configuration
+fn default_window() -> Window {
+    let mut window = Window::new(
+        "DMG",
+        160,
+        144,
+        WindowOptions {
+            scale: Scale::X8,
+            ..WindowOptions::default()
+        },
+    ).unwrap_or_else(|e| {
+        panic!("Error creating window: {}", e);
+    });
+    let buf = [0x9bbc0fu32; 0x90 * 0xA0];
+    window.update_with_buffer(&buf, 160, 144).unwrap();
+    window
 }
 
 #[test]

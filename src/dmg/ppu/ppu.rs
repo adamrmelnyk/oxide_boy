@@ -1,8 +1,9 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::ppu::lcdc::{Lcdc, TileData};
+use crate::dmg::ppu::lcdc::{Lcdc, TileData, TileMap};
 use crate::dmg::ppu::stat::{LcdMode, Stat};
-use crate::dmg::ppu::oam::{OamEntry, OamEntryFlag};
+use crate::dmg::ppu::oam::OamEntry;
 use crate::dmg::ppu::color::Color;
+use minifb::{Window, WindowOptions, Scale};
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;
@@ -43,7 +44,8 @@ pub struct PPU {
     /// An array of 40, 4-byte objects
     oam: [u8; 160], // could also be [u32; 40]
 
-    screen: [[u8; 0x90]; 0xA0],
+    screen: [[u32; 0x90]; 0xA0],
+    window: Window,
 }
 
 impl Default for PPU {
@@ -64,6 +66,17 @@ impl Default for PPU {
             vram: [0; 8192],
             oam: [0; 160],
             screen: [[0; 0x90]; 0xA0],
+            window: Window::new(
+                "DMG",
+                160,
+                144,
+                WindowOptions {
+                    scale: Scale::X8,
+                    ..WindowOptions::default()
+                },
+            ).unwrap_or_else(|e| {
+                panic!("Error creating window: {}", e);
+            }),
         }
     }
 }
@@ -130,9 +143,20 @@ impl PPU {
                     self.ly = 0;
                 } else if self.ly < VISIBLE_SCAN_LINES {
                     self.draw_scanline();
+                    self.draw_graphics();
                 }
             }
         }
+    }
+
+    fn draw_graphics(&mut self) {
+        let mut buf = Vec::new();
+        for i in 0..self.screen.len() {
+            for j in 0..self.screen[0].len() {
+                buf.push(self.screen[i][j])
+            }
+        }
+        self.window.update_with_buffer(&buf, 160, 144).unwrap();
     }
 
     fn set_lcd_status(&mut self) {

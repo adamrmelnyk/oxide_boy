@@ -50,6 +50,7 @@ pub struct PPU {
 
 impl Default for PPU {
     fn default() -> PPU {
+        let window = default_window();
         PPU {
             lcdc: Lcdc::default(),
             stat: Stat::default(),
@@ -66,17 +67,7 @@ impl Default for PPU {
             vram: [0; 8192],
             oam: [0; 160],
             screen: [[0; 0x90]; 0xA0],
-            window: Window::new(
-                "DMG",
-                160,
-                144,
-                WindowOptions {
-                    scale: Scale::X8,
-                    ..WindowOptions::default()
-                },
-            ).unwrap_or_else(|e| {
-                panic!("Error creating window: {}", e);
-            }),
+            window,
         }
     }
 }
@@ -342,6 +333,28 @@ fn get_color(num: u8, palette: u8) -> Color {
 /// returns the value of the bit at pos
 fn get_pos_from_byte(byte: u8, pos: u8) -> u8 {
     (byte >> pos) & 1
+}
+
+fn test_bit(byte: u8, pos: u8) -> bool {
+    get_pos_from_byte(byte, pos) & 1 == 1
+}
+
+// Returns a window with the default configuration
+fn default_window() -> Window {
+    let mut window = Window::new(
+        "DMG",
+        160,
+        144,
+        WindowOptions {
+            scale: Scale::X8,
+            ..WindowOptions::default()
+        },
+    ).unwrap_or_else(|e| {
+        panic!("Error creating window: {}", e);
+    });
+    let buf = [0x9bbc0fu32; 0x90 * 0xA0];
+    window.update_with_buffer(&buf, 160, 144).unwrap();
+    window
 }
 
 #[test]

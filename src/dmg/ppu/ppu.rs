@@ -66,7 +66,7 @@ impl Default for PPU {
             scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
             vram: [0; 8192],
             oam: [0; 160],
-            screen: [[0; 0x90]; 0xA0],
+            screen: [[Color::White.rgb(); 0x90]; 0xA0],
             window,
         }
     }
@@ -134,7 +134,6 @@ impl PPU {
                     self.ly = 0;
                 } else if self.ly < VISIBLE_SCAN_LINES {
                     self.draw_scanline();
-                    self.draw_graphics();
                 }
             }
         }
@@ -200,6 +199,8 @@ impl PPU {
         if self.lcdc.obj_display() {
             self.render_sprites();
         }
+
+        self.draw_graphics();
     }
 
     /// Renders the window and background tiles
@@ -208,47 +209,7 @@ impl PPU {
     }
 
     fn render_sprites(&mut self) {
-        for sprite in 0..=39 {
-            let oam_entry = OamEntry::new(self.oam, sprite);
-            let scanline = self.ly as i16;
-            let ysize = self.lcdc.obj_size().vertical_size();
-            let x_flip = oam_entry.attributes.x_flip;
-
-            if scanline >= oam_entry.y_pos && scanline < oam_entry.y_pos + ysize {
-                let mut row = scanline - oam_entry.y_pos;
-                if oam_entry.attributes.y_flip {
-                    row = ysize - row - 1;
-                }
-
-                row *= 2; // same as for tiles
-                let data_address: u16 = (0x8000 + (oam_entry.tile_location as u16 * 16)) + row as u16;
-                let data1 = self.vram[data_address as usize];
-                let data2 = self.vram[data_address as usize + 1];
-
-                // Pixel 0 = bit 7, Pixel 1 = 6...
-                for tile_pixel in 7..=0u8 {
-                    let col = if x_flip { 7 - tile_pixel } else { tile_pixel };
-
-                    // the rest is the same as for tiles
-                    let mut color_num: u8 = get_pos_from_byte(data2,col);
-                    color_num <<= 1;
-                    color_num |= get_pos_from_byte(data1,col) ;
-
-                    let color_palette = self.read_byte(u16::from(&oam_entry.attributes.palette_number));
-                    let color = get_color(color_num, color_palette);
-                    if color != Color::White {
-
-                        let x_pix = 7 - tile_pixel ;
-
-                        let pixel = oam_entry.x_pos + x_pix as i16;
-
-                        if (scanline >= 0) && (scanline <= 143) && (pixel >= 0) && (pixel <= 159) {
-                            self.screen[pixel as usize][scanline as usize] = color.rgb();
-                        }
-                    }
-                }
-            }
-        }
+        // TODO
     }
 
     /// VRAM is only accessible during Modes 0-2

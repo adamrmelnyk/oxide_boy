@@ -16,6 +16,10 @@ const SEARCHING_FOR_SPRITES: u16 = 376;
 // Transfering to the lcd driver. (376 - 172)
 const TRANSFERING_TO_LCD_DRIVER: u16 = 204;
 
+// DMG Screen Dimentions
+const WIDTH: usize = 160;
+const HEIGHT: usize = 144;
+
 // The DMG screen resolution is 160x144 meaning there are 144 visible lines
 // Everything afterwards is invisible.
 const VISIBLE_SCAN_LINES: u8 = 144;
@@ -45,12 +49,12 @@ pub struct PPU {
     oam: [u8; 160], // could also be [u32; 40]
 
     screen: [[u32; 0x90]; 0xA0],
-    window: Window,
+    window: Option<Window>,
 }
 
 impl Default for PPU {
     fn default() -> PPU {
-        let window = default_window();
+        let window = None;
         PPU {
             lcdc: Lcdc::default(),
             stat: Stat::default(),
@@ -113,6 +117,28 @@ impl BusConnection for PPU {
 }
 
 impl PPU {
+    pub fn new() -> PPU {
+        let window = default_window();
+        PPU {
+            lcdc: Lcdc::default(),
+            stat: Stat::default(),
+            scy: 0,
+            scx: 0,
+            ly: 0, // The current scanline we're on
+            lyc: 0,
+            bgp: 0,
+            obp0: 0,
+            obp1: 0,
+            wy: 0,
+            wx: 0,
+            scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
+            vram: [0; 8192],
+            oam: [0; 160],
+            screen: [[Color::White.rgb(); 0x90]; 0xA0],
+            window,
+        }
+    }
+
     pub fn step(&mut self, cycles: u8) {
         self.set_lcd_status();
 
@@ -146,7 +172,10 @@ impl PPU {
                 buf.push(self.screen[i][j])
             }
         }
-        self.window.update_with_buffer(&buf, 160, 144).unwrap();
+        match &mut self.window {
+            Some(window) => window.update_with_buffer(&buf, WIDTH, HEIGHT).unwrap(),
+            None => {},
+        };
     }
 
     fn set_lcd_status(&mut self) {
@@ -301,11 +330,11 @@ fn test_bit(byte: u8, pos: u8) -> bool {
 }
 
 // Returns a window with the default configuration
-fn default_window() -> Window {
+fn default_window() -> Option<Window> {
     let mut window = Window::new(
         "DMG",
-        160,
-        144,
+        WIDTH,
+        HEIGHT,
         WindowOptions {
             scale: Scale::X8,
             ..WindowOptions::default()
@@ -314,8 +343,8 @@ fn default_window() -> Window {
         panic!("Error creating window: {}", e);
     });
     let buf = [0x9bbc0fu32; 0x90 * 0xA0];
-    window.update_with_buffer(&buf, 160, 144).unwrap();
-    window
+    window.update_with_buffer(&buf, WIDTH, HEIGHT).unwrap();
+    Some(window)
 }
 
 #[test]

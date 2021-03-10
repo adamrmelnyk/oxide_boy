@@ -40,7 +40,7 @@ impl Bus {
         Bus {
             memory: Memory::default(),
             timer: Timer::default(),
-            ppu: PPU::default(),
+            ppu: PPU::new(),
             apu: Apu::default(),
             joypad: Joypad::default(),
             cartridge: Cartridge::new(file),

@@ -56,7 +56,6 @@ cargo test
 
 ## TODO
 
-* Alter tests so they still work when there is no Default rom
 * MBC1
   * Read a save file for the RAM if one exists (And if it has a battery)
 * Timers
@@ -64,13 +63,11 @@ cargo test
 * GUI
   * Render tiles
   * Render sprites
-  * Add a library to display everything
 * Sound
   * Step function needs to be implemented
 * I/O
   * Joypad step function
 * Shutdown after locking up at 0xe9 of the boot ROM
-* Log to console only in Debug mode
 
 ### Resources
 

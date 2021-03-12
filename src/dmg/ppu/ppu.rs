@@ -17,8 +17,8 @@ const SEARCHING_FOR_SPRITES: u16 = 376;
 const TRANSFERING_TO_LCD_DRIVER: u16 = 204;
 
 // DMG Screen Dimentions
-const WIDTH: usize = 160;
-const HEIGHT: usize = 144;
+const WIDTH: usize = 160; // 0xA0
+const HEIGHT: usize = 144; // 0x90
 
 // The DMG screen resolution is 160x144 meaning there are 144 visible lines
 // Everything afterwards is invisible.
@@ -48,7 +48,7 @@ pub struct PPU {
     /// An array of 40, 4-byte objects
     oam: [u8; 160], // could also be [u32; 40]
 
-    screen: [[u32; 0x90]; 0xA0],
+    screen: [[u32; WIDTH]; HEIGHT],
     window: Option<Window>,
 }
 
@@ -70,7 +70,7 @@ impl Default for PPU {
             scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
             vram: [0; 8192],
             oam: [0; 160],
-            screen: [[Color::White.rgb(); 0x90]; 0xA0],
+            screen: [[Color::White.rgb(); WIDTH]; HEIGHT],
             window,
         }
     }
@@ -134,7 +134,7 @@ impl PPU {
             scanline_counter: SCANLINE_COUNTER_MAX, // Similar to the timer counter and how we count down. There are 456 dots per scanline,
             vram: [0; 8192],
             oam: [0; 160],
-            screen: [[Color::White.rgb(); 0x90]; 0xA0],
+            screen: [[Color::White.rgb(); WIDTH]; HEIGHT],
             window,
         }
     }
@@ -234,7 +234,57 @@ impl PPU {
 
     /// Renders the window and background tiles
     fn render_tiles(&mut self) {
-        // TODO
+        let window_x = self.wx.wrapping_sub(7);
+        let using_window = self.lcdc.window_display() && self.wy <= self.ly;
+
+        let (tile_data, unsigned) = if self.lcdc.bg_window_tile_data_select() == TileData::S8000 {
+          (0x8000, true)
+        } else {
+          (0x8800, false)
+        };
+
+        let (background_memory, y_pos) = if !using_window {
+            (self.lcdc.bg_tile_map_data_select().address(), self.scy + self.ly)
+        } else {
+            (self.lcdc.window_tile_map_display_select().address(), self.ly - self.wy)
+        };
+
+        let tile_row = (y_pos as u16 / 8) * 32;
+
+        for pixel in 0..160 {
+            let x_pos = if using_window && pixel >= window_x {
+                pixel - window_x
+            } else {
+                pixel + self.scx
+            };
+
+            let tile_column = x_pos / 8;
+
+            let tile_address = background_memory + tile_row as u16 + tile_column as u16;
+            let tile_location = if unsigned {
+                let tile_num = self.read_byte(tile_address);
+                tile_data + (tile_num as u16 * 16)
+            } else {
+                let tile_num = self.read_byte(tile_address) as i8;
+                tile_data + (i16::from(tile_num) as u16 +128) * 16
+            };
+
+            let line = (y_pos % 8) * 2;
+            let data1 = self.read_byte(tile_location + line as u16);
+            let data2 = self.read_byte(tile_location + line as u16 + 1);
+
+            // pixel 0 is 7, 1 is 6 etc.
+            let colour_bit = 7 - (x_pos % 8);
+
+            let mut colour_num = get_pos_from_byte(data2,colour_bit);
+            colour_num <<= 1;
+            colour_num |= get_pos_from_byte(data1,colour_bit) ;
+        
+            let col = get_color(colour_num, self.bgp);
+            if self.ly <= 143 && pixel <= 159 {
+                self.screen[self.ly as usize][pixel as usize] = col.rgb();
+            }
+        }
     }
 
     fn render_sprites(&mut self) {

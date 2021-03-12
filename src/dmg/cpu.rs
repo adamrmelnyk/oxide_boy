@@ -70,7 +70,6 @@ impl CPU {
     pub fn step(&mut self) {
         let mut instruction_byte = self.bus.read_byte(self.pc);
         let prefixed = instruction_byte == 0xCB;
-        info!("PC: {:#02x}, Instruction {:#02x}", self.pc, instruction_byte);
         if instruction_byte == 0xCB {
             instruction_byte = self.bus.read_byte(self.pc + 1);
             info!("Prefix: {:#02x}", instruction_byte);
@@ -78,6 +77,7 @@ impl CPU {
 
         let (next_pc, cycles) =
             if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed) {
+                info!("PC: {:#02x}, Instruction {:#02x}, {:?}", self.pc, instruction_byte, instruction);
                 self.execute(instruction)
             } else {
                 let description = format!(

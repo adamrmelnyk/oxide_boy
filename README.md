@@ -61,7 +61,6 @@ cargo test
 * Timers
   * Trigger the interrupt from the step function
 * GUI
-  * Render tiles
   * Render sprites
 * Sound
   * Step function needs to be implemented
@@ -80,4 +79,5 @@ This emulator couldn't have been built without the help of many others (this is 
 * [GB OP Codes](https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
 * [Emudev](https://emudev.de/gameboy-emulator/overview/)
 * [The Ultimate Gameboy Talk](https://www.youtube.com/watch?v=HyzD8pNlpwI&t=29m12s)
-* [An archived page](https://web.archive.org/web/20181011215339/http://www.codeslinger.co.uk/pages/projects/gameboy.html) that contains lots of documentation and implementation details for parts of the DMG.
+* [Boot ROM](https://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM) Walk through of the operations in the DMG boot rom.
+* [Codeslingers implementation](https://web.archive.org/web/20181011215339/http://www.codeslinger.co.uk/pages/projects/gameboy.html) that contains lots of documentation and implementation details for parts of the DMG.

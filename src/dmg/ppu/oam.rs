@@ -28,7 +28,7 @@ impl std::convert::From<&Palette> for u16 {
 
 impl OamEntry {
     pub fn new(oam: [u8; 160], sprite: usize) -> OamEntry {
-        let index: usize = sprite * 4 ;
+        let index: usize = sprite * 4;
         OamEntry {
             y_pos: oam[index] as i16 - 16,
             x_pos: oam[index + 1] as i16 - 8,

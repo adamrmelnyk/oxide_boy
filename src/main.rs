@@ -10,16 +10,11 @@ use env_logger;
 #[derive(StructOpt)]
 #[structopt(rename_all = "kebab-case")]
 pub enum Command {
-    #[structopt(
-        about = "Runs the specified ROM",
-        help = "USEAGE: run myRomFile.rom",
-    )]
-    Run {
-        file: String,
-    },
+    #[structopt(about = "Runs the specified ROM", help = "USEAGE: run myRomFile.rom")]
+    Run { file: String },
     #[structopt(
         about = "For development purposes: Runs the default rom at src/dmg/rom/DEFAULT_ROM.bin",
-        help = "USEAGE: default",
+        help = "USEAGE: default"
     )]
     Default,
 }

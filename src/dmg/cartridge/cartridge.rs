@@ -1,10 +1,10 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::cartridge::rom_only::RomOnly;
 use crate::dmg::cartridge::mbc1::MBC1;
+use crate::dmg::cartridge::rom_only::RomOnly;
 
+use log::error;
 use std::fs::File;
 use std::io::Read;
-use log::error;
 
 const DEFAULT_ROM: &str = "src/dmg/rom/DEFAULT_ROM.bin";
 
@@ -76,7 +76,7 @@ impl std::convert::From<u8> for Type {
             0xFD => Type::BandaiTama5,
             0xFE => Type::HuC3,
             0xFF => Type::HuC1RamBattery,
-            _ => panic!("{:#02x} is not a value type of cartridge", byte)
+            _ => panic!("{:#02x} is not a value type of cartridge", byte),
         }
     }
 }
@@ -89,25 +89,26 @@ impl Default for Cartridge {
 
 impl Cartridge {
     pub fn new(file_name: &str) -> Cartridge {
-        let mut data = vec!();
+        let mut data = vec![];
         match File::open(file_name) {
             Ok(mut file) => match file.read_to_end(&mut data) {
-                Ok(_size) => {},
+                Ok(_size) => {}
                 Err(err) => error!("Error reading file: {}", err),
             },
             Err(err) => {
-                error!("Error opening file: {}, defaulting to empty RomOnly Cartridge", err);
+                error!(
+                    "Error opening file: {}, defaulting to empty RomOnly Cartridge",
+                    err
+                );
                 return Cartridge {
                     cart: Box::new(RomOnly::new(vec![0u8; 0xC000])), // This is mainly so that tests may run without a cartridge
-                }
+                };
             }
         }
         // TODO: We could potentially throw an error if the cart is too small
         let cart_type = Type::from(data[0x147]);
         let cart = cart(&cart_type, data);
-        Cartridge {
-            cart,
-        }
+        Cartridge { cart }
     }
 }
 

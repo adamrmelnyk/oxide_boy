@@ -24,7 +24,7 @@ impl std::convert::From<u8> for Color {
             1 => Color::LightGrey,
             2 => Color::DarkGrey,
             3 => Color::Black,
-            _ => panic!("This should never happen!")
+            _ => panic!("This should never happen!"),
         }
     }
 }

@@ -6,9 +6,7 @@ pub struct RomOnly {
 
 impl RomOnly {
     pub fn new(data: Vec<u8>) -> RomOnly {
-        RomOnly {
-            rom: data,
-        }
+        RomOnly { rom: data }
     }
 }
 

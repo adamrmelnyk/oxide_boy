@@ -48,10 +48,16 @@ impl BusConnection for MBC1 {
             }
             0xA000..=0xBFFF => {
                 if self.ram_enable {
-                    self.ram_bank[(self.ram_bank_numer as usize * 0x2000) + (address as usize - 0xA000)]
-                } else { 0 }
+                    self.ram_bank
+                        [(self.ram_bank_numer as usize * 0x2000) + (address as usize - 0xA000)]
+                } else {
+                    0
+                }
             }
-            _ => panic!("This should never happen, address: {:#02x} out of bounds for MBC1", address)
+            _ => panic!(
+                "This should never happen, address: {:#02x} out of bounds for MBC1",
+                address
+            ),
         }
     }
 
@@ -72,17 +78,22 @@ impl BusConnection for MBC1 {
             }
             0xA000..=0xBFFF => {
                 if self.ram_enable {
-                    self.ram_bank[(self.ram_bank_numer as usize * 0x2000) + (address as usize - 0xA000)] = value;
+                    self.ram_bank
+                        [(self.ram_bank_numer as usize * 0x2000) + (address as usize - 0xA000)] =
+                        value;
                 }
-            },
-            _ => panic!("This should never happen, address: {:#02x} out of bounds for MBC1", address)
+            }
+            _ => panic!(
+                "This should never happen, address: {:#02x} out of bounds for MBC1",
+                address
+            ),
         }
     }
 }
 
 #[test]
 fn write_ram_enabled() {
-    let mut mbc1 = MBC1::new(vec![0u8;0x4000]);
+    let mut mbc1 = MBC1::new(vec![0u8; 0x4000]);
     mbc1.write_byte(0x1FFF, 0x0A); // enable the ram
     mbc1.write_byte(0xA000, 0xAA); // write to ram
     assert_eq!(mbc1.read_byte(0xA000), 0xAA);
@@ -90,7 +101,7 @@ fn write_ram_enabled() {
 
 #[test]
 fn write_ram_disabled() {
-    let mut mbc1 = MBC1::new(vec![0u8;0x4000]);
+    let mut mbc1 = MBC1::new(vec![0u8; 0x4000]);
     mbc1.write_byte(0x1FFF, 0x00); // disable the ram
     mbc1.write_byte(0xA000, 0xAA); // write to ram
     assert_eq!(mbc1.read_byte(0xA000), 0x00);
@@ -98,7 +109,7 @@ fn write_ram_disabled() {
 
 #[test]
 fn read_ram_disabled() {
-    let mut mbc1 = MBC1::new(vec![0u8;0x4000]);
+    let mut mbc1 = MBC1::new(vec![0u8; 0x4000]);
     mbc1.write_byte(0x1FFF, 0x0A); // enable the ram
     mbc1.write_byte(0xA000, 0xAA); // write to ram
     mbc1.write_byte(0x1FFF, 0x00); // disable the ram
@@ -107,7 +118,7 @@ fn read_ram_disabled() {
 
 #[test]
 fn change_mode_to_ram() {
-    let mut mbc1 = MBC1::new(vec![0u8;0x4000]);
+    let mut mbc1 = MBC1::new(vec![0u8; 0x4000]);
     assert_eq!(mbc1.mode, BankingMode::Rom);
     mbc1.write_byte(0x6000, 0x1);
     assert_eq!(mbc1.mode, BankingMode::Ram);
@@ -115,7 +126,7 @@ fn change_mode_to_ram() {
 
 #[test]
 fn change_rom_bank() {
-    let mut mbc1 = MBC1::new(vec![0u8;0x4000]);
+    let mut mbc1 = MBC1::new(vec![0u8; 0x4000]);
     assert_eq!(mbc1.rom_bank_number, 0);
     mbc1.write_byte(0x2000, 0x10);
     assert_eq!(mbc1.rom_bank_number, 0x10);
@@ -123,7 +134,7 @@ fn change_rom_bank() {
 
 #[test]
 fn change_ram_bank() {
-    let mut mbc1 = MBC1::new(vec![0u8;0x4000]);
+    let mut mbc1 = MBC1::new(vec![0u8; 0x4000]);
     assert_eq!(mbc1.ram_bank_numer, 0x0);
     mbc1.write_byte(0x6000, 0x1);
     assert_eq!(mbc1.mode, BankingMode::Ram);
@@ -133,7 +144,7 @@ fn change_ram_bank() {
 
 #[test]
 fn write_and_read_ram_bank_3() {
-    let mut mbc1 = MBC1::new(vec![0u8;0x4000]);
+    let mut mbc1 = MBC1::new(vec![0u8; 0x4000]);
     assert_eq!(mbc1.ram_bank_numer, 0x0);
     mbc1.write_byte(0x6000, 0x1);
     assert_eq!(mbc1.mode, BankingMode::Ram);
@@ -144,5 +155,9 @@ fn write_and_read_ram_bank_3() {
     assert_eq!(mbc1.read_byte(0xA000), 0xAA);
     mbc1.write_byte(0x4000, 0x2);
     assert_eq!(mbc1.ram_bank_numer, 0x2);
-    assert_eq!(mbc1.read_byte(0xA000), 0, "We've changed to a new ram bank, this should be empty");
+    assert_eq!(
+        mbc1.read_byte(0xA000),
+        0,
+        "We've changed to a new ram bank, this should be empty"
+    );
 }

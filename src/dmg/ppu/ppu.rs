@@ -1,9 +1,9 @@
 use crate::dmg::busconnection::BusConnection;
-use crate::dmg::ppu::lcdc::{Lcdc, TileData, TileMap};
-use crate::dmg::ppu::stat::{LcdMode, Stat};
-use crate::dmg::ppu::oam::OamEntry;
 use crate::dmg::ppu::color::Color;
-use minifb::{Window, WindowOptions, Scale};
+use crate::dmg::ppu::lcdc::{Lcdc, TileData};
+use crate::dmg::ppu::oam::OamEntry;
+use crate::dmg::ppu::stat::{LcdMode, Stat};
+use minifb::{Scale, Window, WindowOptions};
 
 // The number of CPU cycles taken to draw one scanline
 const SCANLINE_COUNTER_MAX: u16 = 456;
@@ -174,7 +174,7 @@ impl PPU {
         }
         match &mut self.window {
             Some(window) => window.update_with_buffer(&buf, WIDTH, HEIGHT).unwrap(),
-            None => {},
+            None => {}
         };
     }
 
@@ -238,15 +238,21 @@ impl PPU {
         let using_window = self.lcdc.window_display() && self.wy <= self.ly;
 
         let (tile_data, unsigned) = if self.lcdc.bg_window_tile_data_select() == TileData::S8000 {
-          (0x8000, true)
+            (0x8000, true)
         } else {
-          (0x8800, false)
+            (0x8800, false)
         };
 
         let (background_memory, y_pos) = if !using_window {
-            (self.lcdc.bg_tile_map_data_select().address(), self.scy + self.ly)
+            (
+                self.lcdc.bg_tile_map_data_select().address(),
+                self.scy + self.ly,
+            )
         } else {
-            (self.lcdc.window_tile_map_display_select().address(), self.ly - self.wy)
+            (
+                self.lcdc.window_tile_map_display_select().address(),
+                self.ly - self.wy,
+            )
         };
 
         let tile_row = (y_pos as u16 / 8) * 32;
@@ -266,7 +272,7 @@ impl PPU {
                 tile_data + (tile_num as u16 * 16)
             } else {
                 let tile_num = self.read_byte(tile_address) as i8;
-                tile_data + (i16::from(tile_num) as u16 +128) * 16
+                tile_data + (i16::from(tile_num) as u16 + 128) * 16
             };
 
             let line = (y_pos % 8) * 2;
@@ -276,10 +282,10 @@ impl PPU {
             // pixel 0 is 7, 1 is 6 etc.
             let colour_bit = 7 - (x_pos % 8);
 
-            let mut colour_num = get_pos_from_byte(data2,colour_bit);
+            let mut colour_num = get_pos_from_byte(data2, colour_bit);
             colour_num <<= 1;
-            colour_num |= get_pos_from_byte(data1,colour_bit) ;
-        
+            colour_num |= get_pos_from_byte(data1, colour_bit);
+
             let col = get_color(colour_num, self.bgp);
             if self.ly <= 143 && pixel <= 159 {
                 self.screen[self.ly as usize][pixel as usize] = col.rgb();
@@ -357,16 +363,16 @@ fn get_color(num: u8, palette: u8) -> Color {
         3 => (7, 6),
         _ => panic!("This should never happen: {}", num),
     };
- 
+
     // use the palette to get the colour
     let color = (get_pos_from_byte(palette, high) << 1) | get_pos_from_byte(palette, low);
- 
+
     match color {
-      0 => Color::White,
-      1 => Color::LightGrey,
-      2 => Color::DarkGrey,
-      3 => Color::Black,
-      _ => panic!("This should never happen: {}", color),
+        0 => Color::White,
+        1 => Color::LightGrey,
+        2 => Color::DarkGrey,
+        3 => Color::Black,
+        _ => panic!("This should never happen: {}", color),
     }
 }
 
@@ -389,7 +395,8 @@ fn default_window() -> Option<Window> {
             scale: Scale::X8,
             ..WindowOptions::default()
         },
-    ).unwrap_or_else(|e| {
+    )
+    .unwrap_or_else(|e| {
         panic!("Error creating window: {}", e);
     });
     let buf = [0x9bbc0fu32; 0x90 * 0xA0];

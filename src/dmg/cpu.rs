@@ -77,7 +77,10 @@ impl CPU {
 
         let (next_pc, cycles) =
             if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed) {
-                info!("PC: {:#02x}, Instruction {:#02x}, {:?}", self.pc, instruction_byte, instruction);
+                info!(
+                    "PC: {:#02x}, Instruction {:#02x}, {:?}",
+                    self.pc, instruction_byte, instruction
+                );
                 self.execute(instruction)
             } else {
                 let description = format!(

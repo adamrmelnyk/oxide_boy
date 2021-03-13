@@ -45,9 +45,9 @@ impl BusConnection for BootRom {
 
     fn write_byte(&mut self, address: u16, value: u8) {
         match address {
-            0..=0xFF => { /* Do nothing this is ROM */ },
+            0..=0xFF => { /* Do nothing this is ROM */ }
             0xFF50 => self.enabled = value == 0,
-            _ => panic!("This should never happen!")
+            _ => panic!("This should never happen!"),
         }
     }
 }
@@ -61,6 +61,14 @@ impl BootRom {
 #[test]
 fn read_memory() {
     let rom = BootRom::default();
-    assert_eq!(rom.read_byte(0), 0x31, "The first entry on the boot rom should be 0x31");
-    assert_eq!(rom.read_byte(0xFF), 0x50, "The last entry on the boot rom should be 0x50");
+    assert_eq!(
+        rom.read_byte(0),
+        0x31,
+        "The first entry on the boot rom should be 0x31"
+    );
+    assert_eq!(
+        rom.read_byte(0xFF),
+        0x50,
+        "The last entry on the boot rom should be 0x50"
+    );
 }

@@ -1,8 +1,8 @@
 use crate::dmg::busconnection::BusConnection;
 use crate::dmg::ppu::color::Color;
 use crate::dmg::ppu::lcdc::{Lcdc, TileData};
-use crate::dmg::ppu::oam::OamEntry;
 use crate::dmg::ppu::stat::{LcdMode, Stat};
+use log::info;
 use minifb::{Scale, Window, WindowOptions};
 
 // The number of CPU cycles taken to draw one scanline
@@ -145,7 +145,7 @@ impl PPU {
         if self.lcdc.lcdc_enabled() {
             let (new_count, did_overflow) = self.scanline_counter.overflowing_sub(cycles as u16);
             self.scanline_counter = new_count;
-            if did_overflow {
+            if did_overflow || new_count == 0 {
                 // Move to the next scanline
                 self.ly = self.ly.wrapping_add(1);
 
@@ -185,25 +185,20 @@ impl PPU {
             self.stat.mode_flag = LcdMode::VBlank;
         } else {
             let current_mode = self.stat.mode_flag;
-            let mut interrupt_triggered = false;
-            let new_mode;
 
-            if self.ly >= VISIBLE_SCAN_LINES {
-                new_mode = LcdMode::VBlank;
+            let (new_mode, interrupt_triggered) = if self.ly >= VISIBLE_SCAN_LINES {
                 self.stat.mode_flag = LcdMode::VBlank;
-                interrupt_triggered = self.stat.mode_01;
+                (LcdMode::VBlank, self.stat.mode_01)
             } else if self.scanline_counter >= SEARCHING_FOR_SPRITES {
-                new_mode = LcdMode::SearchSpriteAttributes;
                 self.stat.mode_flag = LcdMode::SearchSpriteAttributes;
-                interrupt_triggered = self.stat.mode_10;
+                (LcdMode::SearchSpriteAttributes, self.stat.mode_10)
             } else if self.scanline_counter >= TRANSFERING_TO_LCD_DRIVER {
-                new_mode = LcdMode::TransferingDataToLCDDriver;
                 self.stat.mode_flag = LcdMode::TransferingDataToLCDDriver;
+                (LcdMode::TransferingDataToLCDDriver, false)
             } else {
-                new_mode = LcdMode::HBlank;
                 self.stat.mode_flag = LcdMode::HBlank;
-                interrupt_triggered = self.stat.mode_00;
-            }
+                (LcdMode::HBlank, self.stat.mode_00)
+            };
 
             if interrupt_triggered && (new_mode != current_mode) {
                 // TODO: RequestInterrupt(1)
@@ -244,15 +239,11 @@ impl PPU {
         };
 
         let (background_memory, y_pos) = if !using_window {
-            (
-                self.lcdc.bg_tile_map_data_select().address(),
-                self.scy + self.ly,
-            )
+            let address = self.lcdc.bg_tile_map_data_select().address();
+            (address, self.scy + self.ly)
         } else {
-            (
-                self.lcdc.window_tile_map_display_select().address(),
-                self.ly - self.wy,
-            )
+            let address = self.lcdc.window_tile_map_display_select().address();
+            (address, self.ly - self.wy)
         };
 
         let tile_row = (y_pos as u16 / 8) * 32;
@@ -295,6 +286,7 @@ impl PPU {
 
     fn render_sprites(&mut self) {
         // TODO
+        info!("Rendering sprites");
     }
 
     /// VRAM is only accessible during Modes 0-2
@@ -381,9 +373,9 @@ fn get_pos_from_byte(byte: u8, pos: u8) -> u8 {
     (byte >> pos) & 1
 }
 
-fn test_bit(byte: u8, pos: u8) -> bool {
-    get_pos_from_byte(byte, pos) & 1 == 1
-}
+// fn test_bit(byte: u8, pos: u8) -> bool {
+//     get_pos_from_byte(byte, pos) & 1 == 1
+// }
 
 // Returns a window with the default configuration
 fn default_window() -> Option<Window> {

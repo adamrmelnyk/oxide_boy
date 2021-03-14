@@ -2,7 +2,7 @@
 
 A gameboy / DMG emulator
 
-This project is currently in progress and has a few missing parts. Currently there is no GUI, sound or user input, though the vast majority of the project including the run loop and CPU instructions are implemented. Currently running only displays and executes the instructions without a GUI.
+This project is currently in progress and has a few missing parts. Currently there is no sound or user input, though the vast majority of the project including the run loop and CPU instructions are implemented. Currently running only draws tiles, but not sprites, and executes the instructions in the console if logging is enabled.
 
 ## Building
 
@@ -44,6 +44,12 @@ or for development, to use the default rom file:
 oxide_boy default
 ```
 
+you can also run using the start scipt:
+
+```sh
+./start.sh
+```
+
 Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot ROM. To run the default rom you will need to place the ROM at `/src/dmg/rom/DEFAULT_ROM.bin`. You can find some roms made for testing [here](https://github.com/retrio/gb-test-roms)
 
 ## Testing
@@ -65,6 +71,7 @@ cargo test
 * Sound
   * Step function needs to be implemented
 * I/O
+  * Integrate minifb with the joypad to read keyboard input
   * Joypad step function
 * Shutdown after locking up at 0xe9 of the boot ROM
 

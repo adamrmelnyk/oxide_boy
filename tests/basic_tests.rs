@@ -871,6 +871,8 @@ fn test_ldha() {
     assert_eq!(cpu.bus.read_byte(0xFF11), cpu.registers.a);
 }
 
+// TODO: Add more tests for ldha?
+
 #[test]
 fn test_ld8a() {
     let mut cpu = setup();

@@ -64,6 +64,8 @@ cargo test
 
 * MBC1
   * Read a save file for the RAM if one exists (And if it has a battery)
+* Other cartridge support
+  * There are 20+ other cartridge types
 * Timers
   * Trigger the interrupt from the step function
 * GUI

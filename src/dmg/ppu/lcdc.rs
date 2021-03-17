@@ -244,6 +244,14 @@ fn u8_to_lcdc() {
 }
 
 #[test]
+fn lcdc_obj_size() {
+    let lcdc = Lcdc::from(&0b0000_0100);
+    assert_eq!(lcdc.obj_size, ObjSize::S8x16);
+    let lcdc = Lcdc::from(&0b0000_0000);
+    assert_eq!(lcdc.obj_size, ObjSize::S8x8);
+}
+
+#[test]
 fn u8_to_objsize() {
     let byte = 0b0000_0100;
     assert_eq!(ObjSize::from(&byte), ObjSize::S8x16);

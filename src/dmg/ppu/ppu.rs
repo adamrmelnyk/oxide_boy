@@ -285,7 +285,6 @@ impl PPU {
     }
 
     fn render_sprites(&mut self) {
-        // TODO
         info!("Rendering sprites");
     }
 
@@ -415,6 +414,15 @@ fn ly_inc() {
 }
 
 #[test]
+fn lcdc_not_enabled_step_does_not_inc_ly() {
+    let mut ppu = PPU::default();
+    assert_eq!(ppu.ly, 0);
+    ppu.step(255);
+    ppu.step(255);
+    assert_eq!(ppu.ly, 0, "ly should not inc because it's not enabled");
+}
+
+#[test]
 fn write_to_ly() {
     let mut ppu = PPU::default();
     ppu.write_byte(0xFF44, 10);
@@ -513,4 +521,10 @@ fn write_oam_when_stat_mode_3() {
     );
 }
 
-// TODO: Tests for the step function effects on ppu.stat
+#[test]
+fn get_bit_at() {
+    let bit = get_pos_from_byte(0b1000_1000, 7);
+    assert_eq!(bit, 1);
+    let bit = get_pos_from_byte(0b0000_0100, 3);
+    assert_eq!(bit, 0);
+}

@@ -507,6 +507,26 @@ fn test_di() {
 }
 
 #[test]
+fn bit_bl() {
+    let op = Instruction::from_byte(0x46, true).unwrap();
+    assert_eq!(op, Instruction::BIT(0, ArithmeticTarget::HLI, 12));
+    let op = Instruction::from_byte(0x56, true).unwrap();
+    assert_eq!(op, Instruction::BIT(2, ArithmeticTarget::HLI, 12));
+    let op = Instruction::from_byte(0x66, true).unwrap();
+    assert_eq!(op, Instruction::BIT(4, ArithmeticTarget::HLI, 12));
+    let op = Instruction::from_byte(0x76, true).unwrap();
+    assert_eq!(op, Instruction::BIT(6, ArithmeticTarget::HLI, 12));
+    let op = Instruction::from_byte(0x4E, true).unwrap();
+    assert_eq!(op, Instruction::BIT(1, ArithmeticTarget::HLI, 12));
+    let op = Instruction::from_byte(0x5E, true).unwrap();
+    assert_eq!(op, Instruction::BIT(3, ArithmeticTarget::HLI, 12));
+    let op = Instruction::from_byte(0x6E, true).unwrap();
+    assert_eq!(op, Instruction::BIT(5, ArithmeticTarget::HLI, 12));
+    let op = Instruction::from_byte(0x7E, true).unwrap();
+    assert_eq!(op, Instruction::BIT(7, ArithmeticTarget::HLI, 12));
+}
+
+#[test]
 fn undefined_function_tests() {
     for i in vec![
         0xD3, 0xE3, 0xE4, 0xF4, 0xDB, 0xEB, 0xEC, 0xFC, 0xDD, 0xED, 0xFD,

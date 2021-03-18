@@ -25,9 +25,11 @@ FLAGS:
     -V, --version    Prints version information
 
 SUBCOMMANDS:
+    custom     Runs the specified ROM as the BOOT ROM, use this to run custom boot roms or test roms
     default    For development purposes: Runs the default rom at src/dmg/rom/DEFAULT_ROM.bin
     help       Prints this message or the help of the given subcommand(s)
     run        Runs the specified ROM
+    skip       Runs the specified ROM, but skips the boot sequence
 ```
 
 ## Running
@@ -42,6 +44,12 @@ or for development, to use the default rom file:
 
 ```sh
 oxide_boy default
+```
+
+For running a rom other than the default boot rom:
+
+```sh
+oxide_boy custom my_custom_boot_rom.bin
 ```
 
 you can also run using the start scipt:

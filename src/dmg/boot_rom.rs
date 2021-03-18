@@ -15,15 +15,15 @@ pub struct BootRom {
 impl Default for BootRom {
     fn default() -> BootRom {
         BootRom {
-            rom: load_boot_rom(),
+            rom: load_boot_rom(BOOT_ROM),
             enabled: true,
         }
     }
 }
 
-fn load_boot_rom() -> [u8; 0x100] {
+fn load_boot_rom(file: &str) -> [u8; 0x100] {
     let mut buffer = [0u8; 0xFF + 1];
-    match File::open(BOOT_ROM) {
+    match File::open(file) {
         Ok(mut file) => match file.read(&mut buffer[..]) {
             Ok(_bytes) => buffer,
             Err(err) => {
@@ -55,6 +55,14 @@ impl BusConnection for BootRom {
 impl BootRom {
     pub fn enabled(&self) -> bool {
         self.enabled
+    }
+
+    /// Allows you to specify the bootrom
+    pub fn custom(file: &str) -> BootRom {
+        BootRom {
+            rom: load_boot_rom(file),
+            enabled: true,
+        }
     }
 }
 

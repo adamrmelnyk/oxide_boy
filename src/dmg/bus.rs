@@ -48,6 +48,19 @@ impl Bus {
         }
     }
 
+    /// Allows you to specify the bootrom being loaded
+    pub fn custom_boot_rom(boot_file: &str, file: &str) -> Bus {
+        Bus {
+            memory: Memory::default(),
+            timer: Timer::default(),
+            ppu: PPU::new(),
+            apu: Apu::default(),
+            joypad: Joypad::default(),
+            cartridge: Cartridge::new(file),
+            boot_rom: BootRom::custom(boot_file),
+        }
+    }
+
     pub fn read_byte(&self, address: u16) -> u8 {
         // TODO: Add the rest pointing to other devices
         if address <= 0xFF && self.boot_rom.enabled() {

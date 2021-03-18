@@ -1058,7 +1058,29 @@ fn test_ldaby() {
     assert_eq!(cpu.bus.read_word(0xCABB), 0xEE);
 }
 
-// TODO: tests for SRA SLA RRC RLC LDHLSP etc.
+// TODO: tests for SRA RRC RLC LDHLSP etc.
+
+#[test]
+fn sla_carry() {
+    let mut cpu = setup();
+    cpu.pc = 10;
+    cpu.registers.b = 0b1000_0001;
+    let (next_pc, _) = cpu.execute(Instruction::SLA(ArithmeticTarget::B, 8));
+    assert_eq!(next_pc, 11);
+    assert_eq!(cpu.registers.b, 0b0000_0010);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn sla_no_carry() {
+    let mut cpu = setup();
+    cpu.pc = 10;
+    cpu.registers.b = 0b0100_0001;
+    let (next_pc, _) = cpu.execute(Instruction::SLA(ArithmeticTarget::B, 8));
+    assert_eq!(next_pc, 11);
+    assert_eq!(cpu.registers.b, 0b1000_0010);
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
 
 // TODO: Tests for prefix byte making the pc inc two places. test should be for step
 
@@ -1068,7 +1090,7 @@ fn writing_to_lcdc() {
     assert_eq!(cpu.bus.read_byte(0xFF40), 0);
     cpu.bus.write_byte(0xFF40, 0x40);
     assert_eq!(cpu.bus.read_byte(0xFF40), 0x40);
-}
+}   
 
 #[test]
 fn writing_to_stat() {

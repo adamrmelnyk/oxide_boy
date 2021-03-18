@@ -58,6 +58,26 @@ fn from_byte_prefix_rr_hli() {
 }
 
 #[test]
+fn from_byte_prefix_sla() {
+    let op = Instruction::from_byte(0x28, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::B, 8));
+    let op = Instruction::from_byte(0x29, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::C, 8));
+    let op = Instruction::from_byte(0x2A, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::D, 8));
+    let op = Instruction::from_byte(0x2B, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::E, 8));
+    let op = Instruction::from_byte(0x2C, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::H, 8));
+    let op = Instruction::from_byte(0x2D, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::L, 8));
+    let op = Instruction::from_byte(0x2E, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::HLI, 16));
+    let op = Instruction::from_byte(0x2F, true).unwrap();
+    assert_eq!(op, Instruction::SRA(ArithmeticTarget::A, 8));
+}
+
+#[test]
 fn from_byte_add() {
     for byte in 0x80..=0x87 {
         let op = Instruction::from_byte(byte, false).unwrap();

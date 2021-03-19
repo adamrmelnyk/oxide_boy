@@ -742,6 +742,16 @@ fn test_rl_carry() {
 }
 
 #[test]
+fn test_rl_from_carry() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b0000_0011;
+    cpu.registers.set_flags_nz(false, false, true);
+    cpu.execute(Instruction::RL(ArithmeticTarget::A, 4));
+    assert_eq!(cpu.registers.a, 0b0000_0111);
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
 fn test_rst() {
     let mut cpu = setup();
     cpu.pc = 0x1000;
@@ -1058,7 +1068,45 @@ fn test_ldaby() {
     assert_eq!(cpu.bus.read_word(0xCABB), 0xEE);
 }
 
-// TODO: tests for RRC RLC LDHLSP etc.
+// TODO: tests for LDHLSP etc.
+
+#[test]
+fn rrc() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0000;
+    cpu.registers.set_flags_nz(false, false, true);
+    cpu.execute(Instruction::RRC(ArithmeticTarget::A, 4));
+    assert_eq!(cpu.registers.a, 0b0100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
+fn rrc_carry() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.execute(Instruction::RRC(ArithmeticTarget::A, 4));
+    assert_eq!(cpu.registers.a, 0b1100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn rlc() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b0000_0001;
+    cpu.registers.set_flags_nz(false, false, true);
+    cpu.execute(Instruction::RLC(ArithmeticTarget::A, 4));
+    assert_eq!(cpu.registers.a, 0b0000_0010);
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
+fn rlc_carry() {
+    let mut cpu = setup();
+    cpu.registers.a = 0b1000_0001;
+    cpu.execute(Instruction::RLC(ArithmeticTarget::A, 4));
+    assert_eq!(cpu.registers.a, 0b0000_0011);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
 
 #[test]
 fn sla_carry() {

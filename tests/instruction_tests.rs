@@ -25,6 +25,27 @@ fn from_byte_prefix_rlc() {
 }
 
 #[test]
+fn from_byte_prefix_rrc() {
+    let op0 = Instruction::from_byte(0x08, true).unwrap();
+    let op1 = Instruction::from_byte(0x09, true).unwrap();
+    let op2 = Instruction::from_byte(0x0A, true).unwrap();
+    let op3 = Instruction::from_byte(0x0B, true).unwrap();
+    let op4 = Instruction::from_byte(0x0C, true).unwrap();
+    let op5 = Instruction::from_byte(0x0D, true).unwrap();
+    let op6 = Instruction::from_byte(0x0E, true).unwrap();
+    let op7 = Instruction::from_byte(0x0F, true).unwrap();
+
+    assert_eq!(op0, Instruction::RRC(ArithmeticTarget::B, 8));
+    assert_eq!(op1, Instruction::RRC(ArithmeticTarget::C, 8));
+    assert_eq!(op2, Instruction::RRC(ArithmeticTarget::D, 8));
+    assert_eq!(op3, Instruction::RRC(ArithmeticTarget::E, 8));
+    assert_eq!(op4, Instruction::RRC(ArithmeticTarget::H, 8));
+    assert_eq!(op5, Instruction::RRC(ArithmeticTarget::L, 8));
+    assert_eq!(op6, Instruction::RRC(ArithmeticTarget::HLI, 16));
+    assert_eq!(op7, Instruction::RRC(ArithmeticTarget::A, 8));
+}
+
+#[test]
 fn from_byte_prefix_rl() {
     let op0 = Instruction::from_byte(0x10, true).unwrap();
     let op1 = Instruction::from_byte(0x11, true).unwrap();

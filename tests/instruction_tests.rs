@@ -58,7 +58,7 @@ fn from_byte_prefix_rr_hli() {
 }
 
 #[test]
-fn from_byte_prefix_sla() {
+fn from_byte_prefix_sra() {
     let op = Instruction::from_byte(0x28, true).unwrap();
     assert_eq!(op, Instruction::SRA(ArithmeticTarget::B, 8));
     let op = Instruction::from_byte(0x29, true).unwrap();
@@ -75,6 +75,27 @@ fn from_byte_prefix_sla() {
     assert_eq!(op, Instruction::SRA(ArithmeticTarget::HLI, 16));
     let op = Instruction::from_byte(0x2F, true).unwrap();
     assert_eq!(op, Instruction::SRA(ArithmeticTarget::A, 8));
+}
+
+
+#[test]
+fn from_byte_prefix_sla() {
+    let op = Instruction::from_byte(0x20, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::B, 8));
+    let op = Instruction::from_byte(0x21, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::C, 8));
+    let op = Instruction::from_byte(0x22, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::D, 8));
+    let op = Instruction::from_byte(0x23, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::E, 8));
+    let op = Instruction::from_byte(0x24, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::H, 8));
+    let op = Instruction::from_byte(0x25, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::L, 8));
+    let op = Instruction::from_byte(0x26, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::HLI, 16));
+    let op = Instruction::from_byte(0x27, true).unwrap();
+    assert_eq!(op, Instruction::SLA(ArithmeticTarget::A, 8));
 }
 
 #[test]

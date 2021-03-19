@@ -1058,7 +1058,7 @@ fn test_ldaby() {
     assert_eq!(cpu.bus.read_word(0xCABB), 0xEE);
 }
 
-// TODO: tests for SRA RRC RLC LDHLSP etc.
+// TODO: tests for RRC RLC LDHLSP etc.
 
 #[test]
 fn sla_carry() {
@@ -1079,6 +1079,28 @@ fn sla_no_carry() {
     let (next_pc, _) = cpu.execute(Instruction::SLA(ArithmeticTarget::B, 8));
     assert_eq!(next_pc, 11);
     assert_eq!(cpu.registers.b, 0b1000_0010);
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
+fn sra_carry() {
+    let mut cpu = setup();
+    cpu.pc = 10;
+    cpu.registers.b = 0b1000_0001;
+    let (next_pc, _) = cpu.execute(Instruction::SRA(ArithmeticTarget::B, 8));
+    assert_eq!(next_pc, 11);
+    assert_eq!(cpu.registers.b, 0b0100_0000);
+    assert_flags_znhc(cpu.registers, false, false, false, true);
+}
+
+#[test]
+fn sra_no_carry() {
+    let mut cpu = setup();
+    cpu.pc = 10;
+    cpu.registers.b = 0b0100_0010;
+    let (next_pc, _) = cpu.execute(Instruction::SRA(ArithmeticTarget::B, 8));
+    assert_eq!(next_pc, 11);
+    assert_eq!(cpu.registers.b, 0b0010_0001);
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
 

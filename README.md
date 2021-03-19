@@ -78,6 +78,7 @@ cargo test
   * Trigger the interrupt from the step function
 * GUI
   * Render sprites
+  * Display logo on boot
 * Sound
   * Step function needs to be implemented
 * I/O

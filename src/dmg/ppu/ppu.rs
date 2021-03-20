@@ -303,6 +303,7 @@ impl PPU {
     /// Writing when the mode flag is set to 3 will not change the data
     fn write_vram(&mut self, address: u16, value: u8) {
         if self.stat.mode_flag != LcdMode::TransferingDataToLCDDriver {
+            info!("Writing: {:#02x} to vram address {:#02x}", value, address);
             self.vram[(address - 0x8000) as usize] = value;
         }
     }

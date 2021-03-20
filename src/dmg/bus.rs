@@ -255,6 +255,8 @@ fn default_no_cart_is_rom() {
 
 #[test]
 fn dma_transfer() {
+    // NOTE: This Test require a particular rom at src/dmg/rom/DEFAULT_ROM.bin
+    // for the test to work properly
     let mut bus = Bus::default();
     assert_eq!(bus.read_byte(0x0101), 0xC3);
     assert_eq!(bus.read_byte(0x0102), 0x50);

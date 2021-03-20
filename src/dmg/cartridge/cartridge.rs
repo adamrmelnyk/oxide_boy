@@ -136,3 +136,17 @@ fn convert_byte_to_type() {
     assert_eq!(Type::from(0x00), Type::RomOnly);
     assert_eq!(Type::from(0x01), Type::MBC1);
 }
+
+#[test]
+fn cart_defaults_to_rom_only() {
+    let mut cart = Cartridge::new("notAfile.bin");
+    assert_eq!(cart.read_byte(0xA001), 0x00);
+    cart.write_byte(0xA001, 0xFF);
+    assert_eq!(cart.read_byte(0xA001), 0x00);
+}
+
+#[test]
+fn cart_data() {
+    let cart = Cartridge::default();
+    assert_eq!(cart.read_byte(0x0101), 0xC3, "This test relies on a particular rom being at src/dmg/roms/DEFAULT_ROM.bin");
+}

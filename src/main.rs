@@ -12,9 +12,15 @@ use env_logger;
 pub enum Command {
     #[structopt(about = "Runs the specified ROM", help = "USEAGE: run myRomFile.rom")]
     Run { file: String },
-    #[structopt(about = "Runs the specified ROM as the BOOT ROM, use this to run custom boot roms or test roms", help = "USEAGE: custom myBootRom.rom myRomFile.rom")]
+    #[structopt(
+        about = "Runs the specified ROM as the BOOT ROM, use this to run custom boot roms or test roms",
+        help = "USEAGE: custom myBootRom.rom myRomFile.rom"
+    )]
     Custom { boot_file: String, file: String },
-    #[structopt(about = "Runs the specified ROM, but skips the boot sequence", help = "USEAGE: skip myRomFile.rom")]
+    #[structopt(
+        about = "Runs the specified ROM, but skips the boot sequence",
+        help = "USEAGE: skip myRomFile.rom"
+    )]
     Skip { file: String },
     #[structopt(
         about = "For development purposes: Runs the default rom at src/dmg/rom/DEFAULT_ROM.bin",

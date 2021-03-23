@@ -148,5 +148,9 @@ fn cart_defaults_to_rom_only() {
 #[test]
 fn cart_data() {
     let cart = Cartridge::default();
-    assert_eq!(cart.read_byte(0x0101), 0xC3, "This test relies on a particular rom being at src/dmg/roms/DEFAULT_ROM.bin");
+    assert_eq!(
+        cart.read_byte(0x0101),
+        0xC3,
+        "This test relies on a particular rom being at src/dmg/roms/DEFAULT_ROM.bin"
+    );
 }

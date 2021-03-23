@@ -411,8 +411,16 @@ fn load_test_hlinc() {
         LoadType::Byte(LoadByteTarget::HLINC, LoadByteSource::A),
         8,
     ));
-    assert_eq!(cpu.bus.read_byte(hl_addr), cpu.registers.a, "Memory location hl should hold the value of a");
-    assert_eq!(cpu.registers.get_hl(), hl_addr + 1, "HL should be incremented");
+    assert_eq!(
+        cpu.bus.read_byte(hl_addr),
+        cpu.registers.a,
+        "Memory location hl should hold the value of a"
+    );
+    assert_eq!(
+        cpu.registers.get_hl(),
+        hl_addr + 1,
+        "HL should be incremented"
+    );
     assert_flags_znhc(cpu.registers, false, false, false, false);
 }
 

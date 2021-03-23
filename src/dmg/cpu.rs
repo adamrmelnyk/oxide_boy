@@ -53,7 +53,7 @@ impl CPU {
     pub fn custom_boot_rom(boot_file: &str, file: &str) -> CPU {
         CPU {
             registers: Registers::default(),
-            bus: Bus::custom_boot_rom(boot_file ,file),
+            bus: Bus::custom_boot_rom(boot_file, file),
             pc: 0,
             sp: 0xFFFE,
             is_halted: false,

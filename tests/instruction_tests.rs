@@ -98,7 +98,6 @@ fn from_byte_prefix_sra() {
     assert_eq!(op, Instruction::SRA(ArithmeticTarget::A, 8));
 }
 
-
 #[test]
 fn from_byte_prefix_sla() {
     let op = Instruction::from_byte(0x20, true).unwrap();

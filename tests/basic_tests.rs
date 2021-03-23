@@ -887,7 +887,25 @@ fn test_ldha() {
     assert_eq!(cpu.bus.read_byte(0xFF11), cpu.registers.a);
 }
 
-// TODO: Add more tests for ldha?
+#[test]
+fn test_ldha_scy() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x64;
+    cpu.pc = 0xC000;
+    cpu.bus.write_byte(0xC001, 0x42);
+    cpu.execute(Instruction::from_byte(0xE0, false).unwrap());
+    assert_eq!(cpu.bus.read_byte(0xFF42), 0x64);
+}
+
+#[test]
+fn test_ldha_turn_on_lcdc() {
+    let mut cpu = setup();
+    cpu.registers.a = 0x91;
+    cpu.pc = 0xC000;
+    cpu.bus.write_byte(0xC001, 0x40);
+    cpu.execute(Instruction::from_byte(0xE0, false).unwrap());
+    assert_eq!(cpu.bus.read_byte(0xFF40), 0x91);
+}
 
 #[test]
 fn test_ld8a() {

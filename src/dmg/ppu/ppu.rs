@@ -6,15 +6,15 @@ use log::info;
 use minifb::{Scale, Window, WindowOptions};
 
 // The number of CPU cycles taken to draw one scanline
-const SCANLINE_COUNTER_MAX: u16 = 456;
+const SCANLINE_COUNTER_MAX: i32 = 456;
 
 // The first 80 of the 456 cycles to draw a scanline are used in mode 2,
 // searching sprite attributes. (465 - 80 = 476)
-const SEARCHING_FOR_SPRITES: u16 = 376;
+const SEARCHING_FOR_SPRITES: i32 = 376;
 
 // The second section of the 456 cycles is 172 cycles spent in mode 3,
 // Transfering to the lcd driver. (376 - 172)
-const TRANSFERING_TO_LCD_DRIVER: u16 = 204;
+const TRANSFERING_TO_LCD_DRIVER: i32 = 204;
 
 // DMG Screen Dimentions
 const WIDTH: usize = 160; // 0xA0
@@ -42,7 +42,7 @@ pub struct PPU {
 
     wy: u8, //0xFF4A
     wx: u8, //0xFF4B
-    scanline_counter: u16,
+    scanline_counter: i32,
     vram: [u8; 8192],
 
     /// An array of 40, 4-byte objects
@@ -143,15 +143,11 @@ impl PPU {
         self.set_lcd_status();
 
         if self.lcdc.lcdc_enabled() {
-            let (new_count, did_overflow) = self.scanline_counter.overflowing_sub(cycles as u16);
-            self.scanline_counter = new_count;
-            if did_overflow || new_count == 0 {
-                // Move to the next scanline
-                self.ly = self.ly.wrapping_add(1);
+            self.scanline_counter -= cycles as i32;
 
-                // Reset the scanline counter
+            if self.scanline_counter <= 0 {
+                self.ly += 1;
                 self.scanline_counter = SCANLINE_COUNTER_MAX;
-
                 // Vertical blank period
                 if self.ly == VISIBLE_SCAN_LINES {
                     // Trigger vblank

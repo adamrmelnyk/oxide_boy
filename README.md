@@ -2,7 +2,7 @@
 
 A gameboy / DMG emulator
 
-This project is currently in progress and has a few missing parts. Currently there is no sound or user input, though the vast majority of the project including the run loop and CPU instructions are implemented. Currently running only draws tiles, but not sprites, and executes the instructions in the console if logging is enabled.
+**This project is currently in progress** and has a few missing parts. Currently there is no sound or user input, though the vast majority of the project including the run loop and CPU instructions are implemented. Currently running only draws tiles, but not sprites, and executes the instructions in the console if logging is enabled.
 
 ## Building
 

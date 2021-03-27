@@ -2,3 +2,4 @@
 .vscode/
 /src/dmg/rom/DEFAULT_ROM.bin
 *.gb
+tarpaulin-report.html

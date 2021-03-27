@@ -62,10 +62,18 @@ Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot 
 
 ## Testing
 
+### Test Coverage: 83.98%
+
 Currently running tests requires a rom to be present at `/src/dmg/rom/DEFAULT_ROM.bin`. Some of the tests will fail without this, but will likely change in the future.
 
 ```sh
 cargo test
+```
+
+Test coverage can be generated using Tarpaulin. After installing tarpaulin with cargo, to update test results use:
+
+```sh
+cargo tarpaulin -v -o Html
 ```
 
 ## TODO

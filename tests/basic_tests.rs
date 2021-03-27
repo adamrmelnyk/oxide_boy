@@ -48,6 +48,16 @@ fn inc_16_test() {
 }
 
 #[test]
+fn inc_sp() {
+    let mut cpu = setup();
+    let before = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::SP);
+    cpu.execute(Instruction::INC16(SixteenBitArithmeticTarget::SP, 8));
+    let after = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::SP);
+    assert_eq!(before + 1, after);
+    assert_flags_znhc(cpu.registers, false, false, false, false);
+}
+
+#[test]
 fn dec_16_test() {
     let mut cpu = setup();
     let before = cpu.sixteen_bit_register_value(&SixteenBitArithmeticTarget::BC);
@@ -451,6 +461,61 @@ fn load_tests() {
 }
 
 #[test]
+fn load_b_from_b() {
+    let mut cpu = setup();
+    cpu.registers.b = 0x10;
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::B, LoadByteSource::B),
+        8,
+    ));
+    assert_eq!(cpu.registers.b, 0x10);
+}
+
+#[test]
+fn load_b_from_c() {
+    let mut cpu = setup();
+    cpu.registers.c = 0x10;
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::B, LoadByteSource::C),
+        8,
+    ));
+    assert_eq!(cpu.registers.b, 0x10);
+}
+
+#[test]
+fn load_b_from_d() {
+    let mut cpu = setup();
+    cpu.registers.d = 0x10;
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::B, LoadByteSource::D),
+        8,
+    ));
+    assert_eq!(cpu.registers.b, 0x10);
+}
+
+#[test]
+fn load_b_from_e() {
+    let mut cpu = setup();
+    cpu.registers.e = 0x10;
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::B, LoadByteSource::E),
+        8,
+    ));
+    assert_eq!(cpu.registers.b, 0x10);
+}
+
+#[test]
+fn load_b_from_l() {
+    let mut cpu = setup();
+    cpu.registers.l = 0x10;
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::B, LoadByteSource::L),
+        8,
+    ));
+    assert_eq!(cpu.registers.b, 0x10);
+}
+
+#[test]
 fn load_test_a_from_bci() {
     let mut cpu = setup();
     cpu.registers.set_bc(0xC1A1);
@@ -460,6 +525,32 @@ fn load_test_a_from_bci() {
         8,
     ));
     assert_eq!(cpu.registers.a, 0x10);
+}
+
+#[test]
+fn load_test_a_from_hli() {
+    let mut cpu = setup();
+    cpu.registers.set_hl(0xC1A1);
+    cpu.bus.write_byte(0xC1A1, 0x10);
+    cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::B, LoadByteSource::HLI),
+        8,
+    ));
+    assert_eq!(cpu.registers.b, 0x10);
+}
+
+#[test]
+fn load_from_d8_to_c() {
+    let mut cpu = setup();
+    cpu.pc = 0xC000;
+    cpu.bus.write_byte(0xC001, 0x10);
+    let (next_pc, cycles) = cpu.execute(Instruction::LD(
+        LoadType::Byte(LoadByteTarget::C, LoadByteSource::D8),
+        8,
+    ));
+    assert_eq!(cycles, 8);
+    assert_eq!(next_pc, 0xC002);
+    assert_eq!(cpu.registers.c, 0x10);
 }
 
 #[test]
@@ -799,6 +890,19 @@ fn test_jump_zero() {
 }
 
 #[test]
+fn test_jump_not_zero() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0xC001, 0xAA);
+    cpu.bus.write_byte(0xC002, 0xFF);
+    cpu.pc = 0xC000;
+    cpu.registers.set_flags(false, false, false, false);
+    let (res, cycles) = cpu.execute(Instruction::JP(JumpCond::NotZero, 12, 16));
+    assert_eq!(cycles, 16);
+    assert_eq!(cpu.pc, 0xFFAA, "Should jump to 0xFFAA");
+    assert_eq!(res, cpu.pc);
+}
+
+#[test]
 fn test_jump_carry() {
     let mut cpu = setup();
     cpu.bus.write_byte(0xC001, 0xAA);
@@ -1100,7 +1204,27 @@ fn test_ldaby() {
     assert_eq!(cpu.bus.read_word(0xCABB), 0xEE);
 }
 
-// TODO: tests for LDHLSP etc.
+#[test]
+fn ldhlsp_move_up() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0xC001, 0xFF); // -1 as an unsigned int
+    cpu.pc = 0xC000;
+    assert_eq!(cpu.sp, 0xFFFE, "SP should be at the starting position");
+    let (next_pc, _) = cpu.execute(Instruction::LDHLSP(12));
+    assert_eq!(next_pc, 0xC002);
+    assert_eq!(cpu.registers.get_hl(), 0xFFFD);
+}
+
+#[test]
+fn ldhlsp_move_down() {
+    let mut cpu = setup();
+    cpu.bus.write_byte(0xC001, 0x01);
+    cpu.pc = 0xC000;
+    cpu.sp = 0xFFFD;
+    let (next_pc, _) = cpu.execute(Instruction::LDHLSP(12));
+    assert_eq!(next_pc, 0xC002);
+    assert_eq!(cpu.registers.get_hl(), 0xFFFE);
+}
 
 #[test]
 fn rrc() {
@@ -1192,7 +1316,7 @@ fn writing_to_lcdc() {
     assert_eq!(cpu.bus.read_byte(0xFF40), 0);
     cpu.bus.write_byte(0xFF40, 0x40);
     assert_eq!(cpu.bus.read_byte(0xFF40), 0x40);
-}   
+}
 
 #[test]
 fn writing_to_stat() {

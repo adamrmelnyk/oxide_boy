@@ -85,6 +85,7 @@ cargo test
   * Integrate minifb with the joypad to read keyboard input
   * Joypad step function
 * Shutdown after locking up at 0xe9 of the boot ROM
+* Improve test coverage
 
 ### Resources
 

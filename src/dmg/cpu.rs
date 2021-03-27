@@ -328,7 +328,7 @@ impl CPU {
     fn sub(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = self.registers.a.wrapping_sub(value);
-        let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
+        let half_carry = (self.registers.a & 0xF) < (value & 0xF);
         self.registers
             .set_flags(new_value == 0, true, half_carry, self.registers.a < value);
         self.registers.a = new_value;
@@ -389,7 +389,7 @@ impl CPU {
         let value = self.register_value(&target);
         let zero: bool = value == self.registers.a;
         let (_, did_overflow) = self.registers.a.overflowing_sub(value);
-        let half_carry = (self.registers.a & 0xF) < (value & 0xF); // TODO: Double check this
+        let half_carry = (self.registers.a & 0xF) < (value & 0xF);
         self.registers
             .set_flags(zero, true, half_carry, did_overflow);
         true
@@ -400,7 +400,7 @@ impl CPU {
     fn inc(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = value.wrapping_add(1);
-        let half_carry = (value & 0xF) + (1 & 0xF) > 0xF; // TODO: Double check this
+        let half_carry = (value & 0xF) + (1 & 0xF) > 0xF;
         self.registers
             .set_flags(new_value == 0, false, half_carry, self.registers.carry());
         self.set_register_by_target(&target, new_value);
@@ -412,7 +412,7 @@ impl CPU {
     fn dec(&mut self, target: ArithmeticTarget) -> bool {
         let value = self.register_value(&target);
         let new_value = value.wrapping_sub(1);
-        let half_carry = (value & 0xF) < 1; // TODO; Double check this
+        let half_carry = (value & 0xF) < 1;
         self.registers
             .set_flags(new_value == 0, true, half_carry, self.registers.carry());
         self.set_register_by_target(&target, new_value);
@@ -673,11 +673,6 @@ impl CPU {
             }
         }
         match source {
-            // If we read from the D8, we should move the pc up one extra spot
-            LoadByteSource::D8 => {
-                // TODO: May or may not need to inc the PC here. This needs to have a
-                //       test written for it.
-            }
             LoadByteSource::HLINC => {
                 self.registers
                     .set_hl(self.registers.get_hl().wrapping_add(1));
@@ -699,7 +694,7 @@ impl CPU {
             LoadByteSource::E => self.registers.e,
             LoadByteSource::H => self.registers.h,
             LoadByteSource::L => self.registers.l,
-            LoadByteSource::D8 => self.read_next_byte(), // TODO: Double check this
+            LoadByteSource::D8 => self.read_next_byte(),
             LoadByteSource::HLI | LoadByteSource::HLINC | LoadByteSource::HLDEC => {
                 self.bus.read_byte(self.registers.get_hl())
             }

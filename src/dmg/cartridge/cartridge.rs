@@ -105,7 +105,9 @@ impl Cartridge {
                 };
             }
         }
-        // TODO: We could potentially throw an error if the cart is too small
+        if data.len() < 0x147 {
+            panic!("Cartridge is too small! Check what file you specified");
+        }
         let cart_type = Type::from(data[0x147]);
         let cart = cart(&cart_type, data);
         Cartridge { cart }

@@ -122,7 +122,6 @@ impl std::convert::From<u8> for LoadByteTarget {
 
 impl std::convert::From<u8> for LoadByteSource {
     fn from(byte: u8) -> LoadByteSource {
-        // TODO: Add the other bytes (There shouldn't be any left to add)
         match byte {
             0x06 | 0x16 | 0x26 | 0x36 | 0x0E | 0x1E | 0x2E | 0x3E => LoadByteSource::D8,
             0x02 | 0x12 | 0x22 | 0x32 => LoadByteSource::A,
@@ -157,11 +156,11 @@ pub enum LoadByteSource {
     E,
     H,
     L,
-    D8,  // direct 8 bit value, read next byte
-    HLI, // read from the address stored in HL
+    D8,
+    HLI,
     BCI,
     DEI,
-    HLINC, // TODO: Maybe combine these with HLI, whatever makes the code simpler
+    HLINC,
     HLDEC,
 }
 

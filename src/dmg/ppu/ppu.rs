@@ -236,10 +236,10 @@ impl PPU {
 
         let (background_memory, y_pos) = if !using_window {
             let address = self.lcdc.bg_tile_map_data_select().address();
-            (address, self.scy + self.ly)
+            (address, self.scy.wrapping_add(self.ly))
         } else {
             let address = self.lcdc.window_tile_map_display_select().address();
-            (address, self.ly - self.wy)
+            (address, self.ly.wrapping_sub(self.wy))
         };
 
         let tile_row = (y_pos as u16 / 8) * 32;

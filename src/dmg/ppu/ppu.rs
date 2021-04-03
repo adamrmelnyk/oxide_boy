@@ -434,8 +434,9 @@ fn draw_one_scanline_at_a_time() {
         ppu.step(255);
         ppu.step(201);
         assert_eq!(ppu.ly, i + 1, "Ly should be incd after 456 cycles");
-        assert_eq!(ppu.screen[i as usize][0], Color::White.rgb());
-        assert_eq!(ppu.screen[i as usize][159], Color::White.rgb());
+        for j in 0..160 {
+            assert_eq!(ppu.screen[i as usize][j], Color::White.rgb());
+        }
         if i < 143 {
             // If we haven't drawn the last line, check that the next line is blank
             assert_eq!(ppu.screen[i as usize + 1][0], 0);

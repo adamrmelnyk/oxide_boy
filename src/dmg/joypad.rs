@@ -14,14 +14,14 @@ pub struct Joypad {
 impl Default for Joypad {
     fn default() -> Joypad {
         Joypad {
-            unused_bit_7: false,
-            unused_bit_6: false,
-            select_button_keys: false,
-            select_direction_keys: false,
-            down_or_start: false,
-            up_or_select: false,
-            left_or_button_b: false,
-            right_or_button_a: false,
+            unused_bit_7: true,
+            unused_bit_6: true,
+            select_button_keys: true,
+            select_direction_keys: true,
+            down_or_start: true,
+            up_or_select: true,
+            left_or_button_b: true,
+            right_or_button_a: true,
         }
     }
 }
@@ -56,4 +56,10 @@ impl BusConnection for Joypad {
             panic!("The Address: {:#02x}, is not use by the Joypad", address)
         }
     }
+}
+
+#[test]
+fn default_oxff() {
+    let joy = Joypad::default();
+    assert_eq!(joy.read_byte(0xFF00), 0xFF);
 }

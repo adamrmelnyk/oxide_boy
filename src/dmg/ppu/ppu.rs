@@ -149,12 +149,12 @@ impl PPU {
                 self.ly += 1;
                 self.scanline_counter = SCANLINE_COUNTER_MAX;
                 // Vertical blank period
-                if self.ly == VISIBLE_SCAN_LINES {
+                if self.ly == VISIBLE_SCAN_LINES + 1 {
                     // Trigger vblank
                     // TODO: Trigger the interrupt 0
                 } else if self.ly > MAX_SCAN_LINES {
                     self.ly = 0;
-                } else if self.ly < VISIBLE_SCAN_LINES {
+                } else if self.ly <= VISIBLE_SCAN_LINES {
                     self.draw_scanline();
                 }
             }
@@ -274,8 +274,8 @@ impl PPU {
             colour_num |= get_pos_from_byte(data1, colour_bit);
 
             let col = get_color(colour_num, self.bgp);
-            if self.ly <= 143 && pixel <= 159 {
-                self.screen[self.ly as usize][pixel as usize] = col.rgb();
+            if self.ly - 1 <= 143 && pixel <= 159 {
+                self.screen[self.ly as usize - 1][pixel as usize] = col.rgb();
             }
         }
     }
@@ -406,8 +406,42 @@ fn ly_inc() {
     ppu.lcdc = Lcdc::from(&255);
     assert_eq!(ppu.ly, 0);
     ppu.step(255);
-    ppu.step(255);
+    ppu.step(201);
     assert_eq!(ppu.ly, 1, "Ly should be incd after 456 cycles");
+
+    // Step one less than the MAX Scanline number
+    assert_eq!(ppu.ly, 1);
+    ppu.step(255);
+    ppu.step(200);
+    assert_eq!(ppu.ly, 1, "Ly should not be incd after 455 cycles");
+}
+
+#[test]
+fn draw_one_scanline_at_a_time() { 
+    let mut ppu = PPU::default();
+    ppu.lcdc = Lcdc::from(&255);
+    assert_eq!(ppu.ly, 0);
+
+    // Blanking out the screen so that we can see what we're drawing
+    for i in 0..ppu.screen.len() {
+        for j in 0..ppu.screen.len() {
+            ppu.screen[i][j] = 0;
+        }
+    }
+
+    // Execute 456 cycles and check that ly has increased and that we've drawn
+    for i in 0..144 {
+        ppu.step(255);
+        ppu.step(201);
+        assert_eq!(ppu.ly, i + 1, "Ly should be incd after 456 cycles");
+        assert_eq!(ppu.screen[i as usize][0], Color::White.rgb());
+        assert_eq!(ppu.screen[i as usize][159], Color::White.rgb());
+        if i < 143 {
+            // If we haven't drawn the last line, check that the next line is blank
+            assert_eq!(ppu.screen[i as usize + 1][0], 0);
+        }
+    }
+
 }
 
 #[test]

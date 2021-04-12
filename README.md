@@ -12,6 +12,12 @@ You will need nightly Rust to build this project. After installing nightly rust,
 cargo build
 ```
 
+If the build fails because it can't find a package, you are likely missing `xkbcommon` if you are on ubuntu/debian you can install this using:
+
+```
+sudo apt install libxkbcommon-x11-dev
+```
+
 ## CLI
 
 ```sh

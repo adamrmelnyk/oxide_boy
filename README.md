@@ -12,6 +12,12 @@ You will need nightly Rust to build this project. After installing nightly rust,
 cargo build
 ```
 
+If you want to set the nightly build for this repo alone, you can do so by running: 
+
+```
+rustup override set nightly
+```
+
 If the build fails because it can't find a package, you are likely missing `xkbcommon` if you are on ubuntu/debian you can install this using:
 
 ```
@@ -68,7 +74,7 @@ Note: Without a ROM, this emulator will lock up at instruction 0xE9 in the boot 
 
 ## Testing
 
-### Test Coverage: 83.98%
+### Test Coverage: 84.35%
 
 Currently running tests requires a rom to be present at `/src/dmg/rom/DEFAULT_ROM.bin`. Some of the tests will fail without this, but will likely change in the future.
 

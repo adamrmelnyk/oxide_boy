@@ -1,5 +1,5 @@
 use oxide_boy::{
-    ArithmeticTarget, Instruction, JumpCond, LoadByteSource, LoadByteTarget, LoadType,
+    ArithmeticTarget, StackTarget, Instruction, JumpCond, LoadByteSource, LoadByteTarget, LoadType,
     LoadWordSource, LoadWordTarget,
 };
 
@@ -585,6 +585,56 @@ fn bit_bl() {
     assert_eq!(op, Instruction::BIT(5, ArithmeticTarget::HLI, 12));
     let op = Instruction::from_byte(0x7E, true).unwrap();
     assert_eq!(op, Instruction::BIT(7, ArithmeticTarget::HLI, 12));
+}
+
+#[test]
+fn reset() {
+    let op = Instruction::from_byte(0x80, true).unwrap();
+    assert_eq!(op, Instruction::RESET(0, ArithmeticTarget::B, 8));
+}
+
+#[test]
+fn set() {
+    let op = Instruction::from_byte(0xC0, true).unwrap();
+    assert_eq!(op, Instruction::SET(0, ArithmeticTarget::B, 8));
+}
+
+#[test]
+fn ret() {
+    let op = Instruction::from_byte(0xC0, false).unwrap();
+    assert_eq!(op, Instruction::RET(JumpCond::NotZero, 8, 20));
+    let op = Instruction::from_byte(0xD0, false).unwrap();
+    assert_eq!(op, Instruction::RET(JumpCond::NotCarry, 8, 20));
+    let op = Instruction::from_byte(0xC8, false).unwrap();
+    assert_eq!(op, Instruction::RET(JumpCond::Zero, 8, 20));
+    let op = Instruction::from_byte(0xD8, false).unwrap();
+    assert_eq!(op, Instruction::RET(JumpCond::Carry, 8, 20));
+    let op = Instruction::from_byte(0xC9, false).unwrap();
+    assert_eq!(op, Instruction::RET(JumpCond::Always, 16, 16));
+}
+
+#[test]
+fn pop() {
+    let op = Instruction::from_byte(0xC1, false).unwrap();
+    assert_eq!(op, Instruction::POP(StackTarget::BC, 12));
+    let op = Instruction::from_byte(0xD1, false).unwrap();
+    assert_eq!(op, Instruction::POP(StackTarget::DE, 12));
+    let op = Instruction::from_byte(0xE1, false).unwrap();
+    assert_eq!(op, Instruction::POP(StackTarget::HL, 12));
+    let op = Instruction::from_byte(0xF1, false).unwrap();
+    assert_eq!(op, Instruction::POP(StackTarget::AF, 12));
+}
+
+#[test]
+fn push() {
+    let op = Instruction::from_byte(0xC5, false).unwrap();
+    assert_eq!(op, Instruction::PUSH(StackTarget::BC, 16));
+    let op = Instruction::from_byte(0xD5, false).unwrap();
+    assert_eq!(op, Instruction::PUSH(StackTarget::DE, 16));
+    let op = Instruction::from_byte(0xE5, false).unwrap();
+    assert_eq!(op, Instruction::PUSH(StackTarget::HL, 16));
+    let op = Instruction::from_byte(0xF5, false).unwrap();
+    assert_eq!(op, Instruction::PUSH(StackTarget::AF, 16));
 }
 
 #[test]

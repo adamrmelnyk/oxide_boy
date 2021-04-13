@@ -137,9 +137,12 @@ fn add_test() {
     let mut cpu = setup();
     cpu.registers.a = 10;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::ADD(ArithmeticTarget::B, 4));
+    cpu.pc = 0x100;
+    let (next_pc, cycles) = cpu.execute(Instruction::ADD(ArithmeticTarget::B, 4));
     assert_eq!(11, cpu.register_value(&ArithmeticTarget::A));
     assert_flags_znhc(cpu.registers, false, false, false, false);
+    assert_eq!(next_pc, 0x101);
+    assert_eq!(cycles, 4);
 }
 
 #[test]
@@ -147,9 +150,12 @@ fn add_overflow_test() {
     let mut cpu = setup();
     cpu.registers.a = 255;
     cpu.registers.b = 1;
-    cpu.execute(Instruction::ADD(ArithmeticTarget::B, 4));
+    cpu.pc = 0x101;
+    let (next_pc, cycles) = cpu.execute(Instruction::ADD(ArithmeticTarget::B, 4));
     assert_eq!(0, cpu.register_value(&ArithmeticTarget::A));
     assert_flags_znhc(cpu.registers, true, false, true, true);
+    assert_eq!(next_pc, 0x102);
+    assert_eq!(cycles, 4);
 }
 
 #[test]

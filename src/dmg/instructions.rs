@@ -51,7 +51,7 @@ fn conditional_cycle(byte: u8) -> u8 {
         0xC2 | 0xD2 | 0xC3 | 0xCA | 0xDA | 0xC9 => 16,
         0xC4 | 0xD4 | 0xCC | 0xDC | 0xCD => 24,
 
-        _ => panic!("u8 {:?} cannot be converted into an JumpCond", byte),
+        _ => panic!("u8 {:?} cannot be converted into into a conditional cycle", byte),
     }
 }
 

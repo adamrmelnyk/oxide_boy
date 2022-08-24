@@ -1,4 +1,3 @@
-#![feature(destructuring_assignment)]
 pub mod dmg;
 
 pub use dmg::cpu::CPU;

@@ -74,7 +74,7 @@ impl Bus {
             0xFF10..=0xFF1E | 0xFF20..=0xFF26 | 0xFF30..=0xFF3F => self.apu.read(address),
             0xFEA0..=0xFEFF => 0xFF, /* Unused Memory. Return Default value */
             0xFF01..=0xFF03 => {
-                error!("unimplemented");
+                error!("unimplemented serial transfer port");
                 0xFF // TODO: The serial transfer port
             }
             0xC000..=0xFDFF => self.memory.read_byte(address),
@@ -94,7 +94,7 @@ impl Bus {
             0x8000..=0x9FFF | 0xFF40..=0xFF45 | 0xFF47..=0xFF4B | 0xFE00..=0xFE9F => {
                 self.ppu.write_byte(address, value)
             }
-            0xFF01..=0xFF03 => error!("unimplemented"),
+            0xFF01..=0xFF03 => error!("unimplemented link cable"),
             0xFEA0..=0xFEFF => { /* Unused memory. Do Nothing */ }
             0xFF46 => self.dma(value),
             0xFF50 => self.boot_rom.write_byte(address, value),
